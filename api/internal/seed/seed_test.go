@@ -1,0 +1,416 @@
+package seed
+
+import (
+	"testing"
+	"time"
+
+	"github.com/dracuten1/cgv-v2/api/internal/model"
+)
+
+// TestFixture_FamilyCount: exactly 3 families (F8).
+func TestFixture_FamilyCount(t *testing.T) {
+	fams := seedAll()
+	if len(fams) != 3 {
+		t.Fatalf("seedAll() trả về %d dòng họ, muốn đúng 3", len(fams))
+	}
+
+	seen := map[string]bool{}
+	for _, f := range fams {
+		if seen[f.id] {
+			t.Errorf("trùng lặp ID dòng họ: %s", f.id)
+		}
+		seen[f.id] = true
+	}
+}
+
+// TestFixture_TotalMembers: the hard acceptance gate — 53 members total.
+func TestFixture_TotalMembers(t *testing.T) {
+	fams := seedAll()
+	total := 0
+	for _, f := range fams {
+		total += len(f.memb)
+	}
+	if total != 53 {
+		t.Fatalf("tổng số thành viên = %d, muốn đúng 53", total)
+	}
+}
+
+// TestFixture_Family1SpansFiveGenerations: Family 1 has members in every
+// generation 1..5; families 2-3 span at least 3 generations.
+func TestFixture_Family1SpansFiveGenerations(t *testing.T) {
+	fams := seedAll()
+	for i, f := range fams {
+		gens := map[int]int{}
+		for _, m := range f.memb {
+			gens[m.GenerationIndex]++
+		}
+		want := 3
+		if i == 0 {
+			want = 5
+		}
+		for g := 1; g <= want; g++ {
+			if gens[g] == 0 {
+				t.Errorf("dòng họ %q thiếu thế hệ %d", f.name, g)
+			}
+		}
+	}
+}
+
+// TestFixture_PerFamilyTotals: the documented split 24/16/13.
+func TestFixture_PerFamilyTotals(t *testing.T) {
+	fams := seedAll()
+	want := []int{24, 16, 13}
+	for i, f := range fams {
+		if len(f.memb) != want[i] {
+			t.Errorf("dòng họ %q có %d thành viên, muốn %d", f.name, len(f.memb), want[i])
+		}
+	}
+}
+
+// byID indexes one family's fixture members.
+func byID(t *testing.T, f seedFamily) map[string]model.Member {
+	t.Helper()
+	idx := make(map[string]model.Member, len(f.memb))
+	for _, m := range f.memb {
+		if _, dup := idx[m.ID]; dup {
+			t.Errorf("trùng lặp ID thành viên trong dòng họ %s: %s", f.name, m.ID)
+		}
+		idx[m.ID] = m
+	}
+	return idx
+}
+
+// TestFixture_ParentChildEdges: every edge references existing fixture IDs,
+// no self-edges, no duplicate edges, and the generation delta parent→child is
+// exactly +1.
+func TestFixture_ParentChildEdges(t *testing.T) {
+	for _, f := range seedAll() {
+		idx := byID(t, f)
+		seen := map[string]bool{}
+		for _, e := range f.pc {
+			parent, ok := idx[e.ParentID]
+			if !ok {
+				t.Fatalf("dòng họ %s: biên cha con tham chiếu cha không tồn tại: %s", f.name, e.ParentID)
+			}
+			child, ok := idx[e.ChildID]
+			if !ok {
+				t.Fatalf("dòng họ %s: biên cha con tham chiếu con không tồn tại: %s", f.name, e.ChildID)
+			}
+			if e.ParentID == e.ChildID {
+				t.Errorf("dòng họ %s: biên cha con trỏ vào chính nó: %s", f.name, e.ParentID)
+			}
+			key := e.ParentID + "->" + e.ChildID
+			if seen[key] {
+				t.Errorf("dòng họ %s: biên cha con bị lặp: %s", f.name, key)
+			}
+			seen[key] = true
+			if delta := child.GenerationIndex - parent.GenerationIndex; delta != 1 {
+				t.Errorf("dòng họ %s: %s -> %s lệch thế hệ = %d, muốn đúng 1",
+					f.name, parent.FullName, child.FullName, delta)
+			}
+		}
+	}
+}
+
+// TestFixture_SpouseEdges: spouse edges reference existing IDs, never
+// self-marriage, and no duplicate pair in either order. A member must not be
+// married to two different people.
+func TestFixture_SpouseEdges(t *testing.T) {
+	for _, f := range seedAll() {
+		idx := byID(t, f)
+		seen := map[string]bool{}
+		for _, s := range f.sp {
+			if _, ok := idx[s.MemberA]; !ok {
+				t.Fatalf("dòng họ %s: biên vợ chồng tham chiếu người không tồn tại: %s", f.name, s.MemberA)
+			}
+			if _, ok := idx[s.MemberB]; !ok {
+				t.Fatalf("dòng họ %s: biên vợ chồng tham chiếu người không tồn tại: %s", f.name, s.MemberB)
+			}
+			if s.MemberA == s.MemberB {
+				t.Errorf("dòng họ %s: tự cưới chính mình: %s", f.name, s.MemberA)
+			}
+			a, b := s.MemberA, s.MemberB
+			if a > b {
+				a, b = b, a
+			}
+			key := a + "+" + b
+			if seen[key] {
+				t.Errorf("dòng họ %s: cặp vợ chồng bị lặp (một trong hai chiều): %s", f.name, key)
+			}
+			seen[key] = true
+		}
+	}
+}
+
+// spouseMap maps each member to their (single) fixture spouse; a member with
+// multiple spouses fails the test (deterministic fixture = one spouse each).
+func spouseMap(t *testing.T, f seedFamily) map[string]string {
+	t.Helper()
+	m := map[string]string{}
+	for _, s := range f.sp {
+		for _, id := range []string{s.MemberA, s.MemberB} {
+			if other, exists := m[id]; exists && other != s.MemberA && other != s.MemberB {
+				t.Errorf("%s có nhiều hơn một vợ/chồng trong fixture", id)
+			}
+		}
+		m[s.MemberA] = s.MemberB
+		m[s.MemberB] = s.MemberA
+	}
+	return m
+}
+
+// TestFixture_RootAncestor: root is Nguyễn Văn An, Gen 1, male, Family 1,
+// notes "Thủy tổ gia phả"; his Gen-1 spouse is Trần Thị Đoan.
+func TestFixture_RootAncestor(t *testing.T) {
+	f1 := seedAll()[0]
+	idx := byID(t, f1)
+
+	root, ok := idx[RootID]
+	if !ok {
+		t.Fatalf("không tìm thấy thủy tổ với RootID = %s", RootID)
+	}
+	if root.FullName != RootAncestorName {
+		t.Errorf("thủy tổ tên %q, muốn %q", root.FullName, RootAncestorName)
+	}
+	if root.Gender != "male" {
+		t.Errorf("giới tính thủy tổ = %q, muốn \"male\"", root.Gender)
+	}
+	if root.GenerationIndex != 1 {
+		t.Errorf("thế hệ thủy tổ = %d, muốn 1", root.GenerationIndex)
+	}
+	if root.FamilyID != Family1ID {
+		t.Errorf("thủy tổ thuộc dòng họ %s, muốn %s", root.FamilyID, Family1ID)
+	}
+	if root.Notes == nil || *root.Notes != "Thủy tổ gia phả" {
+		t.Errorf("ghi chú thủy tổ = %v, muốn \"Thủy tổ gia phả\"", root.Notes)
+	}
+	// Death is optional for the root (F8); if set, IsLiving must be false and
+	// death must follow birth. Root is expected deceased (born ~1928).
+	if root.BirthDate == nil || root.BirthDate.Year() < 1925 || root.BirthDate.Year() > 1930 {
+		if root.BirthDate == nil {
+			t.Errorf("thủy tổ thiếu ngày sinh")
+		} else {
+			t.Errorf("năm sinh thủy tổ = %d, muốn ~1928", root.BirthDate.Year())
+		}
+	}
+	if !root.IsLiving {
+		if root.DeathDate == nil {
+			t.Errorf("thủy tổ đã mất nhưng thiếu ngày mất")
+		} else if !root.DeathDate.After(*root.BirthDate) {
+			t.Errorf("ngày mất thủy tổ %v không sau ngày sinh %v", root.DeathDate, root.BirthDate)
+		}
+		if root.DeathDate != nil && root.DeathDate.Year() < 2000 {
+			t.Errorf("ngày mất thủy tổ = %d, bất hợp lý (sinh ~1928)", root.DeathDate.Year())
+		}
+	}
+
+	// The Gen-1 spouse must be female and share generation 1.
+	spouses := spouseMap(t, f1)
+	spID, ok := spouses[RootID]
+	if !ok {
+		t.Fatalf("thủy tổ chưa có vợ ở thế hệ 1")
+	}
+	sp := idx[spID]
+	if sp.Gender != "female" {
+		t.Errorf("vợ thủy tổ giới tính = %q, muốn \"female\"", sp.Gender)
+	}
+	if sp.GenerationIndex != 1 {
+		t.Errorf("vợ thủy tổ thế hệ = %d, muốn 1", sp.GenerationIndex)
+	}
+}
+
+// TestFixture_KinshipJourneyPath: the E2E kinship path An → (son Kiên, Gen 2)
+// → (grandson Bình, Gen 3) exists — a male Gen-3 grandson whose father is a
+// male Gen-2 son of the root. This is the pair asserted to compute to
+// "Ông nội / Chi nội / Cách 2 đời".
+func TestFixture_KinshipJourneyPath(t *testing.T) {
+	f1 := seedAll()[0]
+	idx := byID(t, f1)
+
+	grandson, ok := idx[GrandsonID]
+	if !ok {
+		t.Fatalf("không tìm thấy cháu nội với GrandsonID = %s", GrandsonID)
+	}
+	if grandson.FullName != "Nguyễn Văn Bình" {
+		t.Errorf("cháu nội tên %q, muốn \"Nguyễn Văn Bình\"", grandson.FullName)
+	}
+	if grandson.Gender != "male" {
+		t.Errorf("cháu nội giới tính = %q, muốn \"male\"", grandson.Gender)
+	}
+	if grandson.GenerationIndex != 3 {
+		t.Errorf("cháu nội thế hệ = %d, muốn 3", grandson.GenerationIndex)
+	}
+	if grandson.FamilyID != Family1ID {
+		t.Errorf("cháu nội thuộc dòng họ %s, muốn %s", grandson.FamilyID, Family1ID)
+	}
+
+	// The grandson's FATHER (unique male parent) must be a Gen-2 son of the
+	// root. A mother alongside the father is expected in a realistic tree.
+	var father *model.Member
+	for _, e := range f1.pc {
+		if e.ChildID != GrandsonID {
+			continue
+		}
+		p := idx[e.ParentID]
+		if p.Gender != "male" {
+			continue // the mother
+		}
+		if father != nil {
+			t.Fatalf("cháu nội có nhiều hơn một cha: %s và %s", father.FullName, p.FullName)
+		}
+		father = &p
+	}
+	if father == nil {
+		t.Fatalf("cháu nội %s không có cha nào (nam) trỏ tới", GrandsonID)
+	}
+	if father.Gender != "male" {
+		t.Errorf("cha của cháu nội giới tính = %q, muốn \"male\"", father.Gender)
+	}
+	if father.GenerationIndex != 2 {
+		t.Errorf("cha của cháu nội thế hệ = %d, muốn 2", father.GenerationIndex)
+	}
+
+	childOfRoot := map[string]bool{}
+	for _, e := range f1.pc {
+		if e.ParentID == RootID {
+			childOfRoot[e.ChildID] = true
+		}
+	}
+	if !childOfRoot[father.ID] {
+		t.Errorf("cha %s không phải là con của thủy tổ %s", father.FullName, RootAncestorName)
+	}
+
+	// Root → father → grandson generation distance is exactly 2.
+	if father.GenerationIndex-grandson.GenerationIndex != -1 {
+		t.Errorf("quãng đường thế hệ grandfather→grandson phải là 2 (qua con trai)")
+	}
+}
+
+// TestFixture_UUIDShape: every fixture ID (families + members) is a fixed
+// 36-char canonical lowercase UUID — determinism guarantee (no randomness,
+// no short IDs).
+func TestFixture_UUIDShape(t *testing.T) {
+	isUUID := func(id string) bool {
+		if len(id) != 36 {
+			return false
+		}
+		for i, c := range id {
+			switch i {
+			case 8, 13, 18, 23:
+				if c != '-' {
+					return false
+				}
+			default:
+				if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	for _, f := range seedAll() {
+		if !isUUID(f.id) {
+			t.Errorf("ID dòng họ %q không đúng dạng UUID: %s", f.name, f.id)
+		}
+		for _, m := range f.memb {
+			if !isUUID(m.ID) {
+				t.Errorf("ID thành viên %q không đúng dạng UUID: %s", m.FullName, m.ID)
+			}
+		}
+	}
+}
+
+// TestFixture_LifeDates: birth < death where both set; IsLiving is true iff
+// death_date is nil; parents born ≥ 20 years before their children; spouses
+// both alive at marriage (marriage after both births, before both deaths).
+func TestFixture_LifeDates(t *testing.T) {
+	for _, f := range seedAll() {
+		idx := byID(t, f)
+		for _, m := range f.memb {
+			if (m.DeathDate != nil) == m.IsLiving {
+				t.Errorf("%s: IsLiving=%v không khớp ngày mất %v", m.FullName, m.IsLiving, m.DeathDate)
+			}
+			if m.BirthDate != nil && m.DeathDate != nil && !m.BirthDate.Before(*m.DeathDate) {
+				t.Errorf("%s: ngày sinh %v không trước ngày mất %v", m.FullName, m.BirthDate, m.DeathDate)
+			}
+			if m.BirthDate == nil {
+				t.Errorf("%s: thiếu ngày sinh", m.FullName)
+			}
+		}
+		for _, e := range f.pc {
+			parent, child := idx[e.ParentID], idx[e.ChildID]
+			gap := child.BirthDate.Sub(*parent.BirthDate)
+			if gap < 20*365*24*time.Hour {
+				t.Errorf("%s sinh %v quá gần con %s sinh %v (cần ≥ 20 năm)",
+					parent.FullName, parent.BirthDate.Format("2006"), child.FullName, child.BirthDate.Format("2006"))
+			}
+		}
+		for _, s := range f.sp {
+			a, b := idx[s.MemberA], idx[s.MemberB]
+			md := *s.MarriageDate
+			if md.Before(*a.BirthDate) || md.Before(*b.BirthDate) {
+				t.Errorf("cưới %s - %s trước ngày sinh một trong hai người", a.FullName, b.FullName)
+			}
+			if a.DeathDate != nil && md.After(*a.DeathDate) {
+				t.Errorf("cưới %s - %s sau ngày mất của %s", a.FullName, b.FullName, a.FullName)
+			}
+			if b.DeathDate != nil && md.After(*b.DeathDate) {
+				t.Errorf("cưới %s - %s sau ngày mất của %s", a.FullName, b.FullName, b.FullName)
+			}
+		}
+	}
+}
+
+// TestFixture_FeedPosts: every post references an existing member (of the
+// same family!) and family; 8 posts across families 1 & 2; Vietnamese
+// non-empty content; images are relative paths (no external SaaS).
+func TestFixture_FeedPosts(t *testing.T) {
+	posts := feedPosts()
+	if len(posts) < 6 || len(posts) > 8 {
+		t.Fatalf("số bài viết mẫu = %d, muốn từ 6 đến 8", len(posts))
+	}
+
+	famIdx := map[string]seedFamily{}
+	for _, f := range seedAll() {
+		famIdx[f.id] = f
+	}
+	for i, p := range posts {
+		fam, ok := famIdx[p.FamilyID]
+		if !ok {
+			t.Fatalf("bài viết %d tham chiếu dòng họ không tồn tại: %s", i, p.FamilyID)
+		}
+		if p.FamilyID == Family3ID {
+			t.Errorf("bài viết %d thuộc dòng họ 3, chỉ họ 1 và họ 2 mới có bài", i)
+		}
+		memberOK := false
+		for _, m := range fam.memb {
+			if m.ID == p.AuthorMemberID {
+				memberOK = true
+				break
+			}
+		}
+		if !memberOK {
+			t.Errorf("bài viết %d: tác giả %s không thuộc dòng họ %s", i, p.AuthorMemberID, p.FamilyID)
+		}
+		if p.Content == "" {
+			t.Errorf("bài viết %d có nội dung rỗng", i)
+		}
+		for _, img := range p.Images {
+			if len(img) > 0 && img[0] != '/' {
+				t.Errorf("bài viết %d: ảnh %q phải là đường dẫn tương đối", i, img)
+			}
+		}
+	}
+}
+
+// TestFixture_AllLivingHaveAvatarsOrNot is not a rule — but gender values
+// must be canonical ("male"/"female") per INV-03.
+func TestFixture_GenderCanonical(t *testing.T) {
+	for _, f := range seedAll() {
+		for _, m := range f.memb {
+			if m.Gender != "male" && m.Gender != "female" {
+				t.Errorf("%s: giới tính không hợp lệ %q (chỉ male/female)", m.FullName, m.Gender)
+			}
+		}
+	}
+}

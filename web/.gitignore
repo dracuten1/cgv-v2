@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+
+# Local env files (keep .env.example)
+.env
+.env.local
+.env.*.local
+
+# Editor/OS
+.DS_Store
+*.log

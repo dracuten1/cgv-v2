@@ -1,0 +1,24 @@
+{
+  "nam": {
+    "blood": {
+      "up2": {
+        "patri_male": "Nội",
+        "patri_female": "Nội",
+        "matri_male": "Ngoại",
+        "matri_female": "Ngoại"
+      },
+      "up1": {
+        "patri_older_male": "Bác",
+        "patri_older_female": "Bác",
+        "patri_younger_male": "Chú út",
+        "patri_younger_female": "Cô út",
+        "matri_older_male": "Bác",
+        "matri_older_female": "Bác",
+        "matri_younger_male": "Cậu út",
+        "matri_younger_female": "Dì út",
+        "direct_male": "Ba",
+        "direct_female": "Má"
+      }
+    }
+  }
+}

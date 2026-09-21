@@ -1,0 +1,2119 @@
+openapi: 3.1.0
+info:
+  title: CGP v2
+  version: 2.0.0
+  description: >-
+    Hệ thống Cây Gia Phả (CGP v2) — Ứng dụng quản lý gia phả và kết nối dòng họ ưu tiên văn hóa Việt Nam (Vietnamese-first genealogy platform).
+    Kiến trúc tách biệt (split stack) với Backend REST API viết bằng Go (Gin Framework, PostgreSQL, Docker Compose) và Frontend Single Page Application (SPA) viết bằng Vue 3 (Pinia, TypeScript, Tailwind CSS, Vite, PWA).
+    Hệ thống triển khai đầy đủ 9 nhóm tính năng cốt lõi (F1–F9):
+    F1: Multi-provider auth & account linking (Zalo, Google, Facebook OAuth 2.0 + PKCE, Email Magic Link, Dùng thử Mode A Demo isolation, liên kết đa định danh vào một tài khoản);
+    F2: Family tree visualization (Trực quan hóa đồ thị phả hệ phân tầng theo đời, thế hệ cội nguồn, quan hệ phụ mẫu và hôn phối);
+    F3: Member CRUD & profile (Quản lý hồ sơ thành viên, quan hệ 1-hop, an toàn chống mồ côi orphan-safe, hỗ trợ đa dạng định dạng giới tính);
+    F4: Vietnamese kinship calculator (Thuật toán xưng hô họ hàng tiếng Việt theo đồ thị phả hệ, phân biệt Chi nội / Chi ngoại / Hôn phối / Đồng tông, hỗ trợ 3 phương ngữ Bắc - Trung - Nam);
+    F5: Excel import/export (Nhập và xuất toàn bộ dữ liệu phả hệ ra bảng tính Microsoft Excel .xlsx với cơ chế phát hiện trùng lặp và ghi nhận lỗi);
+    F6: Family feed (Bảng tin hoạt động dòng họ, chia sẻ bài viết, thông báo lễ giỗ, đính kèm hình ảnh và phân trang theo con trỏ cursor);
+    F7: PWA & push notifications (Ứng dụng web tiến bộ Progressive Web App và thông báo Web Push chuẩn VAPID không phụ thuộc dịch vụ trả phí);
+    F8: Demo fixture & seed (Môi trường dùng thử tách biệt hoàn toàn với dữ liệu mẫu dòng họ mẫu mực, cookie riêng biệt cgp_demo_session);
+    F9: Vietnamese design system (Hệ thống thiết kế thuần Việt, văn phong chuẩn mực có dấu tiếng Việt, định dạng ngày tháng và tôn trọng văn hóa gia đình truyền thống).
+servers:
+  - url: http://localhost:3456/api/v1
+    description: Nginx Reverse Proxy (Khuyên dùng trong môi trường phát triển & sản xuất)
+  - url: http://localhost:8080/api/v1
+    description: Truy cập trực tiếp Go API Server (Cổng 8080)
+security:
+  - bearerAuth: []
+tags:
+  - name: Health
+    description: Kiểm tra tình trạng hoạt động và kết nối cơ sở dữ liệu
+  - name: Auth
+    description: Xác thực người dùng, phiên đăng nhập và định danh xã hội
+  - name: Family
+    description: Quản lý dòng họ, cây gia phả và xuất tệp
+  - name: Member
+    description: Quản lý thông tin thành viên, quan hệ huyết thống và hôn phối
+  - name: Kinship
+    description: Thuật toán tính toán quan hệ họ hàng và xưng hô tiếng Việt
+  - name: Excel
+    description: Nhập và xuất dữ liệu gia phả định dạng bảng tính Excel
+  - name: Feed
+    description: Bảng tin hoạt động và bài đăng dòng họ
+  - name: Push
+    description: Đăng ký và quản lý thông báo Web Push VAPID
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JSON Web Token (JWT) được cấp sau khi xác thực thành công (golang-jwt v5), truyền qua tiêu đề Authorization dạng 'Bearer <token>' hoặc đọc từ Cookie httpOnly session.
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: cgp_session
+      description: Cookie phiên đăng nhập chính thức (httpOnly, SameSite=Lax, Secure khi môi trường production). Cookie này cũng được thiết lập tự động trong phản hồi chuyển hướng trình duyệt (302) của luồng OAuth callback.
+    demoCookieAuth:
+      type: apiKey
+      in: cookie
+      name: cgp_demo_session
+      description: Cookie phiên đăng nhập dùng thử cách ly (Mode A Demo Isolation - config.DemoCookieName). Hoạt động độc lập, không cho phép liên kết tài khoản và được cách ly nghiêm ngặt khỏi môi trường production.
+
+  parameters:
+    FamilyIdParam:
+      name: id
+      in: path
+      required: true
+      description: Mã định danh UUID của dòng họ
+      schema:
+        type: string
+        format: uuid
+    MemberIdParam:
+      name: id
+      in: path
+      required: true
+      description: Mã định danh UUID của thành viên gia phả
+      schema:
+        type: string
+        format: uuid
+    ProviderParam:
+      name: provider
+      in: path
+      required: true
+      description: Tên nhà cung cấp xác thực xã hội
+      schema:
+        type: string
+        enum: [zalo, google, facebook, mock]
+    ContactIdParam:
+      name: id
+      in: path
+      required: true
+      description: Mã định danh UUID của điểm liên hệ
+      schema:
+        type: string
+        format: uuid
+    IdentityIdParam:
+      name: id
+      in: path
+      required: true
+      description: Mã định danh UUID của định danh liên kết
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - code
+        - message
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: string
+          description: Mã lỗi định danh hệ thống
+          example: NOT_FOUND
+        message:
+          type: string
+          description: Thông báo chi tiết bằng tiếng Việt có dấu (INV-02)
+          example: Không tìm thấy dữ liệu yêu cầu
+    Gender:
+      type: string
+      description: Giới tính chuẩn của thành viên (INV-03).
+      enum:
+        - male
+        - female
+      example: male
+    User:
+      type: object
+      required:
+        - id
+        - display_name
+        - is_demo
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        display_name:
+          type: string
+          example: Nguyễn Văn An
+        is_demo:
+          type: boolean
+          example: false
+        member_id:
+          type: [string, "null"]
+          format: uuid
+          description: Mã định danh thành viên liên kết 1-1 trong cây gia phả
+          example: 98765432-abcd-ef01-2345-6789abcdef01
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-09-21T08:00:00Z"
+    Identity:
+      type: object
+      required:
+        - id
+        - user_id
+        - provider
+        - provider_subject
+        - linked_at
+        - last_login_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: b2c3d4e5-f6a7-8901-bcde-f12345678901
+        user_id:
+          type: string
+          format: uuid
+        provider:
+          type: string
+          enum: [zalo, google, facebook, email, demo, mock]
+          example: google
+        provider_subject:
+          type: string
+          example: "109876543210987654321"
+        linked_at:
+          type: string
+          format: date-time
+          example: "2026-09-21T08:30:00Z"
+        last_login_at:
+          type: string
+          format: date-time
+          example: "2026-09-21T09:00:00Z"
+    ContactPoint:
+      type: object
+      required:
+        - id
+        - user_id
+        - kind
+        - value
+        - verified
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: c3d4e5f6-a7b8-9012-cdef-123456789012
+        user_id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum: [email, phone]
+          example: email
+        value:
+          type: string
+          example: an.nguyen@example.com
+        verified:
+          type: boolean
+          example: true
+        verified_via:
+          type: [string, "null"]
+          example: google
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-09-21T08:30:00Z"
+    UserProfile:
+      type: object
+      required:
+        - user
+        - identities
+        - contacts
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        identities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Identity'
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContactPoint'
+    ProviderInfo:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          enum: [zalo, google, facebook, email, demo, mock]
+          example: zalo
+        name:
+          type: string
+          example: Zalo
+    AuthCallbackResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Liên kết phương thức đăng nhập thành công
+        user:
+          $ref: '#/components/schemas/User'
+        is_new:
+          type: boolean
+          example: false
+        conflict_detected:
+          type: boolean
+          example: false
+        identities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Identity'
+    Family:
+      type: object
+      required:
+        - id
+        - name
+        - version
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d4e5f6a7-b8c9-0123-defa-234567890123
+        name:
+          type: string
+          example: Dòng họ Nguyễn Văn
+        version:
+          type: integer
+          format: int64
+          description: Bộ đếm phiên bản phục vụ vô hiệu hóa bộ nhớ đệm phả hệ (ADR-009)
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-09-21T07:00:00Z"
+    TreeNode:
+      type: object
+      required:
+        - id
+        - full_name
+        - gender
+        - generation_index
+        - is_living
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: e5f6a7b8-c9d0-1234-efab-345678901234
+        full_name:
+          type: string
+          example: Nguyễn Văn An
+        gender:
+          $ref: '#/components/schemas/Gender'
+        generation_index:
+          type: integer
+          example: 1
+        birth_date:
+          type: [string, "null"]
+          format: date
+          example: "1950-01-01"
+        death_date:
+          type: [string, "null"]
+          format: date
+          example: null
+        is_living:
+          type: boolean
+          example: true
+        avatar_url:
+          type: string
+          example: ""
+        spouse_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          example: []
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/TreeNode'
+    GenerationMeta:
+      type: object
+      required:
+        - index
+        - label
+        - count
+      properties:
+        index:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: Đời thứ 1
+        count:
+          type: integer
+          example: 4
+    FamilyTree:
+      type: object
+      required:
+        - family_id
+        - version
+        - generations
+        - roots
+      properties:
+        family_id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          format: int64
+          example: 1
+        generations:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenerationMeta'
+        roots:
+          type: array
+          items:
+            $ref: '#/components/schemas/TreeNode'
+    Member:
+      type: object
+      required:
+        - id
+        - family_id
+        - full_name
+        - gender
+        - generation_index
+        - is_living
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        family_id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+          example: Nguyễn Văn An
+        gender:
+          $ref: '#/components/schemas/Gender'
+        generation_index:
+          type: integer
+          example: 1
+        birth_date:
+          type: [string, "null"]
+          format: date-time
+          example: "1950-01-01T00:00:00Z"
+        death_date:
+          type: [string, "null"]
+          format: date-time
+          example: null
+        is_living:
+          type: boolean
+          example: true
+        avatar_url:
+          type: [string, "null"]
+          example: "https://example.com/avatar.jpg"
+        notes:
+          type: [string, "null"]
+          example: Trưởng tộc đời thứ nhất
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-09-21T07:15:00Z"
+    MemberRelations:
+      type: object
+      required:
+        - parents
+        - children
+        - siblings
+        - spouses
+      properties:
+        parents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member'
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member'
+        siblings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member'
+        spouses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member'
+    MemberDetail:
+      type: object
+      required:
+        - id
+        - family_id
+        - full_name
+        - gender
+        - generation_index
+        - is_living
+        - created_at
+        - family_name
+        - relations
+        - posts
+      properties:
+        id:
+          type: string
+          format: uuid
+        family_id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+          example: Nguyễn Văn An
+        gender:
+          $ref: '#/components/schemas/Gender'
+        generation_index:
+          type: integer
+          example: 1
+        birth_date:
+          type: [string, "null"]
+          format: date-time
+        death_date:
+          type: [string, "null"]
+          format: date-time
+        is_living:
+          type: boolean
+          example: true
+        avatar_url:
+          type: [string, "null"]
+        notes:
+          type: [string, "null"]
+        created_at:
+          type: string
+          format: date-time
+        family_name:
+          type: string
+          example: Dòng họ Nguyễn Văn
+        relations:
+          $ref: '#/components/schemas/MemberRelations'
+        posts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Post'
+    MemberPage:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member'
+        total:
+          type: integer
+          format: int64
+          example: 53
+        limit:
+          type: integer
+          example: 20
+        offset:
+          type: integer
+          example: 0
+    KinshipResult:
+      type: object
+      required:
+        - term
+        - line
+        - generation_distance
+        - distance_label
+        - is_blood
+        - dialect
+        - path
+      properties:
+        term:
+          type: string
+          description: >-
+            Từ xưng hô thuần khiết không kèm dấu ngoặc kép (INV-05 rendering contract: Term is BARE text, UI components render plain text interpolation).
+            Ví dụ: "Ông nội", "Bà nội", "Ông ngoại", "Bà ngoại", "Bố", "Mẹ", "Bác", "Chú", "Cô", "Cậu", "Dì", "Anh", "Chị", "Em", "Con trai", "Con gái", "Cháu nội", "Cháu ngoại", "Chắt", "Chút", "Chồng", "Vợ", "Bác dâu", "Thím", "Mợ", "Anh rể", "Chị dâu", "Em rể", "Em dâu", "Con rể", "Con dâu", "Bản thân".
+            Phương ngữ Nam: "Nội", "Ngoại", "Chú út", "Cô út", "Cậu út", "Dì út", "Ba", "Má".
+            Phương ngữ Trung: "O", "Ba", "Mạ".
+          example: Ông nội
+        line:
+          type: string
+          enum: [Chi nội, Chi ngoại, Hôn phối, Đồng tông]
+          description: Nhánh quan hệ gia tộc (Chi nội - Patrilineal, Chi ngoại - Matrilineal, Hôn phối - Affinal, Đồng tông - Same-generation/Direct)
+          example: Chi nội
+        generation_distance:
+          type: integer
+          description: Chênh lệch thế hệ giữa người gốc và đích (dấu âm nếu đích là thế hệ sau, dấu dương nếu đích là thế hệ trước)
+          example: 2
+        distance_label:
+          type: string
+          description: Mô tả khoảng cách thế hệ bằng tiếng Việt (ví dụ "Cách 2 đời", "Cách 1 đời", "Cùng thế hệ")
+          example: Cách 2 đời
+        is_blood:
+          type: boolean
+          description: Đúng nếu quan hệ qua đường huyết thống (LCA path), sai nếu qua hôn phối (Dijkstra path)
+          example: true
+        dialect:
+          type: string
+          enum: [bac, trung, nam]
+          description: Phương ngữ từ điển xưng hô được áp dụng
+          example: bac
+        path:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Chuỗi danh sách ID thành viên kết nối từ nguồn đến đích
+          example: ["e5f6a7b8-c9d0-1234-efab-345678901234", "f6a7b8c9-d0e1-2345-fabc-456789012345"]
+    Post:
+      type: object
+      required:
+        - id
+        - family_id
+        - content
+        - images
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        family_id:
+          type: string
+          format: uuid
+        author_member_id:
+          type: [string, "null"]
+          format: uuid
+          example: e5f6a7b8-c9d0-1234-efab-345678901234
+        content:
+          type: string
+          example: Thông báo lễ giỗ tổ dòng họ năm 2026.
+        images:
+          type: array
+          items:
+            type: string
+          example: ["https://example.com/photo1.jpg"]
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-09-21T09:30:00Z"
+    PostItem:
+      allOf:
+        - $ref: '#/components/schemas/Post'
+        - type: object
+          required:
+            - author_display_name
+          properties:
+            author_display_name:
+              type: string
+              example: Nguyễn Văn An
+    FeedCursor:
+      type: object
+      required:
+        - created_at
+        - id
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+    FeedListResponse:
+      type: object
+      required:
+        - posts
+      properties:
+        posts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostItem'
+        next_cursor:
+          anyOf:
+            - $ref: '#/components/schemas/FeedCursor'
+            - type: "null"
+    ImportSummary:
+      type: object
+      required:
+        - created
+        - skipped_duplicates
+        - errors
+      properties:
+        created:
+          type: integer
+          description: Số lượng bản ghi thành viên mới được thêm vào
+          example: 50
+        skipped_duplicates:
+          type: integer
+          description: Số bản ghi bị bỏ qua do trùng lặp (họ tên, ngày sinh)
+          example: 2
+        errors:
+          type: array
+          items:
+            type: string
+          description: Danh sách các lỗi cú pháp hoặc định dạng phát sinh trong quá trình nhập
+          example: []
+    PushSubscription:
+      type: object
+      required:
+        - id
+        - user_id
+        - endpoint
+        - p256dh
+        - auth
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        endpoint:
+          type: string
+          example: https://updates.push.services.mozilla.com/wpush/v2/...
+        p256dh:
+          type: string
+          example: BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM=
+        auth:
+          type: string
+          example: tBHItJI5svbpez7KI4CCXg==
+        created_at:
+          type: string
+          format: date-time
+paths:
+  /healthz:
+    get:
+      tags:
+        - Health
+      summary: Kiểm tra tình trạng hoạt động tổng thể (Root health check alias)
+      operationId: checkHealthRoot
+      security: []
+      responses:
+        '200':
+          description: Hệ thống và cơ sở dữ liệu hoạt động bình thường
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  db:
+                    type: string
+                    example: up
+                  version:
+                    type: string
+                    example: 2.0.0
+                  time:
+                    type: string
+                    format: date-time
+        '503':
+          description: Cơ sở dữ liệu hoặc thành phần dịch vụ gặp sự cố
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Kiểm tra tình trạng hoạt động và kết nối DB (/api/v1/health)
+      operationId: checkHealthV1
+      security: []
+      responses:
+        '200':
+          description: Dịch vụ sẵn sàng xử lý yêu cầu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  db:
+                    type: string
+                    example: up
+                  version:
+                    type: string
+                    example: 2.0.0
+                  time:
+                    type: string
+                    format: date-time
+        '503':
+          description: Sự cố kết nối cơ sở dữ liệu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/providers:
+    get:
+      tags:
+        - Auth
+      summary: Lấy danh sách các nhà cung cấp xác thực đang được kích hoạt
+      operationId: getAuthProviders
+      security: []
+      responses:
+        '200':
+          description: Danh sách nhà cung cấp khả dụng
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProviderInfo'
+
+  /auth/{provider}/login:
+    get:
+      tags:
+        - Auth
+      summary: Khởi tạo luồng đăng nhập OAuth 2.0 / PKCE (Chuyển hướng 302)
+      operationId: startOAuthLogin
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/ProviderParam'
+      responses:
+        '302':
+          description: Chuyển hướng trình duyệt đến trang đăng nhập của nhà cung cấp OAuth
+          headers:
+            Location:
+              schema:
+                type: string
+                description: URL đăng nhập OAuth từ nhà cung cấp
+        '404':
+          description: Nhà cung cấp không hỗ trợ hoặc bị vô hiệu hóa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/{provider}/callback:
+    get:
+      tags:
+        - Auth
+      summary: Xử lý phản hồi ủy quyền (Callback) từ nhà cung cấp OAuth
+      description: >-
+        Xử lý phản hồi ủy quyền OAuth 2.0 / PKCE từ nhà cung cấp xác thực. Hỗ trợ thỏa thuận nội dung (Content negotiation) theo hai chế độ từ HEAD bf81f52:
+        (1) Trình duyệt (Browser mode - tiêu đề `Accept` chứa `text/html`): Chuyển hướng 302 về ứng dụng web SPA tại `{PUBLIC_BASE_URL}/auth/oauth/callback`.
+        Khi thành công, thiết lập Cookie phiên `cgp_session` (hoặc `cgp_demo_session`) và chuyển hướng kèm tham số `?oauth_linked={provider}`.
+        Khi thất bại, chuyển hướng kèm mã lỗi an toàn `?oauth_error={invalid_state|already_linked|provider_error|demo_restricted|server_error}` (Location được xây dựng nghiêm ngặt từ `PUBLIC_BASE_URL` ngăn chặn triệt để Open Redirect).
+        (2) API / JSON mode (yêu cầu XHR/Fetch không mang `text/html`): Trả về phản hồi JSON tiêu chuẩn với mã 200 (kèm Set-Cookie phiên) hoặc mã lỗi (400 VALIDATION_ERROR, 403 DEMO_ISOLATION_VIOLATION, 409 CONFLICT, 502 PROVIDER_EXCHANGE_FAILED).
+      operationId: handleOAuthCallback
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/ProviderParam'
+        - name: code
+          in: query
+          required: true
+          description: Mã ủy quyền tạm thời (Authorization Code)
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          description: Mã trạng thái phòng chống tấn công CSRF (State token)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Xác thực hoặc liên kết tài khoản thành công (Chế độ JSON / API)
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: cgp_session=eyJhbGci...; Path=/; HttpOnly; SameSite=Lax
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthCallbackResponse'
+        '302':
+          description: >-
+            Chuyển hướng trình duyệt (Chế độ Browser - Accept: text/html) về SPA tại {PUBLIC_BASE_URL}/auth/oauth/callback.
+            Thành công: ?oauth_linked={provider} đồng thời đính kèm Set-Cookie phiên.
+            Thất bại: ?oauth_error={invalid_state|already_linked|provider_error|demo_restricted|server_error}.
+          headers:
+            Location:
+              schema:
+                type: string
+                example: http://localhost:3456/auth/oauth/callback?oauth_linked=google
+              description: URL đích của SPA, xây dựng nghiêm ngặt từ PUBLIC_BASE_URL
+            Set-Cookie:
+              schema:
+                type: string
+                example: cgp_session=eyJhbGci...; Path=/; HttpOnly; SameSite=Lax
+              description: Thiết lập cookie phiên khi đăng nhập thành công
+        '400':
+          description: Mã xác thực hoặc tham số state không hợp lệ (Chế độ JSON - VALIDATION_ERROR)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Vi phạm cách ly phiên dùng thử demo (Chế độ JSON - DEMO_ISOLATION_VIOLATION)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Định danh đã được liên kết với tài khoản khác (Chế độ JSON - CONFLICT)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Lỗi kết nối hoặc trao đổi mã xác thực với nhà cung cấp OAuth (Chế độ JSON - PROVIDER_EXCHANGE_FAILED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/email/magic-link:
+    post:
+      tags:
+        - Auth
+      summary: Gửi liên kết đăng nhập nhanh (Magic Link) qua hộp thư điện tử
+      operationId: sendMagicLink
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+      responses:
+        '200':
+          description: Liên kết đăng nhập đã được gửi thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Liên kết đăng nhập đã được gửi đến hộp thư của bạn
+        '400':
+          description: Địa chỉ email không đúng định dạng hoặc để trống
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/email/verify:
+    post:
+      tags:
+        - Auth
+      summary: Xác thực token Magic Link từ email và thiết lập phiên đăng nhập
+      operationId: verifyMagicLink
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: Mã token ngẫu nhiên nhận được trong email
+                  example: 3f8e1b2a4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f
+      responses:
+        '200':
+          description: Xác thực thành công và thiết lập phiên đăng nhập
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: cgp_session=eyJhbGci...; Path=/; HttpOnly; SameSite=Lax
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  is_new:
+                    type: boolean
+                    example: false
+                  conflict_detected:
+                    type: boolean
+                    example: false
+        '400':
+          description: Dữ liệu yêu cầu thiếu mã token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Token không hợp lệ, đã qua sử dụng hoặc quá hạn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/demo:
+    post:
+      tags:
+        - Auth
+      summary: Khởi tạo phiên làm việc thử nghiệm cách ly (Mode A Demo Session)
+      operationId: startDemoSession
+      security: []
+      responses:
+        '200':
+          description: Phiên dùng thử được tạo thành công
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: cgp_demo_session=eyJhbGci...; Path=/; HttpOnly; SameSite=Lax
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  is_new:
+                    type: boolean
+                    example: true
+                  conflict_detected:
+                    type: boolean
+                    example: false
+        '403':
+          description: Vi phạm quy tắc cách ly dữ liệu dùng thử (INV-04)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Đăng xuất người dùng và thu hồi cookie phiên làm việc
+      operationId: logout
+      security: []
+      responses:
+        '200':
+          description: Đăng xuất thành công, xóa cookie phiên
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: cgp_session=; Path=/; Max-Age=0; HttpOnly
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Đăng xuất thành công
+  /families:
+    get:
+      tags:
+        - Family
+      summary: Lấy danh sách các dòng họ trong hệ thống
+      operationId: listFamilies
+      security: []
+      responses:
+        '200':
+          description: Danh sách dòng họ hiện có
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  families:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Family'
+
+  /families/{id}/tree:
+    get:
+      tags:
+        - Family
+      summary: Lấy toàn bộ cây gia phả phân tầng của dòng họ
+      operationId: getFamilyTree
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/FamilyIdParam'
+      responses:
+        '200':
+          description: Cây gia phả chi tiết kèm danh sách đời và cội nguồn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FamilyTree'
+        '404':
+          description: Không tìm thấy dòng họ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /families/{id}/export.xlsx:
+    get:
+      tags:
+        - Excel
+      summary: Xuất dữ liệu phả hệ dòng họ ra tệp bảng tính Excel (.xlsx)
+      operationId: exportFamilyExcel
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/FamilyIdParam'
+      responses:
+        '200':
+          description: Tệp bảng tính Excel (.xlsx) chứa danh sách thành viên và mối quan hệ
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: 'attachment; filename="gia-pha-nguyen-van.xlsx"'
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Không tìm thấy dòng họ yêu cầu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /families/{id}/feed:
+    get:
+      tags:
+        - Feed
+      summary: Lấy danh sách bài viết trên bảng tin dòng họ (Mới nhất trước)
+      operationId: listFamilyFeed
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/FamilyIdParam'
+        - name: limit
+          in: query
+          required: false
+          description: Số lượng bài đăng tối đa trả về mỗi trang (mặc định 20)
+          schema:
+            type: integer
+            default: 20
+        - name: cursor_created_at
+          in: query
+          required: false
+          description: Mốc thời gian tạo của con trỏ phân trang
+          schema:
+            type: string
+            format: date-time
+        - name: cursor_id
+          in: query
+          required: false
+          description: Mã định danh UUID của con trỏ phân trang
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Danh sách bài viết trên bảng tin kèm con trỏ tiếp theo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedListResponse'
+        '404':
+          description: Không tìm thấy dòng họ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - Feed
+      summary: Đăng bài viết mới lên bảng tin dòng họ
+      operationId: createFeedPost
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - demoCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FamilyIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                  description: Nội dung bài viết dòng họ (bắt buộc, tối đa 5000 ký tự)
+                  example: Họp mặt dòng họ mừng thọ các cụ vào rằm tháng Giêng.
+                images:
+                  type: array
+                  items:
+                    type: string
+                  description: Danh sách URL ảnh đính kèm (tối đa 10 ảnh)
+                  example: ["https://example.com/family.jpg"]
+      responses:
+        '201':
+          description: Bài viết được đăng thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          description: Nội dung rỗng hoặc danh sách ảnh vượt quá giới hạn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Yêu cầu đăng nhập để đăng bài
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /families/{id}/import.xlsx:
+    post:
+      tags:
+        - Excel
+      summary: Nhập dữ liệu phả hệ từ tệp bảng tính Excel (.xlsx)
+      operationId: importFamilyExcel
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - demoCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FamilyIdParam'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Tệp định dạng Microsoft Excel (.xlsx) với kích thước tối đa 15MB
+      responses:
+        '200':
+          description: Kết quả xử lý nhập dữ liệu dòng họ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportSummary'
+        '400':
+          description: Tệp tải lên không hợp lệ, sai định dạng hoặc vượt quá 15MB
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Yêu cầu đăng nhập để nhập tệp phả hệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /members:
+    get:
+      tags:
+        - Member
+      summary: Tìm kiếm và phân trang danh sách thành viên gia phả
+      operationId: listMembers
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: false
+          description: Từ khóa tìm kiếm theo họ tên thành viên
+          schema:
+            type: string
+            example: An
+        - name: page
+          in: query
+          required: false
+          description: Số trang hiện tại (bắt đầu từ 1)
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Số lượng thành viên trên mỗi trang
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Danh sách thành viên kèm thông tin tổng số lượng
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberPage'
+    post:
+      tags:
+        - Member
+      summary: Thêm thành viên mới vào cây gia phả
+      operationId: createMember
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - demoCookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - family_id
+                - full_name
+                - gender
+              properties:
+                family_id:
+                  type: string
+                  format: uuid
+                  example: d4e5f6a7-b8c9-0123-defa-234567890123
+                full_name:
+                  type: string
+                  example: Nguyễn Văn Bình
+                gender:
+                  type: string
+                  description: Giới tính thành viên (chấp nhận 'male'/'female' hoặc 'nam'/'nữ' theo INV-03)
+                  enum: [male, female, nam, nữ, Nam, Nữ]
+                  example: male
+                generation_index:
+                  type: integer
+                  description: Bậc thế hệ trong dòng họ (mặc định 1)
+                  example: 2
+                birth_date:
+                  type: [string, "null"]
+                  format: date
+                  example: "1975-06-15"
+                death_date:
+                  type: [string, "null"]
+                  format: date
+                  example: null
+                is_living:
+                  type: [boolean, "null"]
+                  example: true
+                avatar_url:
+                  type: [string, "null"]
+                  example: "https://example.com/avatar.jpg"
+                notes:
+                  type: [string, "null"]
+                  example: Chi thứ hai
+                parent_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Danh sách mã thành viên cha/mẹ
+                  example: ["e5f6a7b8-c9d0-1234-efab-345678901234"]
+                spouse_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Danh sách mã thành viên phối ngẫu (vợ/chồng)
+                  example: []
+      responses:
+        '201':
+          description: Thành viên mới được tạo thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+        '400':
+          description: Dữ liệu thành viên không hợp lệ hoặc sai định dạng giới tính
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Yêu cầu đăng nhập để tạo thành viên
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /members/{id}:
+    get:
+      tags:
+        - Member
+      summary: Lấy chi tiết thông tin thành viên, các mối quan hệ và bài viết liên quan
+      operationId: getMemberDetail
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/MemberIdParam'
+      responses:
+        '200':
+          description: Chi tiết thành viên kèm quan hệ 1-hop và bài viết liên quan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberDetail'
+        '404':
+          description: Không tìm thấy thành viên
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - Member
+      summary: Cập nhật thông tin thành viên và quan hệ phả hệ
+      operationId: updateMember
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - demoCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MemberIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - full_name
+                - gender
+              properties:
+                full_name:
+                  type: string
+                  example: Nguyễn Văn Bình
+                gender:
+                  type: string
+                  description: Giới tính (chấp nhận 'male'/'female' hoặc 'nam'/'nữ' theo INV-03)
+                  enum: [male, female, nam, nữ, Nam, Nữ]
+                  example: male
+                generation_index:
+                  type: integer
+                  example: 2
+                birth_date:
+                  type: [string, "null"]
+                  format: date
+                  example: "1975-06-15"
+                death_date:
+                  type: [string, "null"]
+                  format: date
+                  example: null
+                is_living:
+                  type: [boolean, "null"]
+                  example: true
+                avatar_url:
+                  type: [string, "null"]
+                notes:
+                  type: [string, "null"]
+                parent_ids:
+                  type: [array, "null"]
+                  items:
+                    type: string
+                    format: uuid
+                spouse_ids:
+                  type: [array, "null"]
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '200':
+          description: Cập nhật thành viên thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Cập nhật thành viên thành công
+        '400':
+          description: Dữ liệu thành viên không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Yêu cầu đăng nhập để cập nhật
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy thành viên cần sửa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Member
+      summary: Xóa thành viên khỏi phả hệ với cơ chế tái liên kết an toàn (Orphan-safe)
+      operationId: deleteMember
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - demoCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MemberIdParam'
+      responses:
+        '200':
+          description: Xóa thành viên và sắp xếp lại liên kết thế hệ thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Xóa thành viên thành công
+        '401':
+          description: Yêu cầu đăng nhập để xóa thành viên
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy thành viên cần xóa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /kinship:
+    get:
+      tags:
+        - Kinship
+      summary: Tính toán quan hệ xưng hô họ hàng tiếng Việt theo đồ thị phả hệ
+      description: >-
+        Thuật toán xưng hô họ hàng tiếng Việt chuẩn xác (INV-05 / F4) dựa trên đồ thị phả hệ (LCA - Lowest Common Ancestor cho quan hệ huyết thống và thuật toán Dijkstra có trọng số cho quan hệ hôn phối).
+        Hỗ trợ 3 phương ngữ chuẩn: Bắc (bac - mặc định), Trung (trung), Nam (nam).
+        Phân loại chính xác các nhánh dòng họ:
+        - "Chi nội" (Patrilineal): Nhánh đằng nội qua chuỗi phụ mẫu nam giới (ví dụ: "Ông nội", "Bà nội", "Bác", "Chú", "Cô", "Cháu nội").
+        - "Chi ngoại" (Matrilineal): Nhánh đằng ngoại qua chuỗi phụ mẫu nữ giới (ví dụ: "Ông ngoại", "Bà ngoại", "Cậu", "Dì", "Cháu ngoại").
+        - "Hôn phối" (Affinal): Quan hệ vợ chồng hoặc thông gia/dâu rể (ví dụ: "Chồng", "Vợ", "Bác dâu", "Thím", "Mợ", "Anh rể", "Chị dâu", "Em rể", "Em dâu", "Con rể", "Con dâu").
+        - "Đồng tông" (Same-generation/Direct): Cùng thế hệ hoặc bản thân ("Bản thân", "Anh", "Chị", "Em").
+      operationId: calculateKinship
+      security: []
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Mã định danh UUID của thành viên gốc (nguồn)
+          schema:
+            type: string
+            format: uuid
+        - name: to
+          in: query
+          required: true
+          description: Mã định danh UUID của thành viên đích (cần xưng hô)
+          schema:
+            type: string
+            format: uuid
+        - name: dialect
+          in: query
+          required: false
+          description: Phương ngữ từ điển xưng hô ('bac', 'trung', 'nam')
+          schema:
+            type: string
+            enum: [bac, trung, nam]
+            default: bac
+      responses:
+        '200':
+          description: Kết quả thuật toán xưng hô với danh xưng thuần khiết (INV-05)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KinshipResult'
+              examples:
+                ong_noi_bac:
+                  summary: Paternal grandfather (Ông nội - Chi nội, phương ngữ Bắc)
+                  value:
+                    term: "Ông nội"
+                    line: "Chi nội"
+                    generation_distance: 2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "d4e5f6a7-b8c9-0123-defa-234567890123"
+                      - "c3d4e5f6-a7b8-9012-cdef-123456789012"
+                ba_noi_bac:
+                  summary: Paternal grandmother (Bà nội - Chi nội, phương ngữ Bắc)
+                  value:
+                    term: "Bà nội"
+                    line: "Chi nội"
+                    generation_distance: 2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "d4e5f6a7-b8c9-0123-defa-234567890123"
+                      - "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                ong_ngoai_bac:
+                  summary: Maternal grandfather (Ông ngoại - Chi ngoại, phương ngữ Bắc)
+                  value:
+                    term: "Ông ngoại"
+                    line: "Chi ngoại"
+                    generation_distance: 2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      - "98765432-abcd-ef01-2345-6789abcdef01"
+                ba_ngoai_bac:
+                  summary: Maternal grandmother (Bà ngoại - Chi ngoại, phương ngữ Bắc)
+                  value:
+                    term: "Bà ngoại"
+                    line: "Chi ngoại"
+                    generation_distance: 2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      - "87654321-bcde-f012-3456-789abcdef012"
+                noi_nam:
+                  summary: Grandparent variant Southern (Nội - Phương ngữ Nam)
+                  value:
+                    term: "Nội"
+                    line: "Chi nội"
+                    generation_distance: 2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "nam"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "d4e5f6a7-b8c9-0123-defa-234567890123"
+                      - "c3d4e5f6-a7b8-9012-cdef-123456789012"
+                ngoai_nam:
+                  summary: Maternal grandparent variant Southern (Ngoại - Phương ngữ Nam)
+                  value:
+                    term: "Ngoại"
+                    line: "Chi ngoại"
+                    generation_distance: 2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "nam"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      - "98765432-abcd-ef01-2345-6789abcdef01"
+                bac_chu_co_bac:
+                  summary: Paternal aunt/uncle (Chú/Cô - Chi nội)
+                  value:
+                    term: "Chú"
+                    line: "Chi nội"
+                    generation_distance: 1
+                    distance_label: "Cách 1 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "c3d4e5f6-a7b8-9012-cdef-123456789012"
+                      - "76543210-cdef-0123-4567-89abcdef0123"
+                cau_di_bac:
+                  summary: Maternal uncle/aunt (Cậu/Dì - Chi ngoại)
+                  value:
+                    term: "Cậu"
+                    line: "Chi ngoại"
+                    generation_distance: 1
+                    distance_label: "Cách 1 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "98765432-abcd-ef01-2345-6789abcdef01"
+                      - "65432109-defa-1234-5678-9abcdef01234"
+                o_trung:
+                  summary: Paternal younger aunt Central variant (O - Phương ngữ Trung)
+                  value:
+                    term: "O"
+                    line: "Chi nội"
+                    generation_distance: 1
+                    distance_label: "Cách 1 đời"
+                    is_blood: true
+                    dialect: "trung"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "c3d4e5f6-a7b8-9012-cdef-123456789012"
+                      - "54321098-efab-2345-6789-abcdef012345"
+                hon_phoi_vo_chong:
+                  summary: Spouse affinal relationship (Vợ / Chồng - Hôn phối)
+                  value:
+                    term: "Vợ"
+                    line: "Hôn phối"
+                    generation_distance: 0
+                    distance_label: "Cùng thế hệ"
+                    is_blood: false
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "43210987-fabc-3456-789a-bcdef0123456"
+                chau_noi_bac:
+                  summary: Paternal grandchild (Cháu nội - Chi nội)
+                  value:
+                    term: "Cháu nội"
+                    line: "Chi nội"
+                    generation_distance: -2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "c3d4e5f6-a7b8-9012-cdef-123456789012"
+                      - "d4e5f6a7-b8c9-0123-defa-234567890123"
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                ban_than:
+                  summary: Self relationship (Bản thân - Đồng tông)
+                  value:
+                    term: "Bản thân"
+                    line: "Đồng tông"
+                    generation_distance: 0
+                    distance_label: "Cùng thế hệ"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+        '400':
+          description: Thiếu tham số hoặc hai thành viên không thuộc cùng dòng họ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy một trong hai thành viên
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /me:
+    get:
+      tags:
+        - Auth
+      summary: Lấy hồ sơ tài khoản hiện tại kèm danh sách định danh và điểm liên hệ
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - demoCookieAuth: []
+      responses:
+        '200':
+          description: Thông tin hồ sơ tài khoản người dùng
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Chưa đăng nhập hoặc phiên làm việc đã hết hạn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy tài khoản người dùng
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /me/link/{provider}/start:
+    get:
+      tags:
+        - Auth
+      summary: Bắt đầu liên kết thêm nhà cung cấp đăng nhập (Chuyển hướng 302)
+      operationId: startLinkProviderGet
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - demoCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProviderParam'
+      responses:
+        '302':
+          description: Chuyển hướng trình duyệt đến trang xác thực của nhà cung cấp
+          headers:
+            Location:
+              schema:
+                type: string
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Nhà cung cấp không hỗ trợ hoặc bị vô hiệu hóa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - Auth
+      summary: Bắt đầu liên kết thêm nhà cung cấp đăng nhập (Trả về URL dạng JSON)
+      operationId: startLinkProviderPost
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - demoCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProviderParam'
+      responses:
+        '200':
+          description: Trả về URL đăng nhập của nhà cung cấp
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    example: https://accounts.google.com/o/oauth2/v2/auth?...
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Nhà cung cấp không hỗ trợ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /me/link/{provider}/callback:
+    get:
+      tags:
+        - Auth
+      summary: Xử lý chuyển hướng callback khi liên kết tài khoản (Public callback alias)
+      description: >-
+        Endpoint callback công khai khi liên kết thêm tài khoản mạng xã hội (Public callback alias không yêu cầu cookie phiên ban đầu vì chuyển hướng từ IdP bên thứ ba).
+        Hỗ trợ Content negotiation từ HEAD bf81f52:
+        (1) Trình duyệt (Browser mode - Accept: text/html): Chuyển hướng 302 về `{PUBLIC_BASE_URL}/auth/oauth/callback` kèm `?oauth_linked={provider}` và Set-Cookie phiên khi thành công;
+        hoặc `?oauth_error={invalid_state|already_linked|provider_error|demo_restricted|server_error}` khi thất bại (đặc biệt mã 409 ánh xạ sang `already_linked`).
+        (2) API / JSON mode: Trả về JSON envelope 200 thành công hoặc các mã lỗi 400 (VALIDATION_ERROR), 409 (CONFLICT: ErrAlreadyLinked), 502 (PROVIDER_EXCHANGE_FAILED).
+      operationId: linkProviderCallback
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/ProviderParam'
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liên kết định danh mới vào tài khoản thành công (Chế độ JSON)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthCallbackResponse'
+        '302':
+          description: >-
+            Chuyển hướng trình duyệt (Chế độ Browser - Accept: text/html) về SPA tại {PUBLIC_BASE_URL}/auth/oauth/callback.
+            Thành công: ?oauth_linked={provider} đồng thời đính kèm Set-Cookie phiên.
+            Thất bại: ?oauth_error={invalid_state|already_linked|provider_error|demo_restricted|server_error}.
+          headers:
+            Location:
+              schema:
+                type: string
+                example: http://localhost:3456/auth/oauth/callback?oauth_linked=google
+              description: URL đích của SPA, xây dựng nghiêm ngặt từ PUBLIC_BASE_URL
+            Set-Cookie:
+              schema:
+                type: string
+                example: cgp_session=eyJhbGci...; Path=/; HttpOnly; SameSite=Lax
+              description: Cập nhật cookie phiên sau khi liên kết tài khoản
+        '400':
+          description: Tham số ủy quyền không hợp lệ hoặc state cookie không khớp (Chế độ JSON)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Định danh xã hội này đã được liên kết với một tài khoản khác (Chế độ JSON)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Lỗi trao đổi mã xác thực với nhà cung cấp OAuth (Chế độ JSON)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /me/identities/{id}:
+    delete:
+      tags:
+        - Auth
+      summary: Hủy liên kết một phương thức đăng nhập khỏi tài khoản
+      operationId: unlinkIdentity
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - demoCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdentityIdParam'
+      responses:
+        '200':
+          description: Hủy liên kết định danh thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Hủy liên kết định danh thành công
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy định danh liên kết
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Không thể hủy liên kết định danh duy nhất còn lại của tài khoản
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /me/contacts:
+    post:
+      tags:
+        - Auth
+      summary: Thêm điểm liên hệ mới (email hoặc số điện thoại) chờ xác thực
+      operationId: addContactPoint
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - demoCookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - kind
+                - value
+              properties:
+                kind:
+                  type: string
+                  enum: [email, phone]
+                  example: email
+                value:
+                  type: string
+                  example: new.email@example.com
+      responses:
+        '201':
+          description: Điểm liên hệ được thêm thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactPoint'
+        '400':
+          description: Dữ liệu điểm liên hệ không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Điểm liên hệ này đã được đăng ký bởi người dùng khác
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /me/contacts/{id}/verify:
+    post:
+      tags:
+        - Auth
+      summary: Kích hoạt gửi mã hoặc liên kết xác thực điểm liên hệ
+      operationId: triggerVerifyContact
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - demoCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ContactIdParam'
+      responses:
+        '200':
+          description: Đã gửi liên kết xác thực hoặc điểm liên hệ đã xác thực trước đó
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Đã gửi liên kết xác thực đến email của bạn
+        '400':
+          description: Loại liên hệ không hỗ trợ gửi xác thực
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy điểm liên hệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /push/subscribe:
+    post:
+      tags:
+        - Push
+      summary: Đăng ký nhận thông báo Web Push (VAPID) cho người dùng
+      operationId: subscribePush
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - demoCookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - endpoint
+                - p256dh
+                - auth
+              properties:
+                endpoint:
+                  type: string
+                  example: https://fcm.googleapis.com/fcm/send/...
+                p256dh:
+                  type: string
+                  example: BEl62iUYgUivxIkv69yViEuiBIa...
+                auth:
+                  type: string
+                  example: 5KZyA3q8LhXq...
+      responses:
+        '200':
+          description: Đăng ký nhận thông báo Web Push thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Đăng ký nhận thông báo thành công
+        '400':
+          description: Thông tin đăng ký không đầy đủ hoặc khóa mã hóa không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Yêu cầu đăng nhập để đăng ký nhận thông báo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Push
+      summary: Hủy đăng ký nhận thông báo Web Push theo endpoint
+      operationId: unsubscribePush
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - demoCookieAuth: []
+      parameters:
+        - name: endpoint
+          in: query
+          required: false
+          description: Địa chỉ endpoint cần hủy đăng ký (có thể truyền qua query hoặc JSON body)
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                endpoint:
+                  type: string
+      responses:
+        '200':
+          description: Hủy đăng ký nhận thông báo thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Hủy đăng ký nhận thông báo thành công
+        '400':
+          description: Thiếu thông tin địa chỉ endpoint cần hủy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Yêu cầu đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy thông tin đăng ký nhận thông báo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
