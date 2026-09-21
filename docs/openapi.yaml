@@ -1,17 +1,27 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
-  title: CGP v2 API
+  title: CGP v2
   version: 2.0.0
   description: >-
-    Hệ thống API RESTful quản lý Cây Gia Phả (CGP v2).
-    Hỗ trợ xác thực đa phương thức (OAuth Zalo, Google, Facebook, Email Magic Link, Dùng thử),
-    tính toán xưng hô phả hệ đa thế hệ, trực quan hóa cây gia phả, bảng tin gia đình,
-    nhập/xuất Excel và thông báo Web Push.
+    Hệ thống Cây Gia Phả (CGP v2) — Ứng dụng quản lý gia phả và kết nối dòng họ ưu tiên văn hóa Việt Nam (Vietnamese-first genealogy platform).
+    Kiến trúc tách biệt (split stack) với Backend REST API viết bằng Go (Gin Framework, PostgreSQL, Docker Compose) và Frontend Single Page Application (SPA) viết bằng Vue 3 (Pinia, TypeScript, Tailwind CSS, Vite, PWA).
+    Hệ thống triển khai đầy đủ 9 nhóm tính năng cốt lõi (F1–F9):
+    F1: Multi-provider auth & account linking (Zalo, Google, Facebook OAuth 2.0 + PKCE, Email Magic Link, Dùng thử Mode A Demo isolation, liên kết đa định danh vào một tài khoản);
+    F2: Family tree visualization (Trực quan hóa đồ thị phả hệ phân tầng theo đời, thế hệ cội nguồn, quan hệ phụ mẫu và hôn phối);
+    F3: Member CRUD & profile (Quản lý hồ sơ thành viên, quan hệ 1-hop, an toàn chống mồ côi orphan-safe, hỗ trợ đa dạng định dạng giới tính);
+    F4: Vietnamese kinship calculator (Thuật toán xưng hô họ hàng tiếng Việt theo đồ thị phả hệ, phân biệt Chi nội / Chi ngoại / Hôn phối / Đồng tông, hỗ trợ 3 phương ngữ Bắc - Trung - Nam);
+    F5: Excel import/export (Nhập và xuất toàn bộ dữ liệu phả hệ ra bảng tính Microsoft Excel .xlsx với cơ chế phát hiện trùng lặp và ghi nhận lỗi);
+    F6: Family feed (Bảng tin hoạt động dòng họ, chia sẻ bài viết, thông báo lễ giỗ, đính kèm hình ảnh và phân trang theo con trỏ cursor);
+    F7: PWA & push notifications (Ứng dụng web tiến bộ Progressive Web App và thông báo Web Push chuẩn VAPID không phụ thuộc dịch vụ trả phí);
+    F8: Demo fixture & seed (Môi trường dùng thử tách biệt hoàn toàn với dữ liệu mẫu dòng họ mẫu mực, cookie riêng biệt cgp_demo_session);
+    F9: Vietnamese design system (Hệ thống thiết kế thuần Việt, văn phong chuẩn mực có dấu tiếng Việt, định dạng ngày tháng và tôn trọng văn hóa gia đình truyền thống).
 servers:
   - url: http://localhost:3456/api/v1
     description: Nginx Reverse Proxy (Khuyên dùng trong môi trường phát triển & sản xuất)
   - url: http://localhost:8080/api/v1
     description: Truy cập trực tiếp Go API Server (Cổng 8080)
+security:
+  - bearerAuth: []
 tags:
   - name: Health
     description: Kiểm tra tình trạng hoạt động và kết nối cơ sở dữ liệu
@@ -35,17 +45,17 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: JSON Web Token (JWT) được lưu trữ trong Cookie httpOnly (`cgp_session` hoặc `cgp_demo_session`) hoặc truyền qua tiêu đề Authorization Bearer.
+      description: JSON Web Token (JWT) được cấp sau khi xác thực thành công (golang-jwt v5), truyền qua tiêu đề Authorization dạng 'Bearer <token>' hoặc đọc từ Cookie httpOnly session.
     cookieAuth:
       type: apiKey
       in: cookie
       name: cgp_session
-      description: Cookie phiên đăng nhập chính thức.
+      description: Cookie phiên đăng nhập chính thức (httpOnly, SameSite=Lax, Secure khi môi trường production). Cookie này cũng được thiết lập tự động trong phản hồi chuyển hướng trình duyệt (302) của luồng OAuth callback.
     demoCookieAuth:
       type: apiKey
       in: cookie
       name: cgp_demo_session
-      description: Cookie phiên đăng nhập dùng thử (Mode A Demo Isolation).
+      description: Cookie phiên đăng nhập dùng thử cách ly (Mode A Demo Isolation - config.DemoCookieName). Hoạt động độc lập, không cho phép liên kết tài khoản và được cách ly nghiêm ngặt khỏi môi trường production.
 
   parameters:
     FamilyIdParam:
@@ -133,9 +143,8 @@ components:
           type: boolean
           example: false
         member_id:
-          type: string
+          type: [string, "null"]
           format: uuid
-          nullable: true
           description: Mã định danh thành viên liên kết 1-1 trong cây gia phả
           example: 98765432-abcd-ef01-2345-6789abcdef01
         created_at:
@@ -202,8 +211,7 @@ components:
           type: boolean
           example: true
         verified_via:
-          type: string
-          nullable: true
+          type: [string, "null"]
           example: google
         created_at:
           type: string
@@ -303,14 +311,12 @@ components:
           type: integer
           example: 1
         birth_date:
-          type: string
+          type: [string, "null"]
           format: date
-          nullable: true
           example: "1950-01-01"
         death_date:
-          type: string
+          type: [string, "null"]
           format: date
-          nullable: true
           example: null
         is_living:
           type: boolean
@@ -393,25 +399,21 @@ components:
           type: integer
           example: 1
         birth_date:
-          type: string
+          type: [string, "null"]
           format: date-time
-          nullable: true
           example: "1950-01-01T00:00:00Z"
         death_date:
-          type: string
+          type: [string, "null"]
           format: date-time
-          nullable: true
           example: null
         is_living:
           type: boolean
           example: true
         avatar_url:
-          type: string
-          nullable: true
+          type: [string, "null"]
           example: "https://example.com/avatar.jpg"
         notes:
-          type: string
-          nullable: true
+          type: [string, "null"]
           example: Trưởng tộc đời thứ nhất
         created_at:
           type: string
@@ -470,22 +472,18 @@ components:
           type: integer
           example: 1
         birth_date:
-          type: string
+          type: [string, "null"]
           format: date-time
-          nullable: true
         death_date:
-          type: string
+          type: [string, "null"]
           format: date-time
-          nullable: true
         is_living:
           type: boolean
           example: true
         avatar_url:
-          type: string
-          nullable: true
+          type: [string, "null"]
         notes:
-          type: string
-          nullable: true
+          type: [string, "null"]
         created_at:
           type: string
           format: date-time
@@ -533,25 +531,33 @@ components:
       properties:
         term:
           type: string
-          description: Từ xưng hô thuần khiết không kèm dấu ngoặc kép (INV-05)
+          description: >-
+            Từ xưng hô thuần khiết không kèm dấu ngoặc kép (INV-05 rendering contract: Term is BARE text, UI components render plain text interpolation).
+            Ví dụ: "Ông nội", "Bà nội", "Ông ngoại", "Bà ngoại", "Bố", "Mẹ", "Bác", "Chú", "Cô", "Cậu", "Dì", "Anh", "Chị", "Em", "Con trai", "Con gái", "Cháu nội", "Cháu ngoại", "Chắt", "Chút", "Chồng", "Vợ", "Bác dâu", "Thím", "Mợ", "Anh rể", "Chị dâu", "Em rể", "Em dâu", "Con rể", "Con dâu", "Bản thân".
+            Phương ngữ Nam: "Nội", "Ngoại", "Chú út", "Cô út", "Cậu út", "Dì út", "Ba", "Má".
+            Phương ngữ Trung: "O", "Ba", "Mạ".
           example: Ông nội
         line:
           type: string
           enum: [Chi nội, Chi ngoại, Hôn phối, Đồng tông]
+          description: Nhánh quan hệ gia tộc (Chi nội - Patrilineal, Chi ngoại - Matrilineal, Hôn phối - Affinal, Đồng tông - Same-generation/Direct)
           example: Chi nội
         generation_distance:
           type: integer
-          description: Chênh lệch thế hệ giữa người gốc và đích
+          description: Chênh lệch thế hệ giữa người gốc và đích (dấu âm nếu đích là thế hệ sau, dấu dương nếu đích là thế hệ trước)
           example: 2
         distance_label:
           type: string
+          description: Mô tả khoảng cách thế hệ bằng tiếng Việt (ví dụ "Cách 2 đời", "Cách 1 đời", "Cùng thế hệ")
           example: Cách 2 đời
         is_blood:
           type: boolean
+          description: Đúng nếu quan hệ qua đường huyết thống (LCA path), sai nếu qua hôn phối (Dijkstra path)
           example: true
         dialect:
           type: string
           enum: [bac, trung, nam]
+          description: Phương ngữ từ điển xưng hô được áp dụng
           example: bac
         path:
           type: array
@@ -576,9 +582,8 @@ components:
           type: string
           format: uuid
         author_member_id:
-          type: string
+          type: [string, "null"]
           format: uuid
-          nullable: true
           example: e5f6a7b8-c9d0-1234-efab-345678901234
         content:
           type: string
@@ -624,8 +629,9 @@ components:
           items:
             $ref: '#/components/schemas/PostItem'
         next_cursor:
-          $ref: '#/components/schemas/FeedCursor'
-          nullable: true
+          anyOf:
+            - $ref: '#/components/schemas/FeedCursor'
+            - type: "null"
     ImportSummary:
       type: object
       required:
@@ -682,6 +688,7 @@ paths:
         - Health
       summary: Kiểm tra tình trạng hoạt động tổng thể (Root health check alias)
       operationId: checkHealthRoot
+      security: []
       responses:
         '200':
           description: Hệ thống và cơ sở dữ liệu hoạt động bình thường
@@ -715,6 +722,7 @@ paths:
         - Health
       summary: Kiểm tra tình trạng hoạt động và kết nối DB (/api/v1/health)
       operationId: checkHealthV1
+      security: []
       responses:
         '200':
           description: Dịch vụ sẵn sàng xử lý yêu cầu
@@ -748,6 +756,7 @@ paths:
         - Auth
       summary: Lấy danh sách các nhà cung cấp xác thực đang được kích hoạt
       operationId: getAuthProviders
+      security: []
       responses:
         '200':
           description: Danh sách nhà cung cấp khả dụng
@@ -767,6 +776,7 @@ paths:
         - Auth
       summary: Khởi tạo luồng đăng nhập OAuth 2.0 / PKCE (Chuyển hướng 302)
       operationId: startOAuthLogin
+      security: []
       parameters:
         - $ref: '#/components/parameters/ProviderParam'
       responses:
@@ -789,7 +799,14 @@ paths:
       tags:
         - Auth
       summary: Xử lý phản hồi ủy quyền (Callback) từ nhà cung cấp OAuth
+      description: >-
+        Xử lý phản hồi ủy quyền OAuth 2.0 / PKCE từ nhà cung cấp xác thực. Hỗ trợ thỏa thuận nội dung (Content negotiation) theo hai chế độ từ HEAD bf81f52:
+        (1) Trình duyệt (Browser mode - tiêu đề `Accept` chứa `text/html`): Chuyển hướng 302 về ứng dụng web SPA tại `{PUBLIC_BASE_URL}/auth/oauth/callback`.
+        Khi thành công, thiết lập Cookie phiên `cgp_session` (hoặc `cgp_demo_session`) và chuyển hướng kèm tham số `?oauth_linked={provider}`.
+        Khi thất bại, chuyển hướng kèm mã lỗi an toàn `?oauth_error={invalid_state|already_linked|provider_error|demo_restricted|server_error}` (Location được xây dựng nghiêm ngặt từ `PUBLIC_BASE_URL` ngăn chặn triệt để Open Redirect).
+        (2) API / JSON mode (yêu cầu XHR/Fetch không mang `text/html`): Trả về phản hồi JSON tiêu chuẩn với mã 200 (kèm Set-Cookie phiên) hoặc mã lỗi (400 VALIDATION_ERROR, 403 DEMO_ISOLATION_VIOLATION, 409 CONFLICT, 502 PROVIDER_EXCHANGE_FAILED).
       operationId: handleOAuthCallback
+      security: []
       parameters:
         - $ref: '#/components/parameters/ProviderParam'
         - name: code
@@ -806,7 +823,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Xác thực hoặc liên kết tài khoản thành công
+          description: Xác thực hoặc liên kết tài khoản thành công (Chế độ JSON / API)
           headers:
             Set-Cookie:
               schema:
@@ -817,15 +834,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthCallbackResponse'
         '302':
-          description: Trình duyệt được chuyển hướng về trang web đích kèm thông tin phiên
+          description: >-
+            Chuyển hướng trình duyệt (Chế độ Browser - Accept: text/html) về SPA tại {PUBLIC_BASE_URL}/auth/oauth/callback.
+            Thành công: ?oauth_linked={provider} đồng thời đính kèm Set-Cookie phiên.
+            Thất bại: ?oauth_error={invalid_state|already_linked|provider_error|demo_restricted|server_error}.
+          headers:
+            Location:
+              schema:
+                type: string
+                example: http://localhost:3456/auth/oauth/callback?oauth_linked=google
+              description: URL đích của SPA, xây dựng nghiêm ngặt từ PUBLIC_BASE_URL
+            Set-Cookie:
+              schema:
+                type: string
+                example: cgp_session=eyJhbGci...; Path=/; HttpOnly; SameSite=Lax
+              description: Thiết lập cookie phiên khi đăng nhập thành công
         '400':
-          description: Mã xác thực hoặc tham số state không hợp lệ
+          description: Mã xác thực hoặc tham số state không hợp lệ (Chế độ JSON - VALIDATION_ERROR)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Vi phạm cách ly phiên dùng thử demo (Chế độ JSON - DEMO_ISOLATION_VIOLATION)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Định danh đã được liên kết với tài khoản khác (Chế độ JSON - CONFLICT)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '502':
-          description: Lỗi kết nối hoặc trao đổi mã xác thực với nhà cung cấp OAuth
+          description: Lỗi kết nối hoặc trao đổi mã xác thực với nhà cung cấp OAuth (Chế độ JSON - PROVIDER_EXCHANGE_FAILED)
           content:
             application/json:
               schema:
@@ -837,6 +880,7 @@ paths:
         - Auth
       summary: Gửi liên kết đăng nhập nhanh (Magic Link) qua hộp thư điện tử
       operationId: sendMagicLink
+      security: []
       requestBody:
         required: true
         content:
@@ -874,6 +918,7 @@ paths:
         - Auth
       summary: Xác thực token Magic Link từ email và thiết lập phiên đăng nhập
       operationId: verifyMagicLink
+      security: []
       requestBody:
         required: true
         content:
@@ -927,6 +972,7 @@ paths:
         - Auth
       summary: Khởi tạo phiên làm việc thử nghiệm cách ly (Mode A Demo Session)
       operationId: startDemoSession
+      security: []
       responses:
         '200':
           description: Phiên dùng thử được tạo thành công
@@ -961,6 +1007,7 @@ paths:
         - Auth
       summary: Đăng xuất người dùng và thu hồi cookie phiên làm việc
       operationId: logout
+      security: []
       responses:
         '200':
           description: Đăng xuất thành công, xóa cookie phiên
@@ -983,6 +1030,7 @@ paths:
         - Family
       summary: Lấy danh sách các dòng họ trong hệ thống
       operationId: listFamilies
+      security: []
       responses:
         '200':
           description: Danh sách dòng họ hiện có
@@ -1002,6 +1050,7 @@ paths:
         - Family
       summary: Lấy toàn bộ cây gia phả phân tầng của dòng họ
       operationId: getFamilyTree
+      security: []
       parameters:
         - $ref: '#/components/parameters/FamilyIdParam'
       responses:
@@ -1024,6 +1073,7 @@ paths:
         - Excel
       summary: Xuất dữ liệu phả hệ dòng họ ra tệp bảng tính Excel (.xlsx)
       operationId: exportFamilyExcel
+      security: []
       parameters:
         - $ref: '#/components/parameters/FamilyIdParam'
       responses:
@@ -1052,6 +1102,7 @@ paths:
         - Feed
       summary: Lấy danh sách bài viết trên bảng tin dòng họ (Mới nhất trước)
       operationId: listFamilyFeed
+      security: []
       parameters:
         - $ref: '#/components/parameters/FamilyIdParam'
         - name: limit
@@ -1188,6 +1239,7 @@ paths:
         - Member
       summary: Tìm kiếm và phân trang danh sách thành viên gia phả
       operationId: listMembers
+      security: []
       parameters:
         - name: q
           in: query
@@ -1254,26 +1306,21 @@ paths:
                   description: Bậc thế hệ trong dòng họ (mặc định 1)
                   example: 2
                 birth_date:
-                  type: string
+                  type: [string, "null"]
                   format: date
-                  nullable: true
                   example: "1975-06-15"
                 death_date:
-                  type: string
+                  type: [string, "null"]
                   format: date
-                  nullable: true
                   example: null
                 is_living:
-                  type: boolean
-                  nullable: true
+                  type: [boolean, "null"]
                   example: true
                 avatar_url:
-                  type: string
-                  nullable: true
+                  type: [string, "null"]
                   example: "https://example.com/avatar.jpg"
                 notes:
-                  type: string
-                  nullable: true
+                  type: [string, "null"]
                   example: Chi thứ hai
                 parent_ids:
                   type: array
@@ -1315,6 +1362,7 @@ paths:
         - Member
       summary: Lấy chi tiết thông tin thành viên, các mối quan hệ và bài viết liên quan
       operationId: getMemberDetail
+      security: []
       parameters:
         - $ref: '#/components/parameters/MemberIdParam'
       responses:
@@ -1363,37 +1411,30 @@ paths:
                   type: integer
                   example: 2
                 birth_date:
-                  type: string
+                  type: [string, "null"]
                   format: date
-                  nullable: true
                   example: "1975-06-15"
                 death_date:
-                  type: string
+                  type: [string, "null"]
                   format: date
-                  nullable: true
                   example: null
                 is_living:
-                  type: boolean
-                  nullable: true
+                  type: [boolean, "null"]
                   example: true
                 avatar_url:
-                  type: string
-                  nullable: true
+                  type: [string, "null"]
                 notes:
-                  type: string
-                  nullable: true
+                  type: [string, "null"]
                 parent_ids:
-                  type: array
+                  type: [array, "null"]
                   items:
                     type: string
                     format: uuid
-                  nullable: true
                 spouse_ids:
-                  type: array
+                  type: [array, "null"]
                   items:
                     type: string
                     format: uuid
-                  nullable: true
       responses:
         '200':
           description: Cập nhật thành viên thành công
@@ -1463,7 +1504,16 @@ paths:
       tags:
         - Kinship
       summary: Tính toán quan hệ xưng hô họ hàng tiếng Việt theo đồ thị phả hệ
+      description: >-
+        Thuật toán xưng hô họ hàng tiếng Việt chuẩn xác (INV-05 / F4) dựa trên đồ thị phả hệ (LCA - Lowest Common Ancestor cho quan hệ huyết thống và thuật toán Dijkstra có trọng số cho quan hệ hôn phối).
+        Hỗ trợ 3 phương ngữ chuẩn: Bắc (bac - mặc định), Trung (trung), Nam (nam).
+        Phân loại chính xác các nhánh dòng họ:
+        - "Chi nội" (Patrilineal): Nhánh đằng nội qua chuỗi phụ mẫu nam giới (ví dụ: "Ông nội", "Bà nội", "Bác", "Chú", "Cô", "Cháu nội").
+        - "Chi ngoại" (Matrilineal): Nhánh đằng ngoại qua chuỗi phụ mẫu nữ giới (ví dụ: "Ông ngoại", "Bà ngoại", "Cậu", "Dì", "Cháu ngoại").
+        - "Hôn phối" (Affinal): Quan hệ vợ chồng hoặc thông gia/dâu rể (ví dụ: "Chồng", "Vợ", "Bác dâu", "Thím", "Mợ", "Anh rể", "Chị dâu", "Em rể", "Em dâu", "Con rể", "Con dâu").
+        - "Đồng tông" (Same-generation/Direct): Cùng thế hệ hoặc bản thân ("Bản thân", "Anh", "Chị", "Em").
       operationId: calculateKinship
+      security: []
       parameters:
         - name: from
           in: query
@@ -1494,6 +1544,160 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/KinshipResult'
+              examples:
+                ong_noi_bac:
+                  summary: Paternal grandfather (Ông nội - Chi nội, phương ngữ Bắc)
+                  value:
+                    term: "Ông nội"
+                    line: "Chi nội"
+                    generation_distance: 2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "d4e5f6a7-b8c9-0123-defa-234567890123"
+                      - "c3d4e5f6-a7b8-9012-cdef-123456789012"
+                ba_noi_bac:
+                  summary: Paternal grandmother (Bà nội - Chi nội, phương ngữ Bắc)
+                  value:
+                    term: "Bà nội"
+                    line: "Chi nội"
+                    generation_distance: 2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "d4e5f6a7-b8c9-0123-defa-234567890123"
+                      - "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                ong_ngoai_bac:
+                  summary: Maternal grandfather (Ông ngoại - Chi ngoại, phương ngữ Bắc)
+                  value:
+                    term: "Ông ngoại"
+                    line: "Chi ngoại"
+                    generation_distance: 2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      - "98765432-abcd-ef01-2345-6789abcdef01"
+                ba_ngoai_bac:
+                  summary: Maternal grandmother (Bà ngoại - Chi ngoại, phương ngữ Bắc)
+                  value:
+                    term: "Bà ngoại"
+                    line: "Chi ngoại"
+                    generation_distance: 2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      - "87654321-bcde-f012-3456-789abcdef012"
+                noi_nam:
+                  summary: Grandparent variant Southern (Nội - Phương ngữ Nam)
+                  value:
+                    term: "Nội"
+                    line: "Chi nội"
+                    generation_distance: 2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "nam"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "d4e5f6a7-b8c9-0123-defa-234567890123"
+                      - "c3d4e5f6-a7b8-9012-cdef-123456789012"
+                ngoai_nam:
+                  summary: Maternal grandparent variant Southern (Ngoại - Phương ngữ Nam)
+                  value:
+                    term: "Ngoại"
+                    line: "Chi ngoại"
+                    generation_distance: 2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "nam"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      - "98765432-abcd-ef01-2345-6789abcdef01"
+                bac_chu_co_bac:
+                  summary: Paternal aunt/uncle (Chú/Cô - Chi nội)
+                  value:
+                    term: "Chú"
+                    line: "Chi nội"
+                    generation_distance: 1
+                    distance_label: "Cách 1 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "c3d4e5f6-a7b8-9012-cdef-123456789012"
+                      - "76543210-cdef-0123-4567-89abcdef0123"
+                cau_di_bac:
+                  summary: Maternal uncle/aunt (Cậu/Dì - Chi ngoại)
+                  value:
+                    term: "Cậu"
+                    line: "Chi ngoại"
+                    generation_distance: 1
+                    distance_label: "Cách 1 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "98765432-abcd-ef01-2345-6789abcdef01"
+                      - "65432109-defa-1234-5678-9abcdef01234"
+                o_trung:
+                  summary: Paternal younger aunt Central variant (O - Phương ngữ Trung)
+                  value:
+                    term: "O"
+                    line: "Chi nội"
+                    generation_distance: 1
+                    distance_label: "Cách 1 đời"
+                    is_blood: true
+                    dialect: "trung"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "c3d4e5f6-a7b8-9012-cdef-123456789012"
+                      - "54321098-efab-2345-6789-abcdef012345"
+                hon_phoi_vo_chong:
+                  summary: Spouse affinal relationship (Vợ / Chồng - Hôn phối)
+                  value:
+                    term: "Vợ"
+                    line: "Hôn phối"
+                    generation_distance: 0
+                    distance_label: "Cùng thế hệ"
+                    is_blood: false
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                      - "43210987-fabc-3456-789a-bcdef0123456"
+                chau_noi_bac:
+                  summary: Paternal grandchild (Cháu nội - Chi nội)
+                  value:
+                    term: "Cháu nội"
+                    line: "Chi nội"
+                    generation_distance: -2
+                    distance_label: "Cách 2 đời"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "c3d4e5f6-a7b8-9012-cdef-123456789012"
+                      - "d4e5f6a7-b8c9-0123-defa-234567890123"
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
+                ban_than:
+                  summary: Self relationship (Bản thân - Đồng tông)
+                  value:
+                    term: "Bản thân"
+                    line: "Đồng tông"
+                    generation_distance: 0
+                    distance_label: "Cùng thế hệ"
+                    is_blood: true
+                    dialect: "bac"
+                    path:
+                      - "e5f6a7b8-c9d0-1234-efab-345678901234"
         '400':
           description: Thiếu tham số hoặc hai thành viên không thuộc cùng dòng họ
           content:
@@ -1607,7 +1811,14 @@ paths:
       tags:
         - Auth
       summary: Xử lý chuyển hướng callback khi liên kết tài khoản (Public callback alias)
+      description: >-
+        Endpoint callback công khai khi liên kết thêm tài khoản mạng xã hội (Public callback alias không yêu cầu cookie phiên ban đầu vì chuyển hướng từ IdP bên thứ ba).
+        Hỗ trợ Content negotiation từ HEAD bf81f52:
+        (1) Trình duyệt (Browser mode - Accept: text/html): Chuyển hướng 302 về `{PUBLIC_BASE_URL}/auth/oauth/callback` kèm `?oauth_linked={provider}` và Set-Cookie phiên khi thành công;
+        hoặc `?oauth_error={invalid_state|already_linked|provider_error|demo_restricted|server_error}` khi thất bại (đặc biệt mã 409 ánh xạ sang `already_linked`).
+        (2) API / JSON mode: Trả về JSON envelope 200 thành công hoặc các mã lỗi 400 (VALIDATION_ERROR), 409 (CONFLICT: ErrAlreadyLinked), 502 (PROVIDER_EXCHANGE_FAILED).
       operationId: linkProviderCallback
+      security: []
       parameters:
         - $ref: '#/components/parameters/ProviderParam'
         - name: code
@@ -1622,21 +1833,41 @@ paths:
             type: string
       responses:
         '200':
-          description: Liên kết định danh mới vào tài khoản thành công
+          description: Liên kết định danh mới vào tài khoản thành công (Chế độ JSON)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthCallbackResponse'
         '302':
-          description: Chuyển hướng trình duyệt về ứng dụng web
+          description: >-
+            Chuyển hướng trình duyệt (Chế độ Browser - Accept: text/html) về SPA tại {PUBLIC_BASE_URL}/auth/oauth/callback.
+            Thành công: ?oauth_linked={provider} đồng thời đính kèm Set-Cookie phiên.
+            Thất bại: ?oauth_error={invalid_state|already_linked|provider_error|demo_restricted|server_error}.
+          headers:
+            Location:
+              schema:
+                type: string
+                example: http://localhost:3456/auth/oauth/callback?oauth_linked=google
+              description: URL đích của SPA, xây dựng nghiêm ngặt từ PUBLIC_BASE_URL
+            Set-Cookie:
+              schema:
+                type: string
+                example: cgp_session=eyJhbGci...; Path=/; HttpOnly; SameSite=Lax
+              description: Cập nhật cookie phiên sau khi liên kết tài khoản
         '400':
-          description: Tham số ủy quyền không hợp lệ
+          description: Tham số ủy quyền không hợp lệ hoặc state cookie không khớp (Chế độ JSON)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: Định danh xã hội này đã được liên kết với một tài khoản khác
+          description: Định danh xã hội này đã được liên kết với một tài khoản khác (Chế độ JSON)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Lỗi trao đổi mã xác thực với nhà cung cấp OAuth (Chế độ JSON)
           content:
             application/json:
               schema:
