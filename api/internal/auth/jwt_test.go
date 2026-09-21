@@ -353,3 +353,112 @@ func TestLinkState_PurposeClaimValidation(t *testing.T) {
 		t.Fatal("expected VerifyLinkState to reject token with empty purpose")
 	}
 }
+
+func newDevTestConfig() *config.Config {
+	return &config.Config{
+		AppEnv:           config.EnvDev,
+		JWTSecret:        "test-jwt-secret-with-adequate-entropy-32b",
+		JWTIssuer:        config.ProdJWTIssuer,
+		CookieName:       config.ProdCookieName,
+		DemoMode:         false,
+		MockOAuthEnabled: true,
+	}
+}
+
+// TestJWT_DevMode_DualIssuer_SameServiceRoundTrip is the regression that closes
+// the residual defect from cgp-v2 re-acceptance close-out (option (a)).
+//
+// The earlier TestJWT_Regression_INV04_FourIssuerStates covered four (issuer,
+// is_demo) states but always minted on one service and verified on a
+// SEPARATELY-CONSTRUCTED service (demoSvc vs prodSvc). That setup masked the
+// real production scenario: a dev-mode deployment runs with
+// AppEnv=EnvDev + JWTIssuer=cgp-prod, the LoginView "Dùng thử ngay" button
+// mints a demo-session token (iss=cgp-demo + is_demo=true) via IssueToken,
+// and the SAME dev-configured service must VerifyToken-accept it on /me.
+//
+// This test exercises mint-and-verify on the SAME service for every stack,
+// and pins the byte-for-byte posture of the strict modes (prod/demo) so the
+// round-1 C3 hardening and the demo Mode A isolation invariants stay intact.
+func TestJWT_DevMode_DualIssuer_SameServiceRoundTrip(t *testing.T) {
+	devSvc := newTestService(newDevTestConfig(), newMemCore(), &fakeOutbox{})
+	prodSvc := newTestService(newTestConfig(false), newMemCore(), &fakeOutbox{})
+	demoSvc := newTestService(newTestConfig(true), newMemCore(), &fakeOutbox{})
+
+	demoUser := model.User{ID: "u-demo-embedded", DisplayName: "Người dùng dùng thử", IsDemo: true}
+	realUser := model.User{ID: "u-real-001", DisplayName: "Nguyễn Văn Real", IsDemo: false}
+
+	t.Run("dev service mints demo token and self-verifies ACCEPT", func(t *testing.T) {
+		tok, err := devSvc.IssueToken(demoUser)
+		if err != nil {
+			t.Fatalf("IssueToken(demo user on dev svc) failed: %v", err)
+		}
+		claims, err := devSvc.VerifyToken(tok)
+		if err != nil {
+			t.Fatalf("dev svc VerifyToken rejected its own demo token (the residual): %v", err)
+		}
+		if claims.Issuer != config.DemoJWTIssuer || !claims.IsDemo {
+			t.Fatalf("unexpected claims: iss=%q, is_demo=%v", claims.Issuer, claims.IsDemo)
+		}
+		if claims.Audience != claims.Issuer {
+			t.Fatalf("aud must equal iss: aud=%q, iss=%q", claims.Audience, claims.Issuer)
+		}
+	})
+
+	t.Run("dev service mints real token and self-verifies ACCEPT", func(t *testing.T) {
+		tok, err := devSvc.IssueToken(realUser)
+		if err != nil {
+			t.Fatalf("IssueToken(real user on dev svc) failed: %v", err)
+		}
+		claims, err := devSvc.VerifyToken(tok)
+		if err != nil {
+			t.Fatalf("dev svc VerifyToken rejected its own real token: %v", err)
+		}
+		if claims.Issuer != config.ProdJWTIssuer || claims.IsDemo {
+			t.Fatalf("unexpected claims: iss=%q, is_demo=%v", claims.Issuer, claims.IsDemo)
+		}
+	})
+
+	t.Run("prod service mints demo token and self-verifies REJECT (C3 posture)", func(t *testing.T) {
+		tok, err := prodSvc.IssueToken(demoUser)
+		if err != nil {
+			t.Fatalf("IssueToken(demo user on prod svc) failed: %v", err)
+		}
+		if _, err := prodSvc.VerifyToken(tok); err == nil {
+			t.Fatal("prod svc must NOT accept a cgp-demo token (C3 hardening invariant)")
+		}
+	})
+
+	t.Run("prod service mints real token and self-verifies ACCEPT", func(t *testing.T) {
+		tok, err := prodSvc.IssueToken(realUser)
+		if err != nil {
+			t.Fatalf("IssueToken(real user on prod svc) failed: %v", err)
+		}
+		if _, err := prodSvc.VerifyToken(tok); err != nil {
+			t.Fatalf("prod svc VerifyToken rejected a valid real token: %v", err)
+		}
+	})
+
+	t.Run("demo service mints demo token and self-verifies ACCEPT", func(t *testing.T) {
+		tok, err := demoSvc.IssueToken(demoUser)
+		if err != nil {
+			t.Fatalf("IssueToken(demo user on demo svc) failed: %v", err)
+		}
+		claims, err := demoSvc.VerifyToken(tok)
+		if err != nil {
+			t.Fatalf("demo svc VerifyToken rejected its own demo token: %v", err)
+		}
+		if claims.Issuer != config.DemoJWTIssuer || !claims.IsDemo {
+			t.Fatalf("unexpected claims: iss=%q, is_demo=%v", claims.Issuer, claims.IsDemo)
+		}
+	})
+
+	t.Run("demo service rejects a prod-shaped real token (Mode A isolation)", func(t *testing.T) {
+		tok, err := prodSvc.IssueToken(realUser)
+		if err != nil {
+			t.Fatalf("IssueToken(real user on prod svc) failed: %v", err)
+		}
+		if _, err := demoSvc.VerifyToken(tok); err == nil {
+			t.Fatal("demo svc must NOT accept a cgp-prod token (Mode A isolation)")
+		}
+	})
+}

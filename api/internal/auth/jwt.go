@@ -92,8 +92,25 @@ func (s *Service) VerifyToken(tokenStr string) (*Claims, error) {
 	if !ok || !parsed.Valid {
 		return nil, ErrInvalidToken
 	}
+	// Issuer must equal audience (spec invariant — aud coupled to iss).
+	//
+	// Dev-only relaxation (leader-decided refinement of close-out option (a)):
+	// a dev-mode deployment runs with AppEnv=EnvDev + JWTIssuer=cgp-prod, yet
+	// the LoginView "Dùng thử ngay" button may mint a demo-session token
+	// (iss=cgp-demo + is_demo=true) for the embedded demo identity. In dev
+	// only we therefore accept the known issuer set {cfg.JWTIssuer, cgp-demo}.
+	// Strict modes (prod AND demo) keep the EXACT single-issuer match so the
+	// round-1 C3 hardening (prod never accepts cgp-demo tokens) and the demo
+	// Mode A isolation are byte-for-byte unchanged.
+	allowedIssuers := map[string]struct{}{s.cfg.JWTIssuer: {}}
+	if s.cfg.AppEnv == config.EnvDev {
+		allowedIssuers[config.DemoJWTIssuer] = struct{}{}
+	}
 	if claims.Issuer == "" || claims.Audience == "" ||
-		claims.Issuer != claims.Audience || claims.Issuer != s.cfg.JWTIssuer {
+		claims.Issuer != claims.Audience {
+		return nil, ErrInvalidToken
+	}
+	if _, ok := allowedIssuers[claims.Issuer]; !ok {
 		return nil, ErrInvalidToken
 	}
 	// Demo isolation enforcement: issuer must agree with the demo flag.
