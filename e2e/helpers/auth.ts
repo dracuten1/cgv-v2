@@ -17,7 +17,8 @@ import { expect, type Page, type Response } from '@playwright/test';
  *   (text "Gia phả") plus user chip / "Đăng xuất".
  */
 
-const AUTH_READY_SELECTOR = 'a[href="/tree"]';
+/** Authenticated-only signal: header "Đăng xuất" button (AppLayout.vue). */
+const AUTH_READY_SELECTOR = 'header button:has-text("Đăng xuất")';
 
 /** True when the page is showing the login screen. */
 export async function isOnLoginPage(page: Page): Promise<boolean> {
@@ -38,13 +39,14 @@ export async function gotoRoot(page: Page): Promise<void> {
 }
 
 /**
- * Wait until the app reports an authenticated session:
- * the main layout nav (a[href="/tree"]) is rendered for any auth state,
- * but the header shows the display-name chip + "Đăng xuất" only when
- * authenticated. /tree itself always renders its toolbar.
+ * Wait until the app reports an authenticated session. The header renders the
+ * display-name chip + "Đăng xuất" button ONLY when authenticated
+ * (AppLayout.vue: <template v-if="auth.isAuthenticated">); an anonymous
+ * session shows the "Đăng nhập" link instead. Nav links like a[href="/tree"]
+ * are ALWAYS rendered and are NOT an auth signal.
  */
 export async function waitForAuthenticated(page: Page): Promise<void> {
-  await expect(page.locator(AUTH_READY_SELECTOR).first()).toBeVisible();
+  await expect(page.locator(AUTH_READY_SELECTOR)).toBeVisible();
 }
 
 /**

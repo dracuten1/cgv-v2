@@ -53,8 +53,11 @@ test.describe('Journey 3 — Tài khoản (Linking)', () => {
       await demoLogin(page);
     }
 
-    // 2. Open AccountView through the real nav link "Tài khoản"
-    await page.locator('a[href="/account"]').click();
+    // 2. Open AccountView through the real nav link "Tài khoản".
+    //    Scoped to the header <nav>: a bare a[href="/account"] also matches
+    //    the mobile tab bar and the OAuth-callback "Quay lại" button
+    //    (Playwright strict mode → violation).
+    await page.locator('nav a[href="/account"]').click();
     await expect(page).toHaveURL(/\/account/);
     await expect(page.locator('[data-testid="user-display-name"]')).toBeVisible();
 

@@ -19,11 +19,11 @@ import { demoLogin } from '../helpers/auth';
  *   Calculate(GrandsonID, RootID) === "Ông nội" — the term is what the FIRST
  *   (from) member calls the SECOND (to) member. So the grandson is placed in
  *   picker 1 and the patriarch An in picker 2.
- * - Grandson discovery: GET /api/v1/members (public) returns items with
- *   { id, full_name, generation_index, parent_ids, family_id }. The grandson
- *   is the generation-3 member whose parent_ids chain leads to
- *   aaaaaaa1-0000-4000-8000-000000000001 (An). The demo session cookie rides
- *   along on page.request automatically.
+ * - Grandson discovery: GET /api/v1/members items do NOT carry parent_ids;
+ *   the parent-child structure is public at GET /api/v1/families/:id/tree
+ *   (nested `children`, same payload TreeVisualizer renders). The grandson
+ *   is the first generation-3 node under root aaaaaaa1-0000-4000-8000-000000000001
+ *   (An). The demo session cookie rides along on page.request automatically.
  */
 
 const ROOT_ID = 'aaaaaaa1-0000-4000-8000-000000000001'; // Nguyễn Văn An
@@ -37,43 +37,45 @@ interface MemberItem {
   family_id?: string;
 }
 
-interface MembersPage {
-  items?: MemberItem[];
+interface TreeNode {
+  id: string;
+  full_name: string;
+  generation_index?: number;
+  children?: TreeNode[];
 }
 
-async function fetchMembers(page: Page): Promise<MemberItem[]> {
-  const resp = await page.request.get('/api/v1/members?limit=100');
-  expect(resp.ok()).toBeTruthy();
-  const body = (await resp.json()) as MembersPage;
-  return body.items ?? [];
-}
-
-/** Pick the generation-3 member whose parent chain leads to the root An. */
+/**
+ * Pick the generation-3 descendant of the patriarch An.
+ *
+ * GET /api/v1/members items carry NO parent_ids (verified: keys are id,
+ * full_name, gender, generation_index, family_id, dates, notes…) — the public
+ * parent-child structure lives in GET /api/v1/families/:id/tree as nested
+ * `children` (the same payload TreeVisualizer renders). Walk it from An's
+ * root node and take the first generation-3 node (DFS).
+ */
 async function discoverGrandson(page: Page): Promise<MemberItem> {
-  const items = await fetchMembers(page);
-  const byId = new Map(items.map((m) => [m.id, m]));
+  const famsResp = await page.request.get('/api/v1/families');
+  expect(famsResp.ok()).toBeTruthy();
+  const fams = (await famsResp.json()) as { families?: { id: string; name: string }[] };
+  const family = (fams.families ?? []).find((f) => f.name === 'Gia phả họ Nguyễn Văn') ??
+    fams.families?.[0];
+  expect(family, 'seed family "Gia phả họ Nguyễn Văn" must exist').toBeTruthy();
 
-  // Walk up from each generation-3 candidate; keep the one whose ancestor
-  // chain contains the root (An).
-  const hasAncestralPathToRoot = (start: MemberItem): boolean => {
-    const seen = new Set<string>();
-    const stack = [...(start.parent_ids ?? [])];
-    while (stack.length) {
-      const cur = stack.pop() as string;
-      if (cur === ROOT_ID) return true;
-      if (seen.has(cur)) continue;
-      seen.add(cur);
-      const parent = byId.get(cur);
-      if (parent?.parent_ids?.length) stack.push(...parent.parent_ids);
-    }
-    return false;
-  };
+  const treeResp = await page.request.get(`/api/v1/families/${family!.id}/tree`);
+  expect(treeResp.ok()).toBeTruthy();
+  const tree = (await treeResp.json()) as { roots?: TreeNode[] };
+  const root = (tree.roots ?? []).find((r) => r.id === ROOT_ID);
+  expect(root, 'patriarch An must be a root of the seed family tree').toBeTruthy();
 
-  const grandson = items.find(
-    (m) => m.generation_index === 3 && m.id !== ROOT_ID && hasAncestralPathToRoot(m),
-  );
+  const stack = [...(root!.children ?? [])];
+  let grandson: TreeNode | undefined;
+  while (stack.length && !grandson) {
+    const node = stack.shift() as TreeNode;
+    stack.unshift(...(node.children ?? []));
+    if (node.generation_index === 3) grandson = node;
+  }
   expect(grandson, 'a generation-3 descendant of An must exist in the seed data').toBeTruthy();
-  return grandson!;
+  return { id: grandson!.id, full_name: grandson!.full_name };
 }
 
 test.describe('Journey 2 — Xưng hô (Kinship)', () => {
