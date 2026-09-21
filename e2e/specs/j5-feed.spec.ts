@@ -14,13 +14,12 @@ import { loginViaMock } from '../helpers/auth';
  *   at the TOP of data-testid="feed-list".
  * - PostCard.vue: author display name element data-testid="post-author"
  *   (post.author_display_name) inside each <article>.
- * - Image attachment: a tiny inline data: URL PNG exercises the URL path
- *   without any external fetch.
+ * - Image attachment: a same-origin http(s) image URL exercises the URL
+ *   path (the API validates scheme http(s) only — data: URLs are 400).
  */
 
-// 1×1 transparent PNG (67 bytes), inline so no network is involved.
-const TINY_PNG_DATA_URL =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+// Same-origin http(s) asset (API rejects data: URLs with 400 VALIDATION_ERROR).
+const POST_IMAGE_URL = 'http://localhost:3456/static/uploads/ong-kien-tre.jpg';
 
 test.describe('Journey 5 — Bảng tin (Feed)', () => {
   test('composes a post with a unique marker + image URL and shows it with author attribution', async ({ page }) => {
@@ -41,7 +40,7 @@ test.describe('Journey 5 — Bảng tin (Feed)', () => {
 
     // 4. Attach image metadata through the real URL input + "Thêm ảnh"
     const urlInput = composer.locator('input[type="url"]');
-    await urlInput.fill(TINY_PNG_DATA_URL);
+    await urlInput.fill(POST_IMAGE_URL);
     await composer.getByRole('button', { name: 'Thêm ảnh' }).click();
     // The attached image chip (truncated URL preview) appears in the composer
     await expect(composer.locator('span[title], .truncate').first()).toBeVisible();
@@ -63,6 +62,6 @@ test.describe('Journey 5 — Bảng tin (Feed)', () => {
     expect(authorText.length).toBeGreaterThan(0);
 
     // 8. The image metadata round-trips into the rendered ImageGrid
-    await expect(createdPost.locator('img').first()).toHaveAttribute('src', TINY_PNG_DATA_URL);
+    await expect(createdPost.locator('img').first()).toHaveAttribute('src', POST_IMAGE_URL);
   });
 });

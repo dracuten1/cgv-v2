@@ -103,7 +103,11 @@ test.describe('Journey 3 — Tài khoản (Linking)', () => {
     const identityId = (await page.locator('[data-testid^="identity-card-"]').first()
       .getAttribute('data-testid'))!
       .replace('identity-card-', '');
-    const resp = await page.request.delete(`/api/v1/me/identities/${identityId}`);
+    // page.request sends no Origin header; the W1 CSRF check would 403
+    // before the REAL 409. Browsers always send Origin on DELETE — mirror it.
+    const resp = await page.request.delete(`/api/v1/me/identities/${identityId}`, {
+      headers: { Origin: 'http://localhost:3456' },
+    });
     expect(resp.status()).toBe(409);
     const body = await resp.json().catch(() => ({}) as Record<string, unknown>);
     const errMessage = JSON.stringify(body);

@@ -93,8 +93,10 @@ test.describe('Journey 2 — Xưng hô (Kinship)', () => {
 
     // 4. Select source (grandson) and target (An) through the real pickers.
     //    Term semantics: term = what picker-1 calls picker-2 → grandson first.
-    const picker1 = page.locator('[data-testid="picker-input-1"]');
-    const picker2 = page.locator('[data-testid="picker-input-2"]');
+    // AppInput attribute fallthrough puts the testid on the wrapper div;
+    // the fillable <input> is nested inside it.
+    const picker1 = page.locator('[data-testid="picker-input-1"] input');
+    const picker2 = page.locator('[data-testid="picker-input-2"] input');
 
     const dropdownOption = (name: string) =>
       page.locator('.absolute.z-30 button', { hasText: name }).first();
