@@ -30,7 +30,7 @@ Chỉ với một câu lệnh duy nhất từ thư mục gốc dự án:
 cp deploy/.env.example .env
 
 # 2. Xây dựng và khởi chạy toàn bộ cụm dịch vụ nền tảng (cgp-v2)
-docker compose -f deploy/docker-compose.yml --env-file .env up -d --build
+docker compose up --build
 ```
 
 Sau khi khởi chạy thành công:
