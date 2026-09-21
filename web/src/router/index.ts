@@ -25,6 +25,14 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/auth/oauth/callback',
+    name: 'oauth-callback',
+    component: () => import('@/views/OAuthCallbackView.vue'),
+    meta: {
+      title: 'Liên kết tài khoản — Cây Gia Phả',
+    },
+  },
+  {
     path: '/tree',
     name: 'tree',
     component: () => import('@/views/TreeView.vue'),

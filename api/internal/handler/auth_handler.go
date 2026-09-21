@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/dracuten1/cgv-v2/api/internal/auth"
@@ -69,31 +72,45 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	c.Redirect(http.StatusFound, url)
 }
 
-// Callback handles GET /api/v1/auth/:provider/callback
+// Callback handles GET /api/v1/auth/:provider/callback (and, via LinkCallback,
+// GET /api/v1/me/link/:provider/callback).
+//
+// Content negotiation (browser seam): when the request Accept header contains
+// text/html the caller is an interactive browser navigation — errors and
+// success are answered with a 302 to the SPA seam
+// {PublicBaseURL}/auth/oauth/callback?oauth_error=<code>|oauth_linked=<provider>
+// instead of a JSON body, so the user never dead-ends on raw JSON. Any other
+// Accept (or none) keeps the historical JSON envelopes byte-for-byte.
 func (h *AuthHandler) Callback(c *gin.Context) {
+	provider := c.Param("provider")
+
 	defer func() {
 		if r := recover(); r != nil {
-			respondError(c, fmt.Errorf("lỗi hệ thống: %v", r))
+			respondCallbackError(c, h.cfg, fmt.Errorf("lỗi hệ thống: %v", r))
 		}
 	}()
 
-	provider := c.Param("provider")
 	code := c.Query("code")
 	stateParam := c.Query("state")
 
 	if code == "" || stateParam == "" {
-		respondError(c, auth.ErrInvalidState)
+		respondCallbackError(c, h.cfg, auth.ErrInvalidState)
 		return
 	}
 
 	res, err := h.authSvc.HandleCallback(c.Request.Context(), c.Writer, c.Request, provider, code, stateParam)
 	if err != nil {
-		respondError(c, err)
+		respondCallbackError(c, h.cfg, err)
 		return
 	}
 
-	// Set session cookie
+	// Set session cookie (must land on the same response as the browser 302).
 	setAuthCookie(c, h.cfg, res.CookieName, res.Token)
+
+	if isBrowserCallback(c) {
+		redirectCallbackSuccess(c, h.cfg, provider)
+		return
+	}
 
 	if res.IsLinked {
 		c.JSON(http.StatusOK, gin.H{
@@ -363,6 +380,100 @@ func clearAuthCookie(c *gin.Context, cfg *config.Config, cookieName string) {
 	secure := cfg.AppEnv != config.EnvDev
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(cookieName, "", -1, "/", "", secure, true)
+}
+
+// ---------------------------------------------------------------------------
+// OAuth callback browser/JSON content negotiation
+// ---------------------------------------------------------------------------
+
+// oauthBrowserAcceptToken marks a callback request as an interactive browser
+// navigation when it appears (case-insensitively) in the Accept header.
+const oauthBrowserAcceptToken = "text/html"
+
+// Stable, non-sensitive error codes surfaced to the SPA through the
+// ?oauth_error= redirect seam. Never include raw provider detail here.
+const (
+	oauthErrCodeInvalidState   = "invalid_state"
+	oauthErrCodeAlreadyLinked  = "already_linked"
+	oauthErrCodeProviderError  = "provider_error"
+	oauthErrCodeDemoRestricted = "demo_restricted"
+	oauthErrCodeServerError    = "server_error"
+)
+
+// isBrowserCallback reports whether this callback request came from an
+// interactive browser navigation: the Accept header contains text/html
+// (case-insensitive). XHR/API clients (e.g. Accept: application/json) and
+// requests with no Accept header at all fall back to JSON mode, which keeps
+// the historical envelopes and existing API clients working unchanged.
+func isBrowserCallback(c *gin.Context) bool {
+	return strings.Contains(strings.ToLower(c.GetHeader("Accept")), oauthBrowserAcceptToken)
+}
+
+// oauthErrorCode maps a callback-flow failure to its stable redirect code.
+// The mapping mirrors respondError's severity ordering but carries no
+// provider-identifying or raw error detail.
+func oauthErrorCode(err error) string {
+	switch {
+	case errors.Is(err, auth.ErrInvalidState):
+		return oauthErrCodeInvalidState
+	case errors.Is(err, auth.ErrAlreadyLinked):
+		return oauthErrCodeAlreadyLinked
+	case errors.Is(err, auth.ErrDemoIsolation):
+		return oauthErrCodeDemoRestricted
+	case errors.Is(err, auth.ErrProviderExchange),
+		errors.Is(err, auth.ErrProviderDisabled),
+		errors.Is(err, auth.ErrUnknownProvider):
+		return oauthErrCodeProviderError
+	default:
+		return oauthErrCodeServerError
+	}
+}
+
+// oauthCallbackRedirectURL builds the SPA seam URL strictly from the
+// configured PublicBaseURL — never from request Host/Origin/X-Forwarded-* —
+// so a hostile Host header cannot turn the 302 into an open redirect.
+// If PublicBaseURL is unset (possible only outside strict modes, which
+// fail-closed on it), the Location degrades to a relative path; no
+// request-derived data is ever used.
+func oauthCallbackRedirectURL(cfg *config.Config, query string) string {
+	base := strings.TrimRight(cfg.PublicBaseURL, "/")
+	if base == "" {
+		return "/auth/oauth/callback?" + query
+	}
+	return base + "/auth/oauth/callback?" + query
+}
+
+// respondCallbackError is the single error seam for both OAuth callback
+// endpoints: browsers receive a 302 to the SPA with a stable ?oauth_error=
+// code; every other client keeps the standard JSON envelope via respondError.
+func respondCallbackError(c *gin.Context, cfg *config.Config, err error) {
+	if c.Writer.Written() {
+		// Headers already sent (panic mid-response): a second response would
+		// be malformed; nothing safe left to send.
+		return
+	}
+	if !isBrowserCallback(c) {
+		respondError(c, err)
+		return
+	}
+
+	code := oauthErrorCode(err)
+	if code == oauthErrCodeServerError {
+		// Keep respondError's observability parity: unclassified errors must
+		// still reach the server log even though the browser gets a redirect.
+		slog.Error("Lỗi hệ thống chưa được phân loại (oauth callback redirect)",
+			slog.String("path", c.Request.URL.Path),
+			slog.String("error", err.Error()),
+		)
+	}
+	c.Redirect(http.StatusFound, oauthCallbackRedirectURL(cfg, "oauth_error="+url.QueryEscape(code)))
+}
+
+// redirectCallbackSuccess sends a browser from a successful OAuth callback to
+// the SPA seam, carrying only the public provider name. The session cookie
+// must be set BEFORE calling this so cookie + Location travel on the same 302.
+func redirectCallbackSuccess(c *gin.Context, cfg *config.Config, provider string) {
+	c.Redirect(http.StatusFound, oauthCallbackRedirectURL(cfg, "oauth_linked="+url.QueryEscape(provider)))
 }
 
 // getPublicBaseURL determines the base URL from config or request origin.

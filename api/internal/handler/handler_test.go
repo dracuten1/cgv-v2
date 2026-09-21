@@ -58,8 +58,19 @@ func (a *fakeAuthService) LoginURL(w http.ResponseWriter, r *http.Request, provi
 }
 
 func (a *fakeAuthService) HandleCallback(ctx context.Context, w http.ResponseWriter, r *http.Request, provider, code, stateParam string) (*auth.AuthResult, error) {
-	if code == "bad_state" {
+	// Scripted sentinel codes let tests exercise each error branch without a
+	// real provider; no existing test uses these magic code values.
+	switch code {
+	case "bad_state":
 		return nil, auth.ErrInvalidState
+	case "already_linked":
+		return nil, auth.ErrAlreadyLinked
+	case "provider_fail":
+		return nil, auth.ErrProviderExchange
+	case "demo_restricted":
+		return nil, auth.ErrDemoIsolation
+	case "server_boom":
+		return nil, errors.New("khủng hoảng chưa phân loại")
 	}
 	u := model.User{ID: "usr-1", DisplayName: "Test User"}
 	return &auth.AuthResult{
@@ -1513,5 +1524,409 @@ func TestVerifyMagicLinkPOST(t *testing.T) {
 	r.ServeHTTP(wBadJSON, reqBadJSON)
 	if wBadJSON.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for malformed json, got %d", wBadJSON.Code)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// OAuth callback browser/JSON content negotiation (SPA redirect seam)
+// ---------------------------------------------------------------------------
+
+const (
+	browserAccept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+	// oauthSeamBase mirrors cfg.PublicBaseURL of setupTestRouter.
+	oauthSeamBase = "http://localhost:3456"
+)
+
+// callbackGet fires a GET at the login callback endpoint with the given
+// Accept header ("" = no header at all) and hostile Host override ("" = none).
+func callbackGet(r *gin.Engine, code, accept, hostOverride string) *httptest.ResponseRecorder {
+	target := "/api/v1/auth/google/callback?code=" + code + "&state=any-state"
+	req, _ := http.NewRequest("GET", target, nil)
+	if hostOverride != "" {
+		req.Host = hostOverride
+	}
+	if accept != "" {
+		req.Header.Set("Accept", accept)
+	}
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	return w
+}
+
+// assertOAuthRedirect asserts a 302 whose Location is EXACTLY the SPA seam
+// URL with the given query (never derived from the request Host).
+func assertOAuthRedirect(t *testing.T, w *httptest.ResponseRecorder, query string) {
+	t.Helper()
+	if w.Code != http.StatusFound {
+		t.Fatalf("expected 302 redirect, got %d. Body: %s", w.Code, w.Body.String())
+	}
+	want := oauthSeamBase + "/auth/oauth/callback?" + query
+	if got := w.Header().Get("Location"); got != want {
+		t.Fatalf("expected Location %q, got %q", want, got)
+	}
+}
+
+// TestOAuthCallbackBrowserRedirect covers the negotiation matrix on the
+// callback seam: browser Accept → 302 with stable ?oauth_error= / ?oauth_linked=
+// codes; JSON or missing Accept → historical envelopes byte-for-byte; and the
+// open-redirect guard against a hostile Host header.
+func TestOAuthCallbackBrowserRedirect(t *testing.T) {
+	r, _, _, _ := setupTestRouter()
+
+	// (1) Browser Accept + invalid state → 302 ?oauth_error=invalid_state
+	assertOAuthRedirect(t, callbackGet(r, "bad_state", browserAccept, ""), "oauth_error=invalid_state")
+
+	// (2) Browser Accept + already-linked / provider failure rows
+	assertOAuthRedirect(t, callbackGet(r, "already_linked", browserAccept, ""), "oauth_error=already_linked")
+	assertOAuthRedirect(t, callbackGet(r, "provider_fail", browserAccept, ""), "oauth_error=provider_error")
+	// Demo isolation and unclassified errors pin the rest of the fixed code set.
+	assertOAuthRedirect(t, callbackGet(r, "demo_restricted", browserAccept, ""), "oauth_error=demo_restricted")
+	assertOAuthRedirect(t, callbackGet(r, "server_boom", browserAccept, ""), "oauth_error=server_error")
+
+	// Case-insensitive Accept matching: TEXT/HTML is still browser mode.
+	assertOAuthRedirect(t, callbackGet(r, "bad_state", "TEXT/HTML; charset=utf-8", ""), "oauth_error=invalid_state")
+
+	// (3) Browser Accept + success → 302 ?oauth_linked=google WITH session cookie
+	wOK := callbackGet(r, "good_code", browserAccept, "")
+	if wOK.Code != http.StatusFound {
+		t.Fatalf("(3) expected 302 on success, got %d. Body: %s", wOK.Code, wOK.Body.String())
+	}
+	assertOAuthRedirect(t, wOK, "oauth_linked=google")
+	var sessionCookie *http.Cookie
+	for _, c := range wOK.Result().Cookies() {
+		if c.Name == "cgp_session" && c.Value != "" {
+			sessionCookie = c
+			break
+		}
+	}
+	if sessionCookie == nil {
+		t.Fatal("(3) expected session cookie set on the 302 response")
+	}
+
+	// (4) XHR Accept → JSON envelopes unchanged
+	wJSON400 := callbackGet(r, "bad_state", "application/json", "")
+	if wJSON400.Code != http.StatusBadRequest {
+		t.Fatalf("(4) expected 400 JSON for invalid state, got %d. Body: %s", wJSON400.Code, wJSON400.Body.String())
+	}
+	var env400 model.ErrorEnvelope
+	if err := json.Unmarshal(wJSON400.Body.Bytes(), &env400); err != nil {
+		t.Fatalf("(4) unmarshal 400 envelope: %v", err)
+	}
+	if env400.Code != model.CodeValidationError || env400.Success {
+		t.Errorf("(4) expected VALIDATION_ERROR success=false envelope, got %+v", env400)
+	}
+
+	wJSON409 := callbackGet(r, "already_linked", "application/json", "")
+	if wJSON409.Code != http.StatusConflict {
+		t.Fatalf("(4) expected 409 JSON for already-linked, got %d. Body: %s", wJSON409.Code, wJSON409.Body.String())
+	}
+	var env409 model.ErrorEnvelope
+	if err := json.Unmarshal(wJSON409.Body.Bytes(), &env409); err != nil {
+		t.Fatalf("(4) unmarshal 409 envelope: %v", err)
+	}
+	if env409.Code != model.CodeConflict || env409.Success {
+		t.Errorf("(4) expected CONFLICT success=false envelope, got %+v", env409)
+	}
+
+	wJSON502 := callbackGet(r, "provider_fail", "application/json", "")
+	if wJSON502.Code != http.StatusBadGateway {
+		t.Fatalf("(4) expected 502 JSON for provider failure, got %d. Body: %s", wJSON502.Code, wJSON502.Body.String())
+	}
+
+	// (5) Open-redirect guard: hostile Host header must not leak into Location.
+	assertOAuthRedirect(t, callbackGet(r, "bad_state", browserAccept, "evil.example.com"), "oauth_error=invalid_state")
+
+	// (6) No Accept header at all → JSON mode (safe default for API clients).
+	wNoAccept := callbackGet(r, "bad_state", "", "")
+	if wNoAccept.Code != http.StatusBadRequest {
+		t.Fatalf("(6) expected 400 JSON with no Accept header, got %d. Body: %s", wNoAccept.Code, wNoAccept.Body.String())
+	}
+	var envNoAccept model.ErrorEnvelope
+	if err := json.Unmarshal(wNoAccept.Body.Bytes(), &envNoAccept); err != nil {
+		t.Fatalf("(6) unmarshal no-Accept envelope: %v", err)
+	}
+	if envNoAccept.Code != model.CodeValidationError {
+		t.Errorf("(6) expected VALIDATION_ERROR envelope, got %+v", envNoAccept)
+	}
+
+	// JSON success must remain byte-shaped as before (200 + user/is_new envelope).
+	wJSONOK := callbackGet(r, "good_code", "application/json", "")
+	if wJSONOK.Code != http.StatusOK {
+		t.Fatalf("expected 200 JSON on success, got %d. Body: %s", wJSONOK.Code, wJSONOK.Body.String())
+	}
+	var successResp struct {
+		User  model.User `json:"user"`
+		IsNew bool       `json:"is_new"`
+	}
+	if err := json.Unmarshal(wJSONOK.Body.Bytes(), &successResp); err != nil {
+		t.Fatalf("unmarshal JSON success envelope: %v", err)
+	}
+	if successResp.User.ID != "usr-1" {
+		t.Errorf("expected user usr-1 in JSON success envelope, got %+v", successResp)
+	}
+}
+
+// TestOAuthCallbackBrowserRedirectRealFlow replays the seam against the REAL
+// auth service (stub Google endpoints): browser success carries the session
+// cookie on the 302, and already-linked / provider-exchange failures redirect
+// with their stable codes while JSON mode keeps the envelopes.
+func TestOAuthCallbackBrowserRedirectRealFlow(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	var failTokenExchange bool
+	oauthServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/token":
+			w.Header().Set("Content-Type", "application/json")
+			if failTokenExchange {
+				w.WriteHeader(http.StatusInternalServerError)
+				_ = json.NewEncoder(w).Encode(map[string]any{"error": "server_error"})
+				return
+			}
+			code := r.FormValue("code")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"access_token": "token-for-" + code,
+				"token_type":   "Bearer",
+				"expires_in":   3600,
+			})
+		case "/userinfo":
+			sub := strings.TrimPrefix(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "), "token-for-")
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"sub":            "sub-" + sub,
+				"name":           "Google User " + sub,
+				"email":          sub + "@gmail.com",
+				"email_verified": true,
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer oauthServer.Close()
+
+	cfg := &config.Config{
+		Port:               8080,
+		AppEnv:             config.EnvDev,
+		CookieName:         config.ProdCookieName,
+		JWTSecret:          "test-secret-min-32-chars-long-123456",
+		JWTIssuer:          config.ProdJWTIssuer,
+		GoogleClientID:     "test-google-client-id",
+		GoogleClientSecret: "test-google-client-secret",
+		CORSAllowedOrigins: []string{"http://localhost:3456"},
+		PublicBaseURL:      "http://localhost:3456",
+	}
+
+	userStore := newInMemUserRepo()
+	identStore := newInMemIdentityRepo()
+	sessionStore := newInMemSessionRepo()
+	contactStore := newInMemContactRepo()
+	txMgr := &fakeTxManager{}
+
+	realAuthSvc := auth.NewService(cfg, txMgr, auth.ServiceDeps{
+		Users:      userStore,
+		Identities: identStore,
+		Contacts:   contactStore,
+		Tokens:     &inMemMagicLinkRepo{},
+		Sessions:   sessionStore,
+		Locker:     &inMemContactLocker{},
+		Outbox:     &inMemOutboxRepo{},
+	})
+	realAuthSvc.SetGoogleEndpoints(oauthServer.URL+"/auth", oauthServer.URL+"/token", oauthServer.URL+"/userinfo")
+
+	router := NewRouter(Deps{
+		Cfg:            cfg,
+		Pinger:         &fakePinger{},
+		TxManager:      txMgr,
+		AuthService:    realAuthSvc,
+		UserStore:      userStore,
+		ContactStore:   contactStore,
+		FamilyRepo:     &fakeFamilyRepo{},
+		MemberRepo:     &fakeMemberRepo{},
+		RelationRepo:   &fakeRelationRepo{},
+		KinshipSvc:     &fakeKinshipService{},
+		ExcelSvc:       &fakeExcelService{},
+		FeedSvc:        &fakeFeedService{},
+		SocialPostRepo: &fakeSocialPostRepo{},
+		PushSvc:        &fakePushService{},
+	})
+
+	ctx := context.Background()
+
+	// Start a login flow: grab state + state cookie.
+	wLogin := httptest.NewRecorder()
+	rLogin, _ := http.NewRequest("GET", "/api/v1/auth/google/login", nil)
+	router.ServeHTTP(wLogin, rLogin)
+	if wLogin.Code != http.StatusFound {
+		t.Fatalf("expected 302 for login start, got %d", wLogin.Code)
+	}
+	loginLoc, _ := url.Parse(wLogin.Header().Get("Location"))
+	loginState := loginLoc.Query().Get("state")
+	var stateCookie *http.Cookie
+	for _, c := range wLogin.Result().Cookies() {
+		if c.Name == "cgp_oauth_state" {
+			stateCookie = c
+			break
+		}
+	}
+	if stateCookie == nil {
+		t.Fatal("expected cgp_oauth_state cookie from login")
+	}
+
+	// (a) Browser login callback → 302 ?oauth_linked=google + session cookie.
+	wBrowserOK := httptest.NewRecorder()
+	rBrowserOK, _ := http.NewRequest("GET", "/api/v1/auth/google/callback?code=real_user_1&state="+loginState, nil)
+	rBrowserOK.Header.Set("Accept", browserAccept)
+	rBrowserOK.AddCookie(stateCookie)
+	router.ServeHTTP(wBrowserOK, rBrowserOK)
+	if wBrowserOK.Code != http.StatusFound {
+		t.Fatalf("(a) expected 302 for browser login callback, got %d. Body: %s", wBrowserOK.Code, wBrowserOK.Body.String())
+	}
+	wantOK := oauthSeamBase + "/auth/oauth/callback?oauth_linked=google"
+	if got := wBrowserOK.Header().Get("Location"); got != wantOK {
+		t.Fatalf("(a) expected Location %q, got %q", wantOK, got)
+	}
+	var sessionCookie *http.Cookie
+	for _, c := range wBrowserOK.Result().Cookies() {
+		if c.Name == config.ProdCookieName && c.Value != "" {
+			sessionCookie = c
+			break
+		}
+	}
+	if sessionCookie == nil {
+		t.Fatal("(a) expected session cookie on the browser 302")
+	}
+	if _, err := identStore.FindByProviderSubject(ctx, model.ProviderGoogle, "sub-real_user_1"); err != nil {
+		t.Fatalf("(a) expected identity persisted: %v", err)
+	}
+
+	// (b) Same Google identity linked to User 2 → browser 302 ?oauth_error=already_linked.
+	user2, err := userStore.Create(ctx, "User 2", false)
+	if err != nil {
+		t.Fatalf("(b) create user 2: %v", err)
+	}
+	token2, err := realAuthSvc.IssueToken(*user2)
+	if err != nil {
+		t.Fatalf("(b) issue token user 2: %v", err)
+	}
+	sessionCookie2 := &http.Cookie{Name: config.ProdCookieName, Value: token2}
+
+	wLinkStart := httptest.NewRecorder()
+	rLinkStart, _ := http.NewRequest("POST", "/api/v1/me/link/google/start", nil)
+	rLinkStart.Header.Set("Origin", "http://localhost:3456")
+	rLinkStart.AddCookie(sessionCookie2)
+	router.ServeHTTP(wLinkStart, rLinkStart)
+	if wLinkStart.Code != http.StatusOK {
+		t.Fatalf("(b) expected 200 for link start, got %d. Body: %s", wLinkStart.Code, wLinkStart.Body.String())
+	}
+	var linkStartResp struct {
+		URL string `json:"url"`
+	}
+	if err := json.Unmarshal(wLinkStart.Body.Bytes(), &linkStartResp); err != nil {
+		t.Fatalf("(b) unmarshal link start: %v", err)
+	}
+	linkLoc, _ := url.Parse(linkStartResp.URL)
+	linkState := linkLoc.Query().Get("state")
+	var linkCookie *http.Cookie
+	for _, c := range wLinkStart.Result().Cookies() {
+		if c.Name == "cgp_oauth_state" {
+			linkCookie = c
+			break
+		}
+	}
+	if linkCookie == nil {
+		t.Fatal("(b) expected cgp_oauth_state cookie from link start")
+	}
+
+	wConflict := httptest.NewRecorder()
+	rConflict, _ := http.NewRequest("GET", "/api/v1/auth/google/callback?code=real_user_1&state="+linkState, nil)
+	rConflict.Header.Set("Accept", browserAccept)
+	rConflict.AddCookie(linkCookie)
+	rConflict.AddCookie(sessionCookie2)
+	router.ServeHTTP(wConflict, rConflict)
+	if wConflict.Code != http.StatusFound {
+		t.Fatalf("(b) expected 302 for browser already-linked, got %d. Body: %s", wConflict.Code, wConflict.Body.String())
+	}
+	wantConflict := oauthSeamBase + "/auth/oauth/callback?oauth_error=already_linked"
+	if got := wConflict.Header().Get("Location"); got != wantConflict {
+		t.Fatalf("(b) expected Location %q, got %q", wantConflict, got)
+	}
+
+	// (c) Provider exchange failure → browser 302 ?oauth_error=provider_error.
+	wLinkStart3 := httptest.NewRecorder()
+	rLinkStart3, _ := http.NewRequest("POST", "/api/v1/me/link/google/start", nil)
+	rLinkStart3.Header.Set("Origin", "http://localhost:3456")
+	rLinkStart3.AddCookie(sessionCookie2)
+	router.ServeHTTP(wLinkStart3, rLinkStart3)
+	var linkStartResp3 struct {
+		URL string `json:"url"`
+	}
+	_ = json.Unmarshal(wLinkStart3.Body.Bytes(), &linkStartResp3)
+	linkLoc3, _ := url.Parse(linkStartResp3.URL)
+	linkState3 := linkLoc3.Query().Get("state")
+	var linkCookie3 *http.Cookie
+	for _, c := range wLinkStart3.Result().Cookies() {
+		if c.Name == "cgp_oauth_state" {
+			linkCookie3 = c
+			break
+		}
+	}
+
+	failTokenExchange = true
+	defer func() { failTokenExchange = false }()
+	wProviderFail := httptest.NewRecorder()
+	rProviderFail, _ := http.NewRequest("GET", "/api/v1/auth/google/callback?code=whatever&state="+linkState3, nil)
+	rProviderFail.Header.Set("Accept", browserAccept)
+	rProviderFail.AddCookie(linkCookie3)
+	rProviderFail.AddCookie(sessionCookie2)
+	router.ServeHTTP(wProviderFail, rProviderFail)
+	if wProviderFail.Code != http.StatusFound {
+		t.Fatalf("(c) expected 302 for browser provider failure, got %d. Body: %s", wProviderFail.Code, wProviderFail.Body.String())
+	}
+	wantProviderFail := oauthSeamBase + "/auth/oauth/callback?oauth_error=provider_error"
+	if got := wProviderFail.Header().Get("Location"); got != wantProviderFail {
+		t.Fatalf("(c) expected Location %q, got %q", wantProviderFail, got)
+	}
+
+	// (d) JSON mode on the real service: success stays a 200 envelope and
+	// invalid state stays a 400 envelope — negotiation must not leak.
+	wLogin2 := httptest.NewRecorder()
+	rLogin2, _ := http.NewRequest("GET", "/api/v1/auth/google/login", nil)
+	router.ServeHTTP(wLogin2, rLogin2)
+	loginLoc2, _ := url.Parse(wLogin2.Header().Get("Location"))
+	loginState2 := loginLoc2.Query().Get("state")
+	var stateCookie2 *http.Cookie
+	for _, c := range wLogin2.Result().Cookies() {
+		if c.Name == "cgp_oauth_state" {
+			stateCookie2 = c
+			break
+		}
+	}
+
+	failTokenExchange = false
+	wJSONOK := httptest.NewRecorder()
+	rJSONOK, _ := http.NewRequest("GET", "/api/v1/auth/google/callback?code=real_user_3&state="+loginState2, nil)
+	rJSONOK.Header.Set("Accept", "application/json")
+	rJSONOK.AddCookie(stateCookie2)
+	router.ServeHTTP(wJSONOK, rJSONOK)
+	if wJSONOK.Code != http.StatusOK {
+		t.Fatalf("(d) expected 200 JSON for login callback, got %d. Body: %s", wJSONOK.Code, wJSONOK.Body.String())
+	}
+	var jsonOK struct {
+		User model.User `json:"user"`
+	}
+	if err := json.Unmarshal(wJSONOK.Body.Bytes(), &jsonOK); err != nil || jsonOK.User.ID == "" {
+		t.Fatalf("(d) expected JSON user envelope, got %s (err: %v)", wJSONOK.Body.String(), err)
+	}
+
+	wJSONBad := httptest.NewRecorder()
+	rJSONBad, _ := http.NewRequest("GET", "/api/v1/auth/google/callback?code=x&state=tampered.state", nil)
+	rJSONBad.Header.Set("Accept", "application/json")
+	router.ServeHTTP(wJSONBad, rJSONBad)
+	if wJSONBad.Code != http.StatusBadRequest {
+		t.Fatalf("(d) expected 400 JSON for invalid state, got %d. Body: %s", wJSONBad.Code, wJSONBad.Body.String())
+	}
+	var env400 model.ErrorEnvelope
+	if err := json.Unmarshal(wJSONBad.Body.Bytes(), &env400); err != nil || env400.Code != model.CodeValidationError {
+		t.Fatalf("(d) expected VALIDATION_ERROR envelope, got %s (err: %v)", wJSONBad.Body.String(), err)
 	}
 }
