@@ -1,4 +1,5 @@
 .agents/
 .env
 deploy/.env
+deploy/.env.demo
 .vite/
