@@ -1,8 +1,13 @@
 package seed
 
 import (
+	"context"
+	"errors"
 	"testing"
 	"time"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/dracuten1/cgv-v2/api/internal/model"
 )
@@ -413,4 +418,62 @@ func TestFixture_GenderCanonical(t *testing.T) {
 			}
 		}
 	}
+}
+
+// TestRunWithExecutor_Regression verifies that RunWithExecutor accepts an existing DBTX
+// without opening a nested transaction, and respects the already-seeded guard.
+func TestRunWithExecutor_Regression(t *testing.T) {
+	fake := &fakeExecutor{rowsCount: 0}
+	sum, err := RunWithExecutor(context.Background(), fake)
+	if err != nil {
+		t.Fatalf("RunWithExecutor failed on empty database: %v", err)
+	}
+	if sum.Families != 3 || sum.Members != 53 {
+		t.Fatalf("unexpected summary: %+v", sum)
+	}
+
+	// Test already seeded guard
+	fakePopulated := &fakeExecutor{rowsCount: 1}
+	_, errPop := RunWithExecutor(context.Background(), fakePopulated)
+	if !errors.Is(errPop, ErrAlreadySeeded) {
+		t.Fatalf("expected ErrAlreadySeeded, got %v", errPop)
+	}
+}
+
+// fakeRow implements pgx.Row for scanning an integer count.
+type fakeRow struct {
+	val int
+}
+
+func (r fakeRow) Scan(dest ...any) error {
+	if len(dest) > 0 {
+		if p, ok := dest[0].(*int); ok {
+			*p = r.val
+			return nil
+		}
+		if p, ok := dest[0].(*int64); ok {
+			*p = int64(r.val)
+			return nil
+		}
+	}
+	return nil
+}
+
+// fakeExecutor satisfies database.DBTX.
+type fakeExecutor struct {
+	rowsCount int
+	execCount int
+}
+
+func (f *fakeExecutor) Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error) {
+	f.execCount++
+	return pgconn.NewCommandTag("INSERT 0 1"), nil
+}
+
+func (f *fakeExecutor) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
+	return nil, nil
+}
+
+func (f *fakeExecutor) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row {
+	return fakeRow{val: f.rowsCount}
 }

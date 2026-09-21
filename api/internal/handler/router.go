@@ -76,7 +76,6 @@ func NewRouter(deps Deps) *gin.Engine {
 		// Public Reads (Genealogy, Kinship, Feed)
 		v1.GET("/families", treeH.ListFamilies)
 		v1.GET("/families/:id/tree", treeH.GetTree)
-		v1.GET("/families/:id/export.xlsx", excelH.Export)
 		v1.GET("/families/:id/feed", feedH.List)
 
 		v1.GET("/members", treeH.ListMembers)
@@ -104,7 +103,8 @@ func NewRouter(deps Deps) *gin.Engine {
 			protected.PUT("/members/:id", treeH.UpdateMember)
 			protected.DELETE("/members/:id", treeH.DeleteMember)
 
-			// Excel import
+			// Excel import & export (protected)
+			protected.GET("/families/:id/export.xlsx", excelH.Export)
 			protected.POST("/families/:id/import.xlsx", excelH.Import)
 
 			// Feed creation
