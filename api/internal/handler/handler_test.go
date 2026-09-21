@@ -3,6 +3,9 @@ package handler
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,6 +27,7 @@ import (
 	"github.com/dracuten1/cgv-v2/api/internal/model"
 	genrepo "github.com/dracuten1/cgv-v2/api/internal/repository/genealogy"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // Fake implementations for router & endpoint unit tests without database
@@ -128,10 +132,6 @@ func (a *fakeAuthService) CurrentUser(ctx context.Context, userID string) (*auth
 
 func (a *fakeAuthService) StartLinkProvider(w http.ResponseWriter, r *http.Request, userID, provider string) (string, error) {
 	return "https://oauth.example.com/link", nil
-}
-
-func (a *fakeAuthService) CompleteLink(ctx context.Context, w http.ResponseWriter, r *http.Request, userID, provider, code, stateParam string) error {
-	return nil
 }
 
 func (a *fakeAuthService) UnlinkIdentity(ctx context.Context, userID, identityID string) error {
@@ -1470,6 +1470,356 @@ func TestLinkCallbackFlow(t *testing.T) {
 	if err != nil || linkedBeta.UserID != user1ID {
 		t.Fatalf("(v) expected beta identity linked to User 1, got %+v (err: %v)", linkedBeta, err)
 	}
+}
+
+// ---------------------------------------------------------------------------
+// HandleCallback link-intent takeover prevention, asserted through the LIVE
+// route (real Service + real router + httptest Google stub). Ported from the
+// deleted service-level TestCompleteLink_SessionSwapTakeoverPrevention; the
+// production properties now live entirely in the HandleCallback link
+// dispatch (burn-on-read nonce, link-state JWT verification, session
+// cross-check) and completeLinkWithClaims (ErrAlreadyLinked → 409).
+// ---------------------------------------------------------------------------
+
+// signTestState mirrors internal/auth's bindState ("payload.hmac(payload)")
+// so the test can mint its own state parameters — including ones carrying
+// deliberately malformed link-state JWTs — that unbind cleanly at the route.
+func signTestState(secret, payload string) string {
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write([]byte(payload))
+	return payload + "." + hex.EncodeToString(mac.Sum(nil))
+}
+
+// testLinkStateClaims mirrors auth.LinkStateClaims (same JSON contract) so
+// tests can sign link-state JWTs with a chosen purpose/aud/iss defect.
+type testLinkStateClaims struct {
+	UserID   string `json:"sub"`
+	Provider string `json:"provider"`
+	Nonce    string `json:"nonce"`
+	Purpose  string `json:"purpose"`
+	jwt.RegisteredClaims
+}
+
+func TestHandleCallback_LinkIntent_SessionSwapTakeoverPrevention(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	// Stub Google OAuth server: code → access token → userinfo (sub "sub-<code>").
+	oauthServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/token":
+			code := r.FormValue("code")
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"access_token": "token-for-" + code,
+				"token_type":   "Bearer",
+				"expires_in":   3600,
+			})
+		case "/userinfo":
+			authHdr := r.Header.Get("Authorization")
+			tok := strings.TrimPrefix(authHdr, "Bearer ")
+			sub := strings.TrimPrefix(tok, "token-for-")
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"sub":            "sub-" + sub,
+				"name":           "Google User " + sub,
+				"email":          sub + "@gmail.com",
+				"email_verified": true,
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer oauthServer.Close()
+
+	cfg := &config.Config{
+		Port:               8080,
+		AppEnv:             config.EnvDev,
+		CookieName:         config.ProdCookieName,
+		JWTSecret:          "test-secret-min-32-chars-long-123456",
+		JWTIssuer:          config.ProdJWTIssuer,
+		GoogleClientID:     "test-google-client-id",
+		GoogleClientSecret: "test-google-client-secret",
+		CORSAllowedOrigins: []string{"http://localhost:3456"},
+		PublicBaseURL:      "http://localhost:3456",
+	}
+
+	userStore := newInMemUserRepo()
+	identStore := newInMemIdentityRepo()
+	sessionStore := newInMemSessionRepo()
+	contactStore := newInMemContactRepo()
+	txMgr := &fakeTxManager{}
+
+	realAuthSvc := auth.NewService(cfg, txMgr, auth.ServiceDeps{
+		Users:      userStore,
+		Identities: identStore,
+		Contacts:   contactStore,
+		Tokens:     &inMemMagicLinkRepo{},
+		Sessions:   sessionStore,
+		Locker:     &inMemContactLocker{},
+		Outbox:     &inMemOutboxRepo{},
+	})
+	realAuthSvc.SetGoogleEndpoints(oauthServer.URL+"/auth", oauthServer.URL+"/token", oauthServer.URL+"/userinfo")
+
+	router := NewRouter(Deps{
+		Cfg:            cfg,
+		Pinger:         &fakePinger{},
+		TxManager:      txMgr,
+		AuthService:    realAuthSvc,
+		UserStore:      userStore,
+		ContactStore:   contactStore,
+		FamilyRepo:     &fakeFamilyRepo{},
+		MemberRepo:     &fakeMemberRepo{},
+		RelationRepo:   &fakeRelationRepo{},
+		KinshipSvc:     &fakeKinshipService{},
+		ExcelSvc:       &fakeExcelService{},
+		FeedSvc:        &fakeFeedService{},
+		SocialPostRepo: &fakeSocialPostRepo{},
+		PushSvc:        &fakePushService{},
+	})
+
+	ctx := context.Background()
+
+	// seedSession creates a fresh user and returns (userID, session cookie).
+	seedSession := func(t *testing.T, name string) (string, *http.Cookie) {
+		t.Helper()
+		u, err := userStore.Create(ctx, name, false)
+		if err != nil {
+			t.Fatalf("create %s: %v", name, err)
+		}
+		tok, err := realAuthSvc.IssueToken(*u)
+		if err != nil {
+			t.Fatalf("issue token for %s: %v", name, err)
+		}
+		return u.ID, &http.Cookie{Name: config.ProdCookieName, Value: tok}
+	}
+
+	// startLink drives POST /me/link/google/start and returns the authorize
+	// state parameter plus the burn-on-read state cookie it minted.
+	startLink := func(t *testing.T, sess *http.Cookie) (string, *http.Cookie) {
+		t.Helper()
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest("POST", "/api/v1/me/link/google/start", nil)
+		r.Header.Set("Origin", "http://localhost:3456")
+		r.AddCookie(sess)
+		router.ServeHTTP(w, r)
+		if w.Code != http.StatusOK {
+			t.Fatalf("link start: expected 200, got %d. Body: %s", w.Code, w.Body.String())
+		}
+		var resp struct {
+			URL string `json:"url"`
+		}
+		if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("link start: unmarshal response: %v", err)
+		}
+		loc, err := url.Parse(resp.URL)
+		if err != nil {
+			t.Fatalf("link start: parse authorize URL: %v", err)
+		}
+		state := loc.Query().Get("state")
+		if state == "" {
+			t.Fatal("link start: expected non-empty state parameter")
+		}
+		var stateCookie *http.Cookie
+		for _, c := range w.Result().Cookies() {
+			if c.Name == "cgp_oauth_state" {
+				stateCookie = c
+				break
+			}
+		}
+		if stateCookie == nil {
+			t.Fatal("link start: expected cgp_oauth_state cookie")
+		}
+		return state, stateCookie
+	}
+
+	// stateCookieNonce extracts the raw nonce from a signed cookie value
+	// ("nonce.hmac"; the nonce itself never contains a dot).
+	stateCookieNonce := func(cookieVal string) string {
+		return cookieVal[:strings.LastIndexByte(cookieVal, '.')]
+	}
+
+	// callback GETs the public Google callback endpoint.
+	callback := func(t *testing.T, code, state string, cookies ...*http.Cookie) *httptest.ResponseRecorder {
+		t.Helper()
+		r, _ := http.NewRequest("GET", "/api/v1/auth/google/callback?code="+code+"&state="+state, nil)
+		for _, c := range cookies {
+			r.AddCookie(c)
+		}
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, r)
+		return w
+	}
+
+	// forgedLinkState binds a hand-signed link-state JWT (with deliberately
+	// wrong purpose/aud/iss) to the live state cookie's nonce, yielding a
+	// callback state parameter whose ONLY defect is the given claim.
+	forgedLinkState := func(t *testing.T, userID, nonce, purpose, aud, iss string) string {
+		t.Helper()
+		claims := &testLinkStateClaims{
+			UserID:   userID,
+			Provider: model.ProviderGoogle,
+			Nonce:    nonce,
+			Purpose:  purpose,
+			RegisteredClaims: jwt.RegisteredClaims{
+				Issuer:    iss,
+				Audience:  jwt.ClaimStrings{aud},
+				IssuedAt:  jwt.NewNumericDate(time.Now()),
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Minute)),
+			},
+		}
+		signed, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(cfg.JWTSecret))
+		if err != nil {
+			t.Fatalf("sign forged link-state JWT: %v", err)
+		}
+		return signTestState(cfg.JWTSecret, signed+"|test-verifier")
+	}
+
+	t.Run("happy_path_linkage_persisted", func(t *testing.T) {
+		userAID, sessA := seedSession(t, "TP Happy User A")
+		state, stateCookie := startLink(t, sessA)
+
+		w := callback(t, "tp-happy", state, stateCookie, sessA)
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected 200 for link callback, got %d. Body: %s", w.Code, w.Body.String())
+		}
+
+		// Linkage persisted and owned by User A.
+		linked, err := identStore.FindByProviderSubject(ctx, model.ProviderGoogle, "sub-tp-happy")
+		if err != nil {
+			t.Fatalf("expected linked identity persisted: %v", err)
+		}
+		if linked.UserID != userAID {
+			t.Fatalf("expected identity owned by %q, got %q", userAID, linked.UserID)
+		}
+		idents, err := identStore.ListByUser(ctx, userAID)
+		if err != nil || len(idents) != 1 {
+			t.Fatalf("expected User A to have exactly 1 identity, got %d (err: %v)", len(idents), err)
+		}
+	})
+
+	t.Run("replayed_state_nonce_rejected", func(t *testing.T) {
+		userAID, sessA := seedSession(t, "TP Replay User")
+		state, stateCookie := startLink(t, sessA)
+
+		w1 := callback(t, "tp-replay", state, stateCookie, sessA)
+		if w1.Code != http.StatusOK {
+			t.Fatalf("expected 200 on first link callback, got %d. Body: %s", w1.Code, w1.Body.String())
+		}
+
+		// Replay the byte-identical callback: the burn-on-read nonce is spent.
+		w2 := callback(t, "tp-replay", state, stateCookie, sessA)
+		if w2.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 for replayed state nonce, got %d. Body: %s", w2.Code, w2.Body.String())
+		}
+
+		// The replay linked nothing new.
+		idents, err := identStore.ListByUser(ctx, userAID)
+		if err != nil || len(idents) != 1 {
+			t.Fatalf("expected exactly 1 identity after replay, got %d (err: %v)", len(idents), err)
+		}
+	})
+
+	t.Run("mismatched_state_nonce_rejected", func(t *testing.T) {
+		_, sessA := seedSession(t, "TP Mismatch User")
+		_, cookieA := startLink(t, sessA)
+		stateB, _ := startLink(t, sessA)
+
+		// Cookie from start #1 + state param from start #2 → nonce mismatch.
+		w := callback(t, "tp-mismatch", stateB, cookieA)
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 for mismatched state nonce, got %d. Body: %s", w.Code, w.Body.String())
+		}
+	})
+
+	t.Run("absent_state_cookie_rejected", func(t *testing.T) {
+		_, sessA := seedSession(t, "TP Absent Cookie User")
+		state, _ := startLink(t, sessA)
+
+		// Valid link-state param, but the burn-on-read cookie is missing.
+		w := callback(t, "tp-absent", state)
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 for absent state cookie, got %d. Body: %s", w.Code, w.Body.String())
+		}
+	})
+
+	t.Run("wrong_purpose_rejected", func(t *testing.T) {
+		userAID, sessA := seedSession(t, "TP Purpose User")
+		_, stateCookie := startLink(t, sessA)
+		forged := forgedLinkState(t, userAID, stateCookieNonce(stateCookie.Value), "login", "link", cfg.JWTIssuer)
+
+		w := callback(t, "tp-purpose", forged, stateCookie)
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 for wrong purpose claim, got %d. Body: %s", w.Code, w.Body.String())
+		}
+	})
+
+	t.Run("wrong_audience_rejected", func(t *testing.T) {
+		userAID, sessA := seedSession(t, "TP Audience User")
+		_, stateCookie := startLink(t, sessA)
+		forged := forgedLinkState(t, userAID, stateCookieNonce(stateCookie.Value), auth.LinkStatePurpose, cfg.JWTIssuer, cfg.JWTIssuer)
+
+		w := callback(t, "tp-audience", forged, stateCookie)
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 for wrong audience claim, got %d. Body: %s", w.Code, w.Body.String())
+		}
+	})
+
+	t.Run("wrong_issuer_rejected", func(t *testing.T) {
+		userAID, sessA := seedSession(t, "TP Issuer User")
+		_, stateCookie := startLink(t, sessA)
+		forged := forgedLinkState(t, userAID, stateCookieNonce(stateCookie.Value), auth.LinkStatePurpose, "link", config.DemoJWTIssuer)
+
+		w := callback(t, "tp-issuer", forged, stateCookie)
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 for wrong issuer claim, got %d. Body: %s", w.Code, w.Body.String())
+		}
+	})
+
+	t.Run("cross_user_session_cookie_rejected", func(t *testing.T) {
+		_, sessA := seedSession(t, "TP Cross User A")
+		userBID, sessB := seedSession(t, "TP Cross User B")
+		state, stateCookie := startLink(t, sessA) // link intent minted for A
+
+		// Presented with B's session cookie: must fail closed.
+		w := callback(t, "tp-cross", state, stateCookie, sessB)
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 for cross-user session cookie, got %d. Body: %s", w.Code, w.Body.String())
+		}
+
+		// Neither user gained the identity.
+		if _, err := identStore.FindByProviderSubject(ctx, model.ProviderGoogle, "sub-tp-cross"); err == nil {
+			t.Fatal("cross-user session must not link the identity")
+		}
+		identsB, err := identStore.ListByUser(ctx, userBID)
+		if err != nil || len(identsB) != 0 {
+			t.Fatalf("expected User B to have 0 identities, got %d (err: %v)", len(identsB), err)
+		}
+	})
+
+	t.Run("already_linked_conflict_409", func(t *testing.T) {
+		userAID, sessA := seedSession(t, "TP Owner A")
+		_, sessB := seedSession(t, "TP Attacker B")
+
+		// User A legitimately links the Google account sub-tp-conflict.
+		stateA, cookieA := startLink(t, sessA)
+		wA := callback(t, "tp-conflict", stateA, cookieA, sessA)
+		if wA.Code != http.StatusOK {
+			t.Fatalf("expected 200 for User A link, got %d. Body: %s", wA.Code, wA.Body.String())
+		}
+
+		// User B tries to claim the SAME provider account → 409, no takeover.
+		stateB, cookieB := startLink(t, sessB)
+		wB := callback(t, "tp-conflict", stateB, cookieB, sessB)
+		if wB.Code != http.StatusConflict {
+			t.Fatalf("expected 409 for already-linked identity, got %d. Body: %s", wB.Code, wB.Body.String())
+		}
+
+		// Ownership unchanged.
+		linked, err := identStore.FindByProviderSubject(ctx, model.ProviderGoogle, "sub-tp-conflict")
+		if err != nil || linked.UserID != userAID {
+			t.Fatalf("expected identity still owned by User A %q, got %+v (err: %v)", userAID, linked, err)
+		}
+	})
 }
 
 func TestVerifyMagicLinkPOST(t *testing.T) {

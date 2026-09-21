@@ -125,9 +125,9 @@ func (s *Service) LoginURL(w http.ResponseWriter, r *http.Request, provider stri
 
 // HandleCallback runs the full callback flow: state-cookie validation
 // (burn-on-read), pre-transaction provider exchange (ADR-007: external HTTP
-// strictly outside any tx), then dispatches either to account linking (completeLinkWithClaims) (when
-// state carries explicit purpose:"oauth_link") or the identity-resolution
-// state machine inside one tx.
+// strictly outside any tx), then dispatches either to account linking
+// (completeLinkWithClaims, when state carries explicit purpose:"oauth_link")
+// or the identity-resolution state machine inside one tx.
 func (s *Service) HandleCallback(ctx context.Context, w http.ResponseWriter, r *http.Request, provider, code, stateParam string) (*AuthResult, error) {
 	signedPayload, verifier, ok := unbindState(s.flows.secret, stateParam)
 	if !ok {
@@ -197,7 +197,8 @@ func (s *Service) HandleCallback(ctx context.Context, w http.ResponseWriter, r *
 	}
 
 	// NORMAL LOGIN FLOW:
-	// Explicitly assert that link-state JWTs cannot log in (login-state JWTs must not dispatch to CompleteLink; link-state JWTs must not log in).
+	// Explicitly assert that link-state JWTs cannot log in (login-state JWTs
+	// must not dispatch to the link path; link-state JWTs must not log in).
 	if strings.Count(signedPayload, ".") >= 2 {
 		return nil, ErrInvalidState
 	}
@@ -253,35 +254,6 @@ func (s *Service) StartLinkProvider(w http.ResponseWriter, r *http.Request, user
 	return adapter.AuthURL(stateParam, challenge)
 }
 
-// Deprecated: superseded by HandleCallback link-intent dispatch; removal tracked in Phase-2 handler cleanup.
-// CompleteLink finishes provider linking for an EXISTING user: exchange the
-// code, then in ONE transaction lock the users row (GetByIDForUpdate),
-// verify demo isolation and insert the identity. A 23505 (provider account
-// already bound to any user) surfaces as ErrAlreadyLinked (→ 409 "Tài khoản
-// này đã được liên kết").
-func (s *Service) CompleteLink(ctx context.Context, w http.ResponseWriter, r *http.Request, userID, provider, code, stateParam string) error {
-	if _, _, err := s.providerAdapter(provider); err != nil {
-		return err
-	}
-	verifier, err := s.validateLinkState(w, r, userID, provider, stateParam)
-	if err != nil {
-		return err
-	}
-
-	// PRE-TX: provider exchange.
-	_, exchangerAdapter, err := s.providerAdapter(provider)
-	if err != nil {
-		return err
-	}
-	claims, err := exchangerAdapter.Exchange(ctx, code, verifier)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.completeLinkWithClaims(ctx, userID, claims)
-	return err
-}
-
 // completeLinkWithClaims locks users row (ADR-007 global lock order), checks demo isolation,
 // inserts identity (mapping duplicate to ErrAlreadyLinked), and confirms provider contacts.
 func (s *Service) completeLinkWithClaims(ctx context.Context, userID string, claims *ProviderClaims) (*model.User, error) {
@@ -322,29 +294,6 @@ func (s *Service) completeLinkWithClaims(ctx context.Context, userID string, cla
 		return nil, err
 	}
 	return linkedUser, nil
-}
-
-// validateLinkState consumes the state cookie and validates the signed link state JWT.
-func (s *Service) validateLinkState(w http.ResponseWriter, r *http.Request, currentUserID, provider, stateParam string) (string, error) {
-	cookieNonce, err := s.flows.ConsumeStateCookie(r, w)
-	if err != nil {
-		return "", fmt.Errorf("ConsumeStateCookie: %w", err)
-	}
-	signedPayload, verifier, ok := unbindState(s.flows.secret, stateParam)
-	if !ok {
-		return "", fmt.Errorf("unbindState: %w", ErrInvalidState)
-	}
-	linkClaims, err := s.VerifyLinkState(signedPayload)
-	if err != nil {
-		return "", fmt.Errorf("VerifyLinkState: %w", err)
-	}
-	if !constantTimeEquals(cookieNonce, linkClaims.Nonce) {
-		return "", fmt.Errorf("constantTimeEquals: %w", ErrInvalidState)
-	}
-	if (currentUserID != "" && linkClaims.UserID != currentUserID) || linkClaims.Provider != provider {
-		return "", fmt.Errorf("claims mismatch: %w", ErrInvalidState)
-	}
-	return verifier, nil
 }
 
 // confirmContact inserts-or-marks a contact point verified for userID.

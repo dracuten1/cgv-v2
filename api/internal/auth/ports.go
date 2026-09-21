@@ -38,8 +38,8 @@ var (
 	// ErrProviderExchange — the provider rejected the code/token exchange or
 	// returned an unusable profile (→ 502/401 at handler discretion).
 	ErrProviderExchange = errors.New("Không thể xác thực với nhà cung cấp, vui lòng thử lại")
-	// ErrUserNotFound — CurrentUser/CompleteLink target user missing
-	// (→ 404).
+	// ErrUserNotFound — CurrentUser or HandleCallback link dispatch target
+	// user missing (→ 404).
 	ErrUserNotFound = errors.New("Không tìm thấy tài khoản")
 	// ErrIdentityNotFound — UnlinkIdentity target identity missing or not
 	// owned by the user (→ 404).
@@ -51,7 +51,8 @@ var (
 	ErrRepoNotFound = errors.New("bản ghi không tồn tại")
 	// ErrDuplicateIdentity — UNIQUE(provider, provider_subject) violation
 	// (pgx 23505). Lost first-login races re-resolve as auto-link (ADR-007);
-	// CompleteLink maps it to ErrAlreadyLinked.
+	// the HandleCallback link dispatch (completeLinkWithClaims) maps it to
+	// ErrAlreadyLinked.
 	ErrDuplicateIdentity = errors.New("định danh đã tồn tại cho tài khoản khác")
 )
 

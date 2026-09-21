@@ -30,7 +30,6 @@ type AuthService interface {
 	Logout(ctx context.Context, jti string) error
 	CurrentUser(ctx context.Context, userID string) (*auth.UserProfile, error)
 	StartLinkProvider(w http.ResponseWriter, r *http.Request, userID, provider string) (string, error)
-	CompleteLink(ctx context.Context, w http.ResponseWriter, r *http.Request, userID, provider, code, stateParam string) error
 	UnlinkIdentity(ctx context.Context, userID, identityID string) error
 	VerifyToken(tokenStr string) (*auth.Claims, error)
 }

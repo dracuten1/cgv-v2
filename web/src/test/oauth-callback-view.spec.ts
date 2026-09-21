@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import OAuthCallbackView from '@/views/OAuthCallbackView.vue';
@@ -24,6 +24,10 @@ describe('OAuthCallbackView.vue', () => {
     vi.restoreAllMocks();
     mockPush.mockReset();
     mockQuery = {};
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('mounts with ?oauth_error=already_linked and asserts the exact Vietnamese message renders', async () => {
@@ -189,5 +193,40 @@ describe('OAuthCallbackView.vue', () => {
     expect(wrapper.find('[data-testid="oauth-message"]').text()).toBe(
       'Chức năng này bị hạn chế trong chế độ demo.'
     );
+  });
+
+  it('redirects to /account after 1500ms when authenticated and oauth_linked=google', async () => {
+    vi.useFakeTimers();
+    mockQuery = { oauth_linked: 'google' };
+    const authStore = useAuthStore();
+    authStore.user = {
+      id: 'usr-123',
+      display_name: 'Test User',
+      is_demo: false,
+      created_at: new Date().toISOString(),
+    };
+    authStore.status = 'authenticated';
+    vi.spyOn(authStore, 'fetchMe').mockImplementation(async () => null);
+
+    const wrapper = mount(OAuthCallbackView, {
+      global: {
+        stubs: {
+          'router-link': {
+            props: ['to'],
+            template: '<a :href="to" data-testid="stub-router-link"><slot /></a>',
+          },
+        },
+      },
+    });
+
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="oauth-success"]').exists()).toBe(true);
+    expect(mockPush).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1500);
+    await flushPromises();
+
+    expect(mockPush).toHaveBeenCalledWith('/account');
   });
 });
