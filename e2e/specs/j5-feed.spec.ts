@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginViaMock } from '../helpers/auth';
+import { demoLogin, loginViaMock } from '../helpers/auth';
 
 /**
  * Journey 5: Bảng tin (Feed) — compose, attach image, publish, verify.
@@ -28,6 +28,50 @@ test.describe('Journey 5 — Bảng tin (Feed)', () => {
     // 1. Mock session → feed view
     // demo login blocked by app bug (iss/is_demo mismatch, jwt.go:41+94) — mock login per leader contract
     await loginViaMock(page);
+    await page.goto('/feed');
+
+    // 2. The composer renders for authenticated users
+    const composer = page.locator('[data-testid="composer-form"]');
+    await expect(composer).toBeVisible();
+
+    // 3. Fill content with the unique marker
+    const textarea = composer.locator('textarea');
+    await textarea.fill(`${marker} — câu chuyện thử nghiệm cho bảng tin dòng họ.`);
+
+    // 4. Attach image metadata through the real URL input + "Thêm ảnh"
+    const urlInput = composer.locator('input[type="url"]');
+    await urlInput.fill(POST_IMAGE_URL);
+    await composer.getByRole('button', { name: 'Thêm ảnh' }).click();
+    // The attached image chip (truncated URL preview) appears in the composer
+    await expect(composer.locator('span[title], .truncate').first()).toBeVisible();
+
+    // 5. Submit
+    await composer.getByRole('button', { name: 'Đăng bài' }).click();
+
+    // 6. The post appears in the timeline with the marker (timeline refreshes
+    //    via store refetch after create; belt-and-braces waitFor)
+    const feedList = page.locator('[data-testid="feed-list"]');
+    await expect(feedList).toBeVisible();
+    const createdPost = feedList.locator('article', { hasText: marker }).first();
+    await expect(createdPost).toBeVisible({ timeout: 15000 });
+
+    // 7. …with author attribution (author display name element, non-empty)
+    const authorEl = createdPost.locator('[data-testid="post-author"]');
+    await expect(authorEl).toBeVisible();
+    const authorText = ((await authorEl.textContent()) || '').trim();
+    expect(authorText.length).toBeGreaterThan(0);
+
+    // 8. The image metadata round-trips into the rendered ImageGrid
+    await expect(createdPost.locator('img').first()).toHaveAttribute('src', POST_IMAGE_URL);
+  });
+
+  // EXPECTED-FAIL until VerifyToken (jwt.go:96) accepts demo-issuer tokens minted by dev-mode service — leader fix pending
+  test('composes a post with a unique marker + image URL and shows it with author attribution (demo login)', async ({ page }) => {
+    const marker = `E2E-J5-${Date.now()}`;
+
+    // 1. Demo session → feed view
+    // EXPECTED-FAIL until VerifyToken (jwt.go:96) accepts demo-issuer tokens minted by dev-mode service — leader fix pending
+    await demoLogin(page);
     await page.goto('/feed');
 
     // 2. The composer renders for authenticated users

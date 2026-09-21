@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { loginViaMock } from '../helpers/auth';
+import { demoLogin, loginViaMock } from '../helpers/auth';
 
 /**
  * Journey 2: Kinship (Xưng hô) — Nguyễn Văn An ↔ grandson (INV-05).
@@ -83,6 +83,56 @@ test.describe('Journey 2 — Xưng hô (Kinship)', () => {
     // 1. Mock session
     // demo login blocked by app bug (iss/is_demo mismatch, jwt.go:41+94) — mock login per leader contract
     await loginViaMock(page);
+
+    // 2. Open kinship view
+    await page.goto('/kinship');
+
+    // 3. Discover the grandson via the public members API
+    const grandson = await discoverGrandson(page);
+    expect(grandson.full_name).not.toBe('');
+
+    // 4. Select source (grandson) and target (An) through the real pickers.
+    //    Term semantics: term = what picker-1 calls picker-2 → grandson first.
+    // AppInput attribute fallthrough puts the testid on the wrapper div;
+    // the fillable <input> is nested inside it.
+    const picker1 = page.locator('[data-testid="picker-input-1"] input');
+    const picker2 = page.locator('[data-testid="picker-input-2"] input');
+
+    const dropdownOption = (name: string) =>
+      page.locator('.absolute.z-30 button', { hasText: name }).first();
+
+    await picker1.click();
+    await picker1.fill(grandson.full_name);
+    await dropdownOption(grandson.full_name).click();
+
+    await picker2.click();
+    await picker2.fill(ROOT_NAME);
+    await dropdownOption(ROOT_NAME).click();
+
+    // 5. Calculate
+    await page.locator('[data-testid="calculate-btn"]').click();
+    await expect(page.locator('[data-testid="kinship-result-container"]')).toBeVisible();
+
+    // 6. INV-05: raw textContent of the term element must be exactly "Ông nội"
+    const termLocator = page.locator('[data-testid="kinship-term"]');
+    const rawTerm = await termLocator.evaluate((el) => el.textContent ?? '');
+    expect(rawTerm).toBe('Ông nội');
+
+    // …and must contain NO quote characters (visual quotes are CSS-only)
+    for (const q of ['"', "'", '\u201C', '\u201D']) {
+      expect(rawTerm.includes(q), `term must not contain quote char ${q}`).toBe(false);
+    }
+
+    // 7. Distance badge "Cách 2 đời" and lineage "Chi nội" visible
+    await expect(page.getByText('Cách 2 đời', { exact: true })).toBeVisible();
+    await expect(page.getByText('Chi nội', { exact: true })).toBeVisible();
+  });
+
+  // EXPECTED-FAIL until VerifyToken (jwt.go:96) accepts demo-issuer tokens minted by dev-mode service — leader fix pending
+  test('grandson calling Nguyễn Văn An yields exactly "Ông nội" / Cách 2 đời / Chi nội (demo login)', async ({ page }) => {
+    // 1. Demo session
+    // EXPECTED-FAIL until VerifyToken (jwt.go:96) accepts demo-issuer tokens minted by dev-mode service — leader fix pending
+    await demoLogin(page);
 
     // 2. Open kinship view
     await page.goto('/kinship');
