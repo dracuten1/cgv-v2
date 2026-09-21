@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, request as pwRequest } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as XLSX from 'xlsx';
@@ -80,11 +80,14 @@ function expectExportInvariants(targetPath: string): void {
 const SEED_FAMILY_ID = '11111111-1111-4111-8111-000000000001';
 
 test.describe('Journey 4 — Xuất Excel', () => {
-  // Anonymous probe of the auth gate. Uses a FRESH request context —
-  // `request.newContext()` shares NO cookies with the browser context, so
-  // anonymity is guaranteed regardless of prior logins in the worker.
-  test('anonymous export probe is rejected with 401 (auth gate)', async ({ request }) => {
-    const anon = await request.newContext();
+  // Anonymous probe of the auth gate. pwRequest.newContext() creates a
+  // STANDALONE context with its own empty cookie jar — cookie-sharing with
+  // the (possibly logged-in) browser context is structurally impossible.
+  test('anonymous export probe is rejected with 401 (auth gate)', async () => {
+    // Module-level request API: newContext() creates a standalone context with
+    // its OWN cookie jar. (The `request` FIXTURE shares the browser context's
+    // cookies and has no newContext — run 5 failed on exactly that.)
+    const anon = await pwRequest.newContext();
     const resp = await anon.get(
       `http://localhost:3456/api/v1/families/${SEED_FAMILY_ID}/export.xlsx`,
       { maxRedirects: 0 },
