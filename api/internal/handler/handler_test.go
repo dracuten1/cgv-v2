@@ -10,7 +10,9 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -927,41 +929,316 @@ func TestContactVerifyOwnership(t *testing.T) {
 	}
 }
 
-// 13. Link-callback flow tests (C2)
+// inMemAuthRepo holds in-memory stores for real auth integration tests.
+type inMemUserRepo struct {
+	mu      sync.Mutex
+	users   map[string]*model.User
+	userSeq int
+}
+
+func newInMemUserRepo() *inMemUserRepo {
+	return &inMemUserRepo{users: make(map[string]*model.User)}
+}
+
+func (r *inMemUserRepo) GetByID(ctx context.Context, userID string) (*model.User, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	u, ok := r.users[userID]
+	if !ok {
+		return nil, auth.ErrRepoNotFound
+	}
+	cpy := *u
+	return &cpy, nil
+}
+
+func (r *inMemUserRepo) GetByIDForUpdate(ctx context.Context, userID string) (*model.User, error) {
+	return r.GetByID(ctx, userID)
+}
+
+func (r *inMemUserRepo) Create(ctx context.Context, displayName string, isDemo bool) (*model.User, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.userSeq++
+	id := fmt.Sprintf("usr-%04d", r.userSeq)
+	u := &model.User{ID: id, DisplayName: displayName, IsDemo: isDemo, CreatedAt: time.Now()}
+	r.users[id] = u
+	cpy := *u
+	return &cpy, nil
+}
+
+func (r *inMemUserRepo) LinkMember(ctx context.Context, userID, memberID string) error {
+	return nil
+}
+
+type inMemIdentityRepo struct {
+	mu         sync.Mutex
+	identities map[string]*model.Identity
+	identSeq   int
+}
+
+func newInMemIdentityRepo() *inMemIdentityRepo {
+	return &inMemIdentityRepo{identities: make(map[string]*model.Identity)}
+}
+
+func (r *inMemIdentityRepo) FindByProviderSubject(ctx context.Context, provider, subject string) (*model.Identity, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	key := provider + ":" + subject
+	id, ok := r.identities[key]
+	if !ok {
+		return nil, auth.ErrRepoNotFound
+	}
+	cpy := *id
+	return &cpy, nil
+}
+
+func (r *inMemIdentityRepo) Insert(ctx context.Context, userID, provider, subject string) (*model.Identity, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	key := provider + ":" + subject
+	if _, exists := r.identities[key]; exists {
+		return nil, auth.ErrDuplicateIdentity
+	}
+	r.identSeq++
+	id := &model.Identity{
+		ID:              fmt.Sprintf("ident-%04d", r.identSeq),
+		UserID:          userID,
+		Provider:        provider,
+		ProviderSubject: subject,
+		LinkedAt:        time.Now(),
+		LastLoginAt:     time.Now(),
+	}
+	r.identities[key] = id
+	cpy := *id
+	return &cpy, nil
+}
+
+func (r *inMemIdentityRepo) TouchLastLogin(ctx context.Context, identityID string) error {
+	return nil
+}
+
+func (r *inMemIdentityRepo) CountByUser(ctx context.Context, userID string) (int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	count := 0
+	for _, id := range r.identities {
+		if id.UserID == userID {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (r *inMemIdentityRepo) Delete(ctx context.Context, identityID, userID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for k, id := range r.identities {
+		if id.ID == identityID && id.UserID == userID {
+			delete(r.identities, k)
+			return nil
+		}
+	}
+	return auth.ErrRepoNotFound
+}
+
+func (r *inMemIdentityRepo) ListByUser(ctx context.Context, userID string) ([]model.Identity, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var list []model.Identity
+	for _, id := range r.identities {
+		if id.UserID == userID {
+			list = append(list, *id)
+		}
+	}
+	return list, nil
+}
+
+type inMemSessionRepo struct {
+	mu       sync.Mutex
+	sessions map[string]string
+}
+
+func newInMemSessionRepo() *inMemSessionRepo {
+	return &inMemSessionRepo{sessions: make(map[string]string)}
+}
+
+func (s *inMemSessionRepo) Insert(ctx context.Context, jti, userID string, expiresAt time.Time) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.sessions[jti] = userID
+	return nil
+}
+
+func (s *inMemSessionRepo) RevokeByJti(ctx context.Context, jti string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.sessions, jti)
+	return nil
+}
+
+type inMemContactRepo struct {
+	mu       sync.Mutex
+	contacts map[string]*model.ContactPoint
+	seq      int
+}
+
+func newInMemContactRepo() *inMemContactRepo {
+	return &inMemContactRepo{contacts: make(map[string]*model.ContactPoint)}
+}
+
+func (c *inMemContactRepo) FindByKindValue(ctx context.Context, kind, value string) (*model.ContactPoint, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	key := kind + ":" + value
+	if cp, ok := c.contacts[key]; ok {
+		cpy := *cp
+		return &cpy, nil
+	}
+	return nil, auth.ErrRepoNotFound
+}
+
+func (c *inMemContactRepo) Insert(ctx context.Context, userID, kind, value string, verified bool, verifiedVia string) (*model.ContactPoint, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.seq++
+	cp := &model.ContactPoint{
+		ID:          fmt.Sprintf("cp-%04d", c.seq),
+		UserID:      userID,
+		Kind:        kind,
+		Value:       value,
+		Verified:    verified,
+		VerifiedVia: &verifiedVia,
+		CreatedAt:   time.Now(),
+	}
+	c.contacts[kind+":"+value] = cp
+	c.contacts[cp.ID] = cp
+	cpy := *cp
+	return &cpy, nil
+}
+
+func (c *inMemContactRepo) MarkVerified(ctx context.Context, contactID, via string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if cp, ok := c.contacts[contactID]; ok {
+		cp.Verified = true
+		cp.VerifiedVia = &via
+	}
+	return nil
+}
+
+func (c *inMemContactRepo) GetByID(ctx context.Context, contactID string) (*model.ContactPoint, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if cp, ok := c.contacts[contactID]; ok {
+		cpy := *cp
+		return &cpy, nil
+	}
+	return nil, auth.ErrRepoNotFound
+}
+
+func (c *inMemContactRepo) ListByUser(ctx context.Context, userID string) ([]model.ContactPoint, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	var list []model.ContactPoint
+	seen := make(map[string]bool)
+	for _, cp := range c.contacts {
+		if cp.UserID == userID && !seen[cp.ID] {
+			seen[cp.ID] = true
+			list = append(list, *cp)
+		}
+	}
+	return list, nil
+}
+
+type inMemMagicLinkRepo struct{}
+
+func (m *inMemMagicLinkRepo) Insert(ctx context.Context, tokenHash, email string, expiresAt time.Time) error {
+	return nil
+}
+func (m *inMemMagicLinkRepo) Consume(ctx context.Context, tokenHash string) (string, error) {
+	return "test@example.com", nil
+}
+
+type inMemContactLocker struct{}
+
+func (l *inMemContactLocker) AcquireContactAdvisoryLock(ctx context.Context, kind, value string) error {
+	return nil
+}
+
+type inMemOutboxRepo struct{}
+
+func (o *inMemOutboxRepo) EnqueueMagicLink(ctx context.Context, email, linkURL string) error {
+	return nil
+}
+
+// 13. Real Round-Trip Integration Test for Account Linking & OAuth Callbacks (C2)
 func TestLinkCallbackFlow(t *testing.T) {
 	gin.SetMode(gin.TestMode)
+
+	// Stub Google OAuth server simulating token exchange and userinfo endpoints
+	oauthServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/token":
+			code := r.FormValue("code")
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"access_token": "token-for-" + code,
+				"token_type":   "Bearer",
+				"expires_in":   3600,
+			})
+		case "/userinfo":
+			authHdr := r.Header.Get("Authorization")
+			tok := strings.TrimPrefix(authHdr, "Bearer ")
+			sub := strings.TrimPrefix(tok, "token-for-")
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"sub":            "sub-" + sub,
+				"name":           "Google User " + sub,
+				"email":          sub + "@gmail.com",
+				"email_verified": true,
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer oauthServer.Close()
+
 	cfg := &config.Config{
-		Port:               8080,
-		AppEnv:             config.EnvDev,
-		CookieName:         "cgp_session",
-		JWTSecret:          "test-secret-min-32-chars-long-123456",
-		JWTIssuer:          config.ProdJWTIssuer,
-		MockOAuthEnabled:   true,
-		CORSAllowedOrigins: []string{"http://localhost:3456"},
-		PublicBaseURL:      "http://localhost:3456",
+		Port:                 8080,
+		AppEnv:               config.EnvDev,
+		CookieName:           config.ProdCookieName,
+		JWTSecret:            "test-secret-min-32-chars-long-123456",
+		JWTIssuer:            config.ProdJWTIssuer,
+		GoogleClientID:       "test-google-client-id",
+		GoogleClientSecret:   "test-google-client-secret",
+		CORSAllowedOrigins:   []string{"http://localhost:3456"},
+		PublicBaseURL:        "http://localhost:3456",
 	}
 
-	authSvc := &fakeAuthServiceWithLink{
-		fakeAuthService: fakeAuthService{
-			validTokens: map[string]*auth.Claims{
-				"token-user-a": {UserID: "user-a", IsDemo: false},
-			},
-			users: map[string]*auth.UserProfile{
-				"user-a": {
-					User:       model.User{ID: "user-a", DisplayName: "User A"},
-					Identities: []model.Identity{{ID: "id-1", Provider: model.ProviderGoogle}},
-				},
-			},
-		},
-	}
+	userStore := newInMemUserRepo()
+	identStore := newInMemIdentityRepo()
+	sessionStore := newInMemSessionRepo()
+	contactStore := newInMemContactRepo()
+	txMgr := &fakeTxManager{}
+
+	realAuthSvc := auth.NewService(cfg, txMgr, auth.ServiceDeps{
+		Users:      userStore,
+		Identities: identStore,
+		Contacts:   contactStore,
+		Tokens:     &inMemMagicLinkRepo{},
+		Sessions:   sessionStore,
+		Locker:     &inMemContactLocker{},
+		Outbox:     &inMemOutboxRepo{},
+	})
+	realAuthSvc.SetGoogleEndpoints(oauthServer.URL+"/auth", oauthServer.URL+"/token", oauthServer.URL+"/userinfo")
 
 	router := NewRouter(Deps{
 		Cfg:          cfg,
 		Pinger:       &fakePinger{},
-		TxManager:    &fakeTxManager{},
-		AuthService:  authSvc,
-		UserStore:    &fakeUserStore{},
-		ContactStore: &fakeContactStore{},
+		TxManager:    txMgr,
+		AuthService:  realAuthSvc,
+		UserStore:    userStore,
+		ContactStore: contactStore,
 		FamilyRepo:   &fakeFamilyRepo{},
 		MemberRepo:   &fakeMemberRepo{},
 		RelationRepo: &fakeRelationRepo{},
@@ -972,46 +1249,216 @@ func TestLinkCallbackFlow(t *testing.T) {
 		PushSvc:      &fakePushService{},
 	})
 
-	// Happy path link callback
-	reqOK, _ := http.NewRequest("GET", "/api/v1/me/link/google/callback?code=good_code&state=good_state", nil)
-	reqOK.AddCookie(&http.Cookie{Name: "cgp_session", Value: "token-user-a"})
-	wOK := httptest.NewRecorder()
-	router.ServeHTTP(wOK, reqOK)
-	if wOK.Code != http.StatusOK {
-		t.Fatalf("expected 200 for successful link callback, got %d. Body: %s", wOK.Code, wOK.Body.String())
+	ctx := context.Background()
+
+	// -------------------------------------------------------------------------
+	// (i) Login callback (normal flow) still works
+	// -------------------------------------------------------------------------
+	wLogin := httptest.NewRecorder()
+	rLogin, _ := http.NewRequest("GET", "/api/v1/auth/google/login", nil)
+	router.ServeHTTP(wLogin, rLogin)
+	if wLogin.Code != http.StatusFound {
+		t.Fatalf("(i) expected 302 for login start, got %d", wLogin.Code)
+	}
+	loginLoc, _ := url.Parse(wLogin.Header().Get("Location"))
+	loginState := loginLoc.Query().Get("state")
+	var loginCookie *http.Cookie
+	for _, c := range wLogin.Result().Cookies() {
+		if c.Name == "cgp_oauth_state" {
+			loginCookie = c
+			break
+		}
+	}
+	if loginCookie == nil {
+		t.Fatal("(i) expected cgp_oauth_state cookie from login")
 	}
 
-	// Bad state → 400
-	reqBadState, _ := http.NewRequest("GET", "/api/v1/me/link/google/callback?code=good_code&state=bad_state", nil)
-	reqBadState.AddCookie(&http.Cookie{Name: "cgp_session", Value: "token-user-a"})
-	wBadState := httptest.NewRecorder()
-	router.ServeHTTP(wBadState, reqBadState)
-	if wBadState.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400 for bad state, got %d", wBadState.Code)
+	// Provider redirects back with login authorization code
+	wCb1 := httptest.NewRecorder()
+	rCb1, _ := http.NewRequest("GET", "/api/v1/auth/google/callback?code=login_user_1&state="+loginState, nil)
+	rCb1.AddCookie(loginCookie)
+	router.ServeHTTP(wCb1, rCb1)
+	if wCb1.Code != http.StatusOK {
+		t.Fatalf("(i) expected 200 for normal login callback, got %d. Body: %s", wCb1.Code, wCb1.Body.String())
+	}
+	var loginResp struct {
+		User model.User `json:"user"`
+	}
+	if err := json.Unmarshal(wCb1.Body.Bytes(), &loginResp); err != nil {
+		t.Fatalf("(i) unmarshal login response: %v", err)
+	}
+	user1ID := loginResp.User.ID
+	if user1ID == "" {
+		t.Fatal("(i) expected non-empty user ID from login response")
 	}
 
-	// Already linked provider → 409
-	reqConflict, _ := http.NewRequest("GET", "/api/v1/me/link/google/callback?code=already_linked&state=good_state", nil)
-	reqConflict.AddCookie(&http.Cookie{Name: "cgp_session", Value: "token-user-a"})
+	var sessionCookie1 *http.Cookie
+	for _, c := range wCb1.Result().Cookies() {
+		if c.Name == config.ProdCookieName && c.Value != "" {
+			sessionCookie1 = c
+			break
+		}
+	}
+	if sessionCookie1 == nil {
+		t.Fatal("(i) expected session cookie set on login callback")
+	}
+
+	// Verify initial identity persisted
+	if _, err := identStore.FindByProviderSubject(ctx, model.ProviderGoogle, "sub-login_user_1"); err != nil {
+		t.Fatalf("(i) expected initial identity persisted: %v", err)
+	}
+
+	// -------------------------------------------------------------------------
+	// (ii) Link callback via link-state JWT dispatch → identity linked to session user
+	// -------------------------------------------------------------------------
+	wLinkStart := httptest.NewRecorder()
+	rLinkStart, _ := http.NewRequest("POST", "/api/v1/me/link/google/start", nil)
+	rLinkStart.Header.Set("Origin", "http://localhost:3456")
+	rLinkStart.AddCookie(sessionCookie1)
+	router.ServeHTTP(wLinkStart, rLinkStart)
+	if wLinkStart.Code != http.StatusOK {
+		t.Fatalf("(ii) expected 200 for link start, got %d. Body: %s", wLinkStart.Code, wLinkStart.Body.String())
+	}
+
+	var linkStartResp struct {
+		URL string `json:"url"`
+	}
+	if err := json.Unmarshal(wLinkStart.Body.Bytes(), &linkStartResp); err != nil {
+		t.Fatalf("(ii) unmarshal link start response: %v", err)
+	}
+	linkLoc, _ := url.Parse(linkStartResp.URL)
+	linkState := linkLoc.Query().Get("state")
+
+	var linkCookie1 *http.Cookie
+	for _, c := range wLinkStart.Result().Cookies() {
+		if c.Name == "cgp_oauth_state" {
+			linkCookie1 = c
+			break
+		}
+	}
+	if linkCookie1 == nil {
+		t.Fatal("(ii) expected cgp_oauth_state cookie from link start")
+	}
+
+	// Complete link at the public callback endpoint
+	wLinkCb := httptest.NewRecorder()
+	rLinkCb, _ := http.NewRequest("GET", "/api/v1/auth/google/callback?code=link_account_alpha&state="+linkState, nil)
+	rLinkCb.AddCookie(linkCookie1)
+	rLinkCb.AddCookie(sessionCookie1)
+	router.ServeHTTP(wLinkCb, rLinkCb)
+	if wLinkCb.Code != http.StatusOK {
+		t.Fatalf("(ii) expected 200 for link callback, got %d. Body: %s", wLinkCb.Code, wLinkCb.Body.String())
+	}
+
+	// Assert persisted linkage in the repository
+	linkedIdent, err := identStore.FindByProviderSubject(ctx, model.ProviderGoogle, "sub-link_account_alpha")
+	if err != nil {
+		t.Fatalf("(ii) expected newly linked identity to exist in store: %v", err)
+	}
+	if linkedIdent.UserID != user1ID {
+		t.Fatalf("(ii) expected identity linked to User 1 (%q), got %q", user1ID, linkedIdent.UserID)
+	}
+
+	// Verify User 1 now has 2 identities
+	user1Idents, err := identStore.ListByUser(ctx, user1ID)
+	if err != nil || len(user1Idents) != 2 {
+		t.Fatalf("(ii) expected User 1 to have 2 identities, got %d (err: %v)", len(user1Idents), err)
+	}
+
+	// -------------------------------------------------------------------------
+	// (iii) Already-linked identity → 409 Conflict
+	// -------------------------------------------------------------------------
+	// Seed a separate user User 2 with active session
+	user2, err := userStore.Create(ctx, "User 2", false)
+	if err != nil {
+		t.Fatalf("(iii) create user 2: %v", err)
+	}
+	token2, err := realAuthSvc.IssueToken(*user2)
+	if err != nil {
+		t.Fatalf("(iii) issue token user 2: %v", err)
+	}
+	sessionCookie2 := &http.Cookie{Name: config.ProdCookieName, Value: token2}
+
+	// User 2 starts linking
+	wLinkStart2 := httptest.NewRecorder()
+	rLinkStart2, _ := http.NewRequest("POST", "/api/v1/me/link/google/start", nil)
+	rLinkStart2.Header.Set("Origin", "http://localhost:3456")
+	rLinkStart2.AddCookie(sessionCookie2)
+	router.ServeHTTP(wLinkStart2, rLinkStart2)
+	if wLinkStart2.Code != http.StatusOK {
+		t.Fatalf("(iii) expected 200 for user 2 link start, got %d", wLinkStart2.Code)
+	}
+	var linkStartResp2 struct {
+		URL string `json:"url"`
+	}
+	_ = json.Unmarshal(wLinkStart2.Body.Bytes(), &linkStartResp2)
+	linkLoc2, _ := url.Parse(linkStartResp2.URL)
+	linkState2 := linkLoc2.Query().Get("state")
+	var linkCookie2 *http.Cookie
+	for _, c := range wLinkStart2.Result().Cookies() {
+		if c.Name == "cgp_oauth_state" {
+			linkCookie2 = c
+			break
+		}
+	}
+
+	// User 2 tries to link the SAME Google account (sub-link_account_alpha) already bound to User 1
 	wConflict := httptest.NewRecorder()
-	router.ServeHTTP(wConflict, reqConflict)
+	rConflict, _ := http.NewRequest("GET", "/api/v1/auth/google/callback?code=link_account_alpha&state="+linkState2, nil)
+	rConflict.AddCookie(linkCookie2)
+	rConflict.AddCookie(sessionCookie2)
+	router.ServeHTTP(wConflict, rConflict)
 	if wConflict.Code != http.StatusConflict {
-		t.Fatalf("expected 409 for already-linked provider, got %d", wConflict.Code)
+		t.Fatalf("(iii) expected 409 for already-linked identity, got %d. Body: %s", wConflict.Code, wConflict.Body.String())
 	}
-}
 
-type fakeAuthServiceWithLink struct {
-	fakeAuthService
-}
+	// -------------------------------------------------------------------------
+	// (iv) Bad/invalid state → 400 Bad Request
+	// -------------------------------------------------------------------------
+	wBadState := httptest.NewRecorder()
+	rBadState, _ := http.NewRequest("GET", "/api/v1/auth/google/callback?code=some_code&state=tampered.or.invalid.state", nil)
+	router.ServeHTTP(wBadState, rBadState)
+	if wBadState.Code != http.StatusBadRequest {
+		t.Fatalf("(iv) expected 400 for bad state, got %d. Body: %s", wBadState.Code, wBadState.Body.String())
+	}
 
-func (f *fakeAuthServiceWithLink) CompleteLink(ctx context.Context, w http.ResponseWriter, r *http.Request, userID, provider, code, stateParam string) error {
-	if stateParam == "bad_state" {
-		return auth.ErrInvalidState
+	// -------------------------------------------------------------------------
+	// (v) Link callback path /api/v1/me/link/:provider/callback is genuinely reachable
+	//     without any JWT cookie (no AuthMiddleware 401)
+	// -------------------------------------------------------------------------
+	wLinkStart3 := httptest.NewRecorder()
+	rLinkStart3, _ := http.NewRequest("POST", "/api/v1/me/link/google/start", nil)
+	rLinkStart3.Header.Set("Origin", "http://localhost:3456")
+	rLinkStart3.AddCookie(sessionCookie1)
+	router.ServeHTTP(wLinkStart3, rLinkStart3)
+	var linkStartResp3 struct {
+		URL string `json:"url"`
 	}
-	if code == "already_linked" {
-		return auth.ErrAlreadyLinked
+	_ = json.Unmarshal(wLinkStart3.Body.Bytes(), &linkStartResp3)
+	linkLoc3, _ := url.Parse(linkStartResp3.URL)
+	linkState3 := linkLoc3.Query().Get("state")
+	var linkCookie3 *http.Cookie
+	for _, c := range wLinkStart3.Result().Cookies() {
+		if c.Name == "cgp_oauth_state" {
+			linkCookie3 = c
+			break
+		}
 	}
-	return nil
+
+	// Call /api/v1/me/link/google/callback WITHOUT JWT session cookie
+	wMeCallback := httptest.NewRecorder()
+	rMeCallback, _ := http.NewRequest("GET", "/api/v1/me/link/google/callback?code=link_account_beta&state="+linkState3, nil)
+	rMeCallback.AddCookie(linkCookie3) // only state cookie, NO session cookie!
+	router.ServeHTTP(wMeCallback, rMeCallback)
+	if wMeCallback.Code != http.StatusOK {
+		t.Fatalf("(v) expected 200 for public /me/link/google/callback, got %d. Body: %s", wMeCallback.Code, wMeCallback.Body.String())
+	}
+
+	// Verify identity was linked to User 1 despite NO session cookie on the callback request
+	linkedBeta, err := identStore.FindByProviderSubject(ctx, model.ProviderGoogle, "sub-link_account_beta")
+	if err != nil || linkedBeta.UserID != user1ID {
+		t.Fatalf("(v) expected beta identity linked to User 1, got %+v (err: %v)", linkedBeta, err)
+	}
 }
 
 func TestVerifyMagicLinkPOST(t *testing.T) {

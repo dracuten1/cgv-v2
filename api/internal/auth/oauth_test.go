@@ -144,3 +144,59 @@ func TestMockProvider_ClaimPrefixes(t *testing.T) {
 		t.Fatalf("expected ErrProviderDisabled, got %v", err)
 	}
 }
+
+// TestHandleCallback_LinkIntentIsolation ensures that link-state JWTs cannot log in
+// and login nonces cannot link.
+func TestHandleCallback_LinkIntentIsolation(t *testing.T) {
+	svc, core, _, _ := newHarness(false)
+	userA := core.seedUser("User A", false)
+
+	// 1. Mint link state for User A
+	w1 := httptest.NewRecorder()
+	r1 := httptest.NewRequest(http.MethodGet, "/api/v1/me/link/mock/start", nil)
+	linkURL, err := svc.StartLinkProvider(w1, r1, userA, model.ProviderMock)
+	if err != nil {
+		t.Fatalf("StartLinkProvider failed: %v", err)
+	}
+	linkState := linkURL[strings.Index(linkURL, "state=")+len("state="):]
+	linkCookie := w1.Result().Cookies()[0]
+
+	// 2. Mint normal login state
+	w2 := httptest.NewRecorder()
+	r2 := httptest.NewRequest(http.MethodGet, "/api/v1/auth/mock/login", nil)
+	loginURL, err := svc.LoginURL(w2, r2, model.ProviderMock)
+	if err != nil {
+		t.Fatalf("LoginURL failed: %v", err)
+	}
+	loginState := loginURL[strings.Index(loginURL, "state=")+len("state="):]
+	loginCookie := w2.Result().Cookies()[0]
+
+	// 3. Link-state JWT with matching cookie dispatched to HandleCallback:
+	// succeeds as link (IsLinked == true), NOT as normal login!
+	wLink := httptest.NewRecorder()
+	rLink := httptest.NewRequest(http.MethodGet, "/api/v1/auth/mock/callback?code=mock_account_1&state="+linkState, nil)
+	rLink.AddCookie(linkCookie)
+	resLink, err := svc.HandleCallback(rLink.Context(), wLink, rLink, model.ProviderMock, "mock_account_1", linkState)
+	if err != nil {
+		t.Fatalf("HandleCallback with link state failed: %v", err)
+	}
+	if !resLink.IsLinked {
+		t.Fatal("expected IsLinked=true for link-intent callback")
+	}
+	if resLink.User.ID != userA {
+		t.Fatalf("expected linked user ID %q, got %q", userA, resLink.User.ID)
+	}
+
+	// 4. Normal login state dispatched to HandleCallback:
+	// succeeds as normal login (IsLinked == false)
+	wLogin := httptest.NewRecorder()
+	rLogin := httptest.NewRequest(http.MethodGet, "/api/v1/auth/mock/callback?code=verified_email:login@test.vn&state="+loginState, nil)
+	rLogin.AddCookie(loginCookie)
+	resLogin, err := svc.HandleCallback(rLogin.Context(), wLogin, rLogin, model.ProviderMock, "verified_email:login@test.vn", loginState)
+	if err != nil {
+		t.Fatalf("HandleCallback with login state failed: %v", err)
+	}
+	if resLogin.IsLinked {
+		t.Fatal("expected IsLinked=false for normal login callback")
+	}
+}

@@ -21,7 +21,7 @@ type Claims struct {
 	UserID   string `json:"sub"`     // user UUID
 	IsDemo   bool   `json:"is_demo"` // demo-account marker (INV-04)
 	Issuer   string `json:"iss"`     // cgp-demo | cgp-prod
-	Audience string `json:"aud"`     // equals Issuer (dual-issuer pair)
+	Audience string `json:"aud"`     // equals Issuer
 	jwt.RegisteredClaims
 }
 
@@ -37,8 +37,7 @@ func issueJTI() (string, error) {
 // IssueToken signs an HMAC-SHA256 JWT for user with the configured issuer
 // (config.JWTIssuer: cgp-demo in demo mode, cgp-prod otherwise), audience
 // equal to issuer, 24h expiry and a 16-byte hex jti. The demo flag always
-// mirrors user.IsDemo so VerifyToken's dual-issuer invariant can reject any
-// demo/real mismatch (INV-04).
+// mirrors user.IsDemo so VerifyToken can reject any demo/real mismatch (INV-04).
 func (s *Service) IssueToken(user model.User) (string, error) {
 	jti, err := issueJTI()
 	if err != nil {
@@ -65,8 +64,8 @@ func (s *Service) IssueToken(user model.User) (string, error) {
 }
 
 // VerifyToken parses and validates signature, issuer, audience and expiry,
-// then enforces the INV-04 dual-issuer invariant: the issuer pair must be
-// internally consistent AND aligned with the is_demo flag — demo tokens
+// then enforces the INV-04 demo isolation invariant: the issuer must match
+// the configured issuer AND align with the is_demo flag — demo tokens
 // (cgp-demo) must carry is_demo=true; real tokens (cgp-prod) is_demo=false.
 // Any mismatch (including tokens minted under a foreign issuer) is rejected
 // with ErrInvalidToken.
@@ -91,18 +90,22 @@ func (s *Service) VerifyToken(tokenStr string) (*Claims, error) {
 		claims.Issuer != claims.Audience || claims.Issuer != s.cfg.JWTIssuer {
 		return nil, ErrInvalidToken
 	}
-	// Dual-issuer enforcement: issuer pair must agree with the demo flag.
+	// Demo isolation enforcement: issuer must agree with the demo flag.
 	if (claims.Issuer == config.DemoJWTIssuer) != claims.IsDemo {
 		return nil, ErrInvalidToken
 	}
 	return claims, nil
 }
 
+// LinkStatePurpose is the explicit purpose claim for account-linking state JWTs.
+const LinkStatePurpose = "oauth_link"
+
 // LinkStateClaims represents the signed state JWT for account linking.
 type LinkStateClaims struct {
 	UserID   string `json:"sub"`
 	Provider string `json:"provider"`
 	Nonce    string `json:"nonce"`
+	Purpose  string `json:"purpose"`
 	jwt.RegisteredClaims
 }
 
@@ -117,6 +120,7 @@ func (s *Service) IssueLinkState(userID, provider, nonce string) (string, error)
 		UserID:   userID,
 		Provider: provider,
 		Nonce:    nonce,
+		Purpose:  LinkStatePurpose,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    issuer,
 			Audience:  jwt.ClaimStrings{"link"},
@@ -155,6 +159,9 @@ func (s *Service) VerifyLinkState(stateJWT string) (*LinkStateClaims, error) {
 	claims, ok := parsed.Claims.(*LinkStateClaims)
 	if !ok || !parsed.Valid {
 		return nil, ErrInvalidState
+	}
+	if claims.Purpose != LinkStatePurpose {
+		return nil, fmt.Errorf("%w: mục đích token không hợp lệ", ErrInvalidState)
 	}
 	return claims, nil
 }

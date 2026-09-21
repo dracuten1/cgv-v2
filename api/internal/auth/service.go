@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/dracuten1/cgv-v2/api/internal/config"
@@ -124,12 +125,82 @@ func (s *Service) LoginURL(w http.ResponseWriter, r *http.Request, provider stri
 
 // HandleCallback runs the full callback flow: state-cookie validation
 // (burn-on-read), pre-transaction provider exchange (ADR-007: external HTTP
-// strictly outside any tx), then the identity-resolution state machine
-// inside one tx.
+// strictly outside any tx), then dispatches either to CompleteLink (when
+// state carries explicit purpose:"oauth_link") or the identity-resolution
+// state machine inside one tx.
 func (s *Service) HandleCallback(ctx context.Context, w http.ResponseWriter, r *http.Request, provider, code, stateParam string) (*AuthResult, error) {
-	verifier, err := s.validateState(w, r, stateParam)
-	if err != nil {
-		return nil, err
+	signedPayload, verifier, ok := unbindState(s.flows.secret, stateParam)
+	if !ok {
+		return nil, ErrInvalidState
+	}
+
+	// Determine if this state carries a link intent.
+	linkClaims, linkErr := s.VerifyLinkState(signedPayload)
+	if linkErr == nil && linkClaims != nil && linkClaims.Purpose == LinkStatePurpose {
+		// LINK FLOW DISPATCH
+		if linkClaims.Provider != provider {
+			return nil, ErrInvalidState
+		}
+
+		cookieNonce, err := s.flows.ConsumeStateCookie(r, w)
+		if err != nil || !constantTimeEquals(cookieNonce, linkClaims.Nonce) {
+			return nil, ErrInvalidState
+		}
+
+		// If a session cookie is present, assert it matches the session user in linkClaims.
+		cookieName := getCookieName(s.cfg)
+		if c, err := r.Cookie(cookieName); err == nil && c.Value != "" {
+			if sessClaims, err := s.VerifyToken(c.Value); err == nil && sessClaims != nil {
+				if sessClaims.UserID != linkClaims.UserID {
+					return nil, fmt.Errorf("session user mismatch: %w", ErrInvalidState)
+				}
+			}
+		}
+
+		// PRE-TX: provider exchange.
+		_, exchangerAdapter, err := s.providerAdapter(provider)
+		if err != nil {
+			return nil, err
+		}
+		claims, err := exchangerAdapter.Exchange(ctx, code, verifier)
+		if err != nil {
+			return nil, err
+		}
+
+		user, err := s.completeLinkWithClaims(ctx, linkClaims.UserID, claims)
+		if err != nil {
+			return nil, err
+		}
+
+		identities, err := s.identities.ListByUser(ctx, linkClaims.UserID)
+		if err != nil {
+			return nil, err
+		}
+
+		token, err := s.IssueToken(*user)
+		if err != nil {
+			return nil, err
+		}
+
+		return &AuthResult{
+			User:       *user,
+			Token:      token,
+			CookieName: cookieName,
+			IsNew:      false,
+			IsLinked:   true,
+			Identities: identities,
+		}, nil
+	}
+
+	// NORMAL LOGIN FLOW:
+	// Explicitly assert that link-state JWTs cannot log in (login-state JWTs must not dispatch to CompleteLink; link-state JWTs must not log in).
+	if strings.Count(signedPayload, ".") >= 2 {
+		return nil, ErrInvalidState
+	}
+
+	cookieNonce, err := s.flows.ConsumeStateCookie(r, w)
+	if err != nil || !constantTimeEquals(cookieNonce, signedPayload) {
+		return nil, ErrInvalidState
 	}
 
 	// PRE-TX: provider exchange (network I/O strictly outside transactions).
@@ -217,8 +288,15 @@ func (s *Service) CompleteLink(ctx context.Context, w http.ResponseWriter, r *ht
 		return err
 	}
 
-	// IN-TX: lock users row (ADR-007 global lock order) then insert identity.
-	return s.tx.WithTx(ctx, func(txCtx context.Context) error {
+	_, err = s.completeLinkWithClaims(ctx, userID, claims)
+	return err
+}
+
+// completeLinkWithClaims locks users row (ADR-007 global lock order), checks demo isolation,
+// inserts identity (mapping duplicate to ErrAlreadyLinked), and confirms provider contacts.
+func (s *Service) completeLinkWithClaims(ctx context.Context, userID string, claims *ProviderClaims) (*model.User, error) {
+	var linkedUser *model.User
+	err := s.tx.WithTx(ctx, func(txCtx context.Context) error {
 		user, err := s.users.GetByIDForUpdate(txCtx, userID)
 		if err != nil {
 			if isNotFoundErr(err) {
@@ -226,6 +304,7 @@ func (s *Service) CompleteLink(ctx context.Context, w http.ResponseWriter, r *ht
 			}
 			return fmt.Errorf("không thể khóa tài khoản để liên kết: %w", err)
 		}
+		linkedUser = user
 		// INV-04: demo accounts never gain extra providers.
 		if user.IsDemo || claims.Provider == model.ProviderDemo {
 			return ErrDemoIsolation
@@ -249,6 +328,10 @@ func (s *Service) CompleteLink(ctx context.Context, w http.ResponseWriter, r *ht
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return linkedUser, nil
 }
 
 // validateLinkState consumes the state cookie and validates the signed link state JWT.
@@ -266,9 +349,9 @@ func (s *Service) validateLinkState(w http.ResponseWriter, r *http.Request, curr
 		return "", fmt.Errorf("VerifyLinkState: %w", err)
 	}
 	if !constantTimeEquals(cookieNonce, linkClaims.Nonce) {
-		return "", fmt.Errorf("constantTimeEquals: cookieNonce=%s linkNonce=%s: %w", cookieNonce, linkClaims.Nonce, ErrInvalidState)
+		return "", fmt.Errorf("constantTimeEquals: %w", ErrInvalidState)
 	}
-	if linkClaims.UserID != currentUserID || linkClaims.Provider != provider {
+	if (currentUserID != "" && linkClaims.UserID != currentUserID) || linkClaims.Provider != provider {
 		return "", fmt.Errorf("claims mismatch: %w", ErrInvalidState)
 	}
 	return verifier, nil
@@ -359,4 +442,42 @@ func (s *Service) Logout(ctx context.Context, jti string) error {
 		return fmt.Errorf("không thể thu hồi phiên đăng nhập: %w", err)
 	}
 	return nil
+}
+
+// SetGoogleEndpoints overrides endpoints on the Google adapter (used for test harnesses).
+func (s *Service) SetGoogleEndpoints(authURL, tokenURL, profileURL string) {
+	if s.google != nil {
+		if authURL != "" {
+			s.google.AuthEndpoint = authURL
+		}
+		if tokenURL != "" {
+			s.google.TokenEndpoint = tokenURL
+		}
+		if profileURL != "" {
+			s.google.ProfileEndpoint = profileURL
+		}
+	}
+}
+
+// SetHTTPClient overrides the HTTP client on provider adapters (used for test harnesses).
+func (s *Service) SetHTTPClient(client *http.Client) {
+	if s.google != nil {
+		s.google.HTTP = client
+	}
+	if s.facebook != nil {
+		s.facebook.HTTP = client
+	}
+	if s.zalo != nil {
+		s.zalo.HTTP = client
+	}
+}
+
+func getCookieName(cfg *config.Config) string {
+	if cfg.CookieName != "" {
+		return cfg.CookieName
+	}
+	if cfg.DemoMode {
+		return config.DemoCookieName
+	}
+	return config.ProdCookieName
 }

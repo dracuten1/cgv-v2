@@ -45,6 +45,8 @@ type AuthResult struct {
 	// phone→user B (plan §3.2): a fresh isolated account was created and the
 	// UI must prompt a manual merge; NO auto-link happened.
 	ConflictDetected bool
+	IsLinked         bool             // true when callback completed account linking
+	Identities       []model.Identity // identities of user after linking
 }
 
 // UserProfile is the GET /api/v1/me payload: the account plus every linked

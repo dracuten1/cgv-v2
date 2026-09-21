@@ -134,6 +134,3 @@ func (g *GoogleProvider) redirectURI() string {
 	}
 	return base + "/api/v1/auth/google/callback"
 }
-
-// strings import guard (redirect constants are plain paths today).
-var _ = strings.TrimSpace

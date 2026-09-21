@@ -200,3 +200,64 @@ func TestJWT_EnforceDualIssuerMismatches(t *testing.T) {
 		})
 	}
 }
+
+func TestLinkState_PurposeClaimValidation(t *testing.T) {
+	svc := newTestService(newTestConfig(false), newMemCore(), &fakeOutbox{})
+
+	// 1. Valid token issued with purpose: "oauth_link" passes VerifyLinkState
+	tokenStr, err := svc.IssueLinkState("user-1", model.ProviderGoogle, "nonce-123")
+	if err != nil {
+		t.Fatalf("IssueLinkState failed: %v", err)
+	}
+
+	claims, err := svc.VerifyLinkState(tokenStr)
+	if err != nil {
+		t.Fatalf("VerifyLinkState failed on valid token: %v", err)
+	}
+	if claims.Purpose != auth.LinkStatePurpose {
+		t.Fatalf("expected purpose %q, got %q", auth.LinkStatePurpose, claims.Purpose)
+	}
+	if claims.UserID != "user-1" || claims.Provider != model.ProviderGoogle || claims.Nonce != "nonce-123" {
+		t.Fatalf("claims mismatch: %+v", claims)
+	}
+
+	// 2. Token with wrong purpose is rejected
+	wrongPurposeClaims := &auth.LinkStateClaims{
+		UserID:   "user-1",
+		Provider: model.ProviderGoogle,
+		Nonce:    "nonce-123",
+		Purpose:  "login_instead",
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    config.ProdJWTIssuer,
+			Audience:  jwt.ClaimStrings{"link"},
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Minute)),
+		},
+	}
+	wrongTok := jwt.NewWithClaims(jwt.SigningMethodHS256, wrongPurposeClaims)
+	wrongStr, _ := wrongTok.SignedString([]byte("test-jwt-secret-with-adequate-entropy-32b"))
+
+	if _, err := svc.VerifyLinkState(wrongStr); err == nil {
+		t.Fatal("expected VerifyLinkState to reject token with wrong purpose")
+	}
+
+	// 3. Token with empty purpose is rejected
+	emptyPurposeClaims := &auth.LinkStateClaims{
+		UserID:   "user-1",
+		Provider: model.ProviderGoogle,
+		Nonce:    "nonce-123",
+		Purpose:  "",
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    config.ProdJWTIssuer,
+			Audience:  jwt.ClaimStrings{"link"},
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Minute)),
+		},
+	}
+	emptyTok := jwt.NewWithClaims(jwt.SigningMethodHS256, emptyPurposeClaims)
+	emptyStr, _ := emptyTok.SignedString([]byte("test-jwt-secret-with-adequate-entropy-32b"))
+
+	if _, err := svc.VerifyLinkState(emptyStr); err == nil {
+		t.Fatal("expected VerifyLinkState to reject token with empty purpose")
+	}
+}

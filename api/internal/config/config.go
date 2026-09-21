@@ -235,12 +235,15 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	// C4: MockOAuth forbidden in prod/demo modes.
-	if c.MockOAuthEnabled && c.AppEnv != EnvDev {
+	// C4: MockOAuth forbidden in prod/demo modes (and dev + DEMO_MODE=true).
+	if c.MockOAuthEnabled && isStrict {
 		return ErrMockOAuthForbidden
 	}
 
-	// W5: Validate PUBLIC_BASE_URL if set (reject trailing path other than / or empty).
+	// W5: Validate PUBLIC_BASE_URL (fail-closed in prod/demo modes to prevent host-header injection).
+	if isStrict && strings.TrimSpace(c.PublicBaseURL) == "" {
+		return fmt.Errorf("cấu hình không hợp lệ: PUBLIC_BASE_URL không được để trống trong môi trường %s", c.AppEnv)
+	}
 	if c.PublicBaseURL != "" {
 		u, err := url.Parse(c.PublicBaseURL)
 		if err != nil || u.Scheme == "" || u.Host == "" {
@@ -266,6 +269,16 @@ func (c *Config) Validate() error {
 		// Database isolation heuristic: DSN must contain "demo" (in db name or path or query).
 		if c.DatabaseURL != "" && !dsnContainsDemo(c.DatabaseURL) {
 			return fmt.Errorf("vi phạm cô lập Demo (Mode A): DATABASE_URL không chứa định danh 'demo' để bảo đảm cách ly vật lý")
+		}
+	}
+
+	// 4. Non-demo Environment Invariants (prevent cross-environment leakage).
+	if !c.DemoMode {
+		if c.JWTIssuer == DemoJWTIssuer {
+			return fmt.Errorf("vi phạm cô lập môi trường: JWT_ISSUER không được là '%s' khi không ở chế độ demo", DemoJWTIssuer)
+		}
+		if c.CookieName == DemoCookieName {
+			return fmt.Errorf("vi phạm cô lập môi trường: COOKIE_NAME không được là '%s' khi không ở chế độ demo", DemoCookieName)
 		}
 	}
 

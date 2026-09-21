@@ -73,8 +73,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 func (h *AuthHandler) Callback(c *gin.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			loginURL := getPublicBaseURL(h.cfg, c) + "/auth/login?error=server_error"
-			c.Redirect(http.StatusFound, loginURL)
+			respondError(c, fmt.Errorf("lỗi hệ thống: %v", r))
 		}
 	}()
 
@@ -83,20 +82,27 @@ func (h *AuthHandler) Callback(c *gin.Context) {
 	stateParam := c.Query("state")
 
 	if code == "" || stateParam == "" {
-		loginURL := getPublicBaseURL(h.cfg, c) + "/auth/login?error=invalid_state"
-		c.Redirect(http.StatusFound, loginURL)
+		respondError(c, auth.ErrInvalidState)
 		return
 	}
 
 	res, err := h.authSvc.HandleCallback(c.Request.Context(), c.Writer, c.Request, provider, code, stateParam)
 	if err != nil {
-		loginURL := getPublicBaseURL(h.cfg, c) + "/auth/login?error=auth_failed"
-		c.Redirect(http.StatusFound, loginURL)
+		respondError(c, err)
 		return
 	}
 
 	// Set session cookie
 	setAuthCookie(c, h.cfg, res.CookieName, res.Token)
+
+	if res.IsLinked {
+		c.JSON(http.StatusOK, gin.H{
+			"message":    "Liên kết phương thức đăng nhập thành công",
+			"identities": res.Identities,
+			"user":       res.User,
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"user":              res.User,
@@ -230,33 +236,9 @@ func (h *AuthHandler) StartLinkProvider(c *gin.Context) {
 	c.Redirect(http.StatusFound, url)
 }
 
-// LinkCallback handles GET /api/v1/me/link/:provider/callback
+// LinkCallback handles GET /api/v1/me/link/:provider/callback (public callback alias).
 func (h *AuthHandler) LinkCallback(c *gin.Context) {
-	userID := GetUserID(c)
-	provider := c.Param("provider")
-	code := c.Query("code")
-	stateParam := c.Query("state")
-
-	if code == "" || stateParam == "" {
-		respondError(c, auth.ErrInvalidState)
-		return
-	}
-
-	if err := h.authSvc.CompleteLink(c.Request.Context(), c.Writer, c.Request, userID, provider, code, stateParam); err != nil {
-		respondError(c, err)
-		return
-	}
-
-	profile, err := h.authSvc.CurrentUser(c.Request.Context(), userID)
-	if err != nil {
-		respondError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message":    "Liên kết phương thức đăng nhập thành công",
-		"identities": profile.Identities,
-	})
+	h.Callback(c)
 }
 
 // UnlinkIdentity handles DELETE /api/v1/me/identities/:id

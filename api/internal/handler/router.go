@@ -84,6 +84,9 @@ func NewRouter(deps Deps) *gin.Engine {
 
 		v1.GET("/kinship", kinshipH.Calculate)
 
+		// Public Account Link Callback (OAuth provider redirects carry no JWT cookie)
+		v1.GET("/me/link/:provider/callback", authH.LinkCallback)
+
 		// Protected Routes (Require JWT cookie)
 		protected := v1.Group("")
 		protected.Use(AuthMiddleware(deps.Cfg, deps.AuthService))
@@ -92,7 +95,6 @@ func NewRouter(deps Deps) *gin.Engine {
 			protected.GET("/me", authH.GetMe)
 			protected.GET("/me/link/:provider/start", authH.StartLinkProvider)
 			protected.POST("/me/link/:provider/start", authH.StartLinkProvider)
-			protected.GET("/me/link/:provider/callback", authH.LinkCallback)
 			protected.DELETE("/me/identities/:id", authH.UnlinkIdentity)
 			protected.POST("/me/contacts", authH.AddContact)
 			protected.POST("/me/contacts/:id/verify", authH.VerifyContact)
