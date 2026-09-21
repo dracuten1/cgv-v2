@@ -12,8 +12,9 @@ import (
 	"github.com/dracuten1/cgv-v2/api/internal/model"
 )
 
-// Google endpoints (standard OAuth2/OIDC; tokeninfo used for verified-email
-// introspection per spec — no extra client library, INV-01).
+// Google endpoints (standard OAuth2/OIDC; the OIDC userinfo endpoint
+// (googleProfileURL) is used for verified-email extraction per spec — no
+// extra client library (INV-01), no tokeninfo call).
 const (
 	googleAuthURL    = "https://accounts.google.com/o/oauth2/v2/auth"
 	googleTokenURL   = "https://oauth2.googleapis.com/token"

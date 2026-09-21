@@ -125,7 +125,7 @@ func (s *Service) LoginURL(w http.ResponseWriter, r *http.Request, provider stri
 
 // HandleCallback runs the full callback flow: state-cookie validation
 // (burn-on-read), pre-transaction provider exchange (ADR-007: external HTTP
-// strictly outside any tx), then dispatches either to CompleteLink (when
+// strictly outside any tx), then dispatches either to account linking (completeLinkWithClaims) (when
 // state carries explicit purpose:"oauth_link") or the identity-resolution
 // state machine inside one tx.
 func (s *Service) HandleCallback(ctx context.Context, w http.ResponseWriter, r *http.Request, provider, code, stateParam string) (*AuthResult, error) {
@@ -147,6 +147,10 @@ func (s *Service) HandleCallback(ctx context.Context, w http.ResponseWriter, r *
 			return nil, ErrInvalidState
 		}
 
+		// Design intent: The binding proof is the burn-on-read state-cookie nonce
+		// match verified above; an ABSENT session cookie (e.g. cross-site cookie
+		// restrictions) is acceptable — the signed state nonce alone is sufficient;
+		// but if a session cookie IS present, it must match the same user.
 		// If a session cookie is present, assert it matches the session user in linkClaims.
 		cookieName := getCookieName(s.cfg)
 		if c, err := r.Cookie(cookieName); err == nil && c.Value != "" {
@@ -217,21 +221,6 @@ func (s *Service) HandleCallback(ctx context.Context, w http.ResponseWriter, r *
 	return s.Resolve(ctx, claims)
 }
 
-// validateState consumes the state cookie, validates the URL state's
-// signature and cross-binds the two nonces; returns the recovered PKCE
-// verifier.
-func (s *Service) validateState(w http.ResponseWriter, r *http.Request, stateParam string) (string, error) {
-	cookieNonce, err := s.flows.ConsumeStateCookie(r, w)
-	if err != nil {
-		return "", err
-	}
-	stateNonce, verifier, ok := unbindState(s.flows.secret, stateParam)
-	if !ok || !constantTimeEquals(cookieNonce, stateNonce) {
-		return "", ErrInvalidState
-	}
-	return verifier, nil
-}
-
 // StartLinkProvider begins the "add another login method" flow for an
 // EXISTING user (GET /api/v1/me/link/:provider/start): mint a signed state JWT,
 // set the state cookie, return the authorize URL.
@@ -264,6 +253,7 @@ func (s *Service) StartLinkProvider(w http.ResponseWriter, r *http.Request, user
 	return adapter.AuthURL(stateParam, challenge)
 }
 
+// Deprecated: superseded by HandleCallback link-intent dispatch; removal tracked in Phase-2 handler cleanup.
 // CompleteLink finishes provider linking for an EXISTING user: exchange the
 // code, then in ONE transaction lock the users row (GetByIDForUpdate),
 // verify demo isolation and insert the identity. A 23505 (provider account
@@ -444,6 +434,7 @@ func (s *Service) Logout(ctx context.Context, jti string) error {
 	return nil
 }
 
+// FOR TESTING ONLY — mutates provider endpoints; not safe for concurrent production use.
 // SetGoogleEndpoints overrides endpoints on the Google adapter (used for test harnesses).
 func (s *Service) SetGoogleEndpoints(authURL, tokenURL, profileURL string) {
 	if s.google != nil {
@@ -456,19 +447,6 @@ func (s *Service) SetGoogleEndpoints(authURL, tokenURL, profileURL string) {
 		if profileURL != "" {
 			s.google.ProfileEndpoint = profileURL
 		}
-	}
-}
-
-// SetHTTPClient overrides the HTTP client on provider adapters (used for test harnesses).
-func (s *Service) SetHTTPClient(client *http.Client) {
-	if s.google != nil {
-		s.google.HTTP = client
-	}
-	if s.facebook != nil {
-		s.facebook.HTTP = client
-	}
-	if s.zalo != nil {
-		s.zalo.HTTP = client
 	}
 }
 

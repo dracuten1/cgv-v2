@@ -252,6 +252,20 @@ func TestConfigValidate_MisconfigMatrix(t *testing.T) {
 			errContains: "PUBLIC_BASE_URL",
 		},
 		{
+			name: "whitespace public base url in prod rejected",
+			cfg: Config{
+				Port:          8080,
+				AppEnv:        EnvProd,
+				DatabaseURL:   "postgres://cgp:cgp@localhost:5432/cgp_prod",
+				JWTSecret:     "demo-secret-value-must-be-32-chars-long",
+				JWTIssuer:     ProdJWTIssuer,
+				CookieName:    ProdCookieName,
+				PublicBaseURL: "   ",
+			},
+			wantErr:     true,
+			errContains: "PUBLIC_BASE_URL",
+		},
+		{
 			name: "empty public base url in demo rejected",
 			cfg: Config{
 				Port:          8080,
