@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+/*
+  Self-hosted font imports (INV-01: NO external fetch / fonts.googleapis.com).
+  Weights: Be Vietnam Pro (400, 500, 600, 700), Fraunces (600, 700).
+*/
+@import "@fontsource/be-vietnam-pro/400.css";
+@import "@fontsource/be-vietnam-pro/500.css";
+@import "@fontsource/be-vietnam-pro/600.css";
+@import "@fontsource/be-vietnam-pro/700.css";
+@import "@fontsource/fraunces/600.css";
+@import "@fontsource/fraunces/700.css";
+
+@theme {
+  --color-cream: #FDFBF7;
+  --color-cream-card: #FFFFFF;
+  --color-cream-muted: #F5EFE6;
+
+  --color-terracotta: #C85A32;
+  --color-terracotta-hover: #B24E2A;
+  --color-terracotta-dark: #983F1E;
+  --color-terracotta-soft: #F9EAE1;
+
+  --color-slate-neutral: #64748B;
+  --color-slate-light: #F1F5F9;
+  --color-slate-border: #E2E8F0;
+
+  /* Generation tokens 1-4 (pastels for bands/badges) */
+  --color-gen-1: #E07A5F;
+  --color-gen-1-soft: #FBECE8;
+  --color-gen-2: #81B29A;
+  --color-gen-2-soft: #EDF5F1;
+  --color-gen-3: #6B9080;
+  --color-gen-3-soft: #EAF0EE;
+  --color-gen-4: #D4A373;
+  --color-gen-4-soft: #FAF3EB;
+
+  --font-body: "Be Vietnam Pro", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+}
+
+:root {
+  --gen-1: #E07A5F;
+  --gen-1-soft: #FBECE8;
+  --gen-2: #81B29A;
+  --gen-2-soft: #EDF5F1;
+  --gen-3: #6B9080;
+  --gen-3-soft: #EAF0EE;
+  --gen-4: #D4A373;
+  --gen-4-soft: #FAF3EB;
+
+  --font-body: "Be Vietnam Pro", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+}
+
+/*
+  INV-02: Global line-height >= 1.45 (body ~1.6, headings >= 1.45)
+  so stacked Vietnamese diacritics/tone marks NEVER clip.
+*/
+html, body {
+  font-family: var(--font-body);
+  line-height: 1.6;
+  background-color: #FDFBF7;
+  color: #1E293B;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  line-height: 1.45;
+}
+
+/* Kinship decorative quotes rule (INV-05 / F4) */
+.kinship-term-quoted::before {
+  content: '\201C';
+}
+.kinship-term-quoted::after {
+  content: '\201D';
+}
