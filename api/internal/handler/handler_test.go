@@ -718,8 +718,18 @@ func TestErrorEnvelopeShape(t *testing.T) {
 func TestExcelEndpoints(t *testing.T) {
 	r, _, _, _ := setupTestRouter()
 
-	// Export
+	// Export (unauthenticated request rejected with 401)
+	reqExpUnauth, _ := http.NewRequest("GET", "/api/v1/families/fam-1/export.xlsx", nil)
+	wExpUnauth := httptest.NewRecorder()
+	r.ServeHTTP(wExpUnauth, reqExpUnauth)
+
+	if wExpUnauth.Code != http.StatusUnauthorized {
+		t.Fatalf("kỳ vọng 401 khi xuất Excel chưa xác thực, nhận %d", wExpUnauth.Code)
+	}
+
+	// Export (authenticated request returns 200)
 	reqExp, _ := http.NewRequest("GET", "/api/v1/families/fam-1/export.xlsx", nil)
+	reqExp.AddCookie(&http.Cookie{Name: "cgp_session", Value: "valid-token-123"})
 	wExp := httptest.NewRecorder()
 	r.ServeHTTP(wExp, reqExp)
 
@@ -730,7 +740,24 @@ func TestExcelEndpoints(t *testing.T) {
 		t.Errorf("kỳ vọng content-type openxmlformats, nhận %s", wExp.Header().Get("Content-Type"))
 	}
 
-	// Import
+	// Import (unauthenticated rejected with 401)
+	var bufUnauth bytes.Buffer
+	mwUnauth := multipart.NewWriter(&bufUnauth)
+	partUnauth, _ := mwUnauth.CreateFormFile("file", "gia-pha.xlsx")
+	_, _ = io.WriteString(partUnauth, "dummy excel content")
+	_ = mwUnauth.Close()
+
+	reqImpUnauth, _ := http.NewRequest("POST", "/api/v1/families/fam-1/import.xlsx", &bufUnauth)
+	reqImpUnauth.Header.Set("Content-Type", mwUnauth.FormDataContentType())
+	reqImpUnauth.Header.Set("Origin", "http://localhost:3456")
+	wImpUnauth := httptest.NewRecorder()
+	r.ServeHTTP(wImpUnauth, reqImpUnauth)
+
+	if wImpUnauth.Code != http.StatusUnauthorized {
+		t.Fatalf("kỳ vọng 401 khi nhập Excel chưa xác thực, nhận %d", wImpUnauth.Code)
+	}
+
+	// Import (authenticated returns 200)
 	var buf bytes.Buffer
 	mw := multipart.NewWriter(&buf)
 	part, _ := mw.CreateFormFile("file", "gia-pha.xlsx")

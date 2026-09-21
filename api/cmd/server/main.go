@@ -79,7 +79,7 @@ func main() {
 
 			if familyCount == 0 {
 				logger.Info("Cơ sở dữ liệu trống, tiến hành nạp dữ liệu mẫu ban đầu...")
-				summary, err := seed.Run(txCtx, pool)
+				summary, err := seed.RunWithExecutor(txCtx, exec)
 				if err != nil {
 					if errors.Is(err, seed.ErrAlreadySeeded) {
 						logger.Info("Dữ liệu đã tồn tại, bỏ qua bước nạp mẫu")

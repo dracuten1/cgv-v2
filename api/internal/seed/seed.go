@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/dracuten1/cgv-v2/api/internal/database"
@@ -52,6 +53,21 @@ func Run(ctx context.Context, pool *pgxpool.Pool) (Summary, error) {
 	return runOpts(ctx, pool, false)
 }
 
+// RunWithExecutor inserts the seed fixture using an existing executor (such as
+// an outer transaction opened by server boot with advisory locking).
+// It checks whether families already exist, returning ErrAlreadySeeded if populated.
+func RunWithExecutor(ctx context.Context, exec database.DBTX) (Summary, error) {
+	var n int
+	if err := exec.QueryRow(ctx, `SELECT COUNT(*) FROM families`).Scan(&n); err != nil {
+		return Summary{}, fmt.Errorf("không thể kiểm tra dữ liệu dòng họ: %w", err)
+	}
+	if n > 0 {
+		return Summary{}, ErrAlreadySeeded
+	}
+	families := seedAll()
+	return insertAll(ctx, exec, families)
+}
+
 // Force is the -force variant: wipes the genealogy tables (families,
 // members, parent_child, spouses, feed_posts — never users / identities /
 // sessions / outbox / tokens) and re-seeds the fixture fresh.
@@ -85,6 +101,13 @@ func runOpts(ctx context.Context, pool *pgxpool.Pool, force bool) (Summary, erro
 
 	var sum Summary
 	// ONE transaction: any error rolls back the whole seed (no partial state).
+	// If the context already carries an ambient transaction (e.g. from AutoSeed boot),
+	// we join it directly via GetExecutor to prevent ErrNestedTransaction.
+	exec := database.GetExecutor(ctx, pool)
+	if _, isTx := exec.(pgx.Tx); isTx {
+		return insertAll(ctx, exec, families)
+	}
+
 	err := database.NewTxManager(pool).WithTx(ctx, func(ctx context.Context) error {
 		exec := database.GetExecutor(ctx, pool)
 		var err error

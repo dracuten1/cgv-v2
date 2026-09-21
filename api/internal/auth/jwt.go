@@ -44,11 +44,17 @@ func (s *Service) IssueToken(user model.User) (string, error) {
 		return "", err
 	}
 	now := time.Now()
+	issuer := s.cfg.JWTIssuer
+	if user.IsDemo {
+		issuer = config.DemoJWTIssuer
+	} else if issuer == config.DemoJWTIssuer {
+		issuer = config.ProdJWTIssuer
+	}
 	claims := &Claims{
 		UserID:   user.ID,
 		IsDemo:   user.IsDemo,
-		Issuer:   s.cfg.JWTIssuer,
-		Audience: s.cfg.JWTIssuer,
+		Issuer:   issuer,
+		Audience: issuer,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        jti,
 			IssuedAt:  jwt.NewNumericDate(now),
