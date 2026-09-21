@@ -1,0 +1,82 @@
+{
+  "bac": {
+    "self": {
+      "any": "Bản thân"
+    },
+    "blood": {
+      "up2": {
+        "patri_male": "Ông nội",
+        "patri_female": "Bà nội",
+        "matri_male": "Ông ngoại",
+        "matri_female": "Bà ngoại"
+      },
+      "up1": {
+        "patri_older_male": "Bác",
+        "patri_older_female": "Bác",
+        "patri_younger_male": "Chú",
+        "patri_younger_female": "Cô",
+        "matri_older_male": "Bác",
+        "matri_older_female": "Bác",
+        "matri_younger_male": "Cậu",
+        "matri_younger_female": "Dì",
+        "direct_male": "Bố",
+        "direct_female": "Mẹ"
+      },
+      "0": {
+        "older_male": "Anh",
+        "older_female": "Chị",
+        "younger_male": "Em",
+        "younger_female": "Em",
+        "same_male": "Anh/Em",
+        "same_female": "Chị/Em"
+      },
+      "down1": {
+        "direct_male": "Con trai",
+        "direct_female": "Con gái",
+        "collateral_male": "Cháu",
+        "collateral_female": "Cháu"
+      },
+      "down2": {
+        "patri_male": "Cháu nội",
+        "patri_female": "Cháu nội",
+        "matri_male": "Cháu ngoại",
+        "matri_female": "Cháu ngoại"
+      },
+      "down3": {
+        "male": "Chắt",
+        "female": "Chắt"
+      },
+      "down4": {
+        "male": "Chút",
+        "female": "Chút"
+      }
+    },
+    "affinal": {
+      "spouse": {
+        "male": "Chồng",
+        "female": "Vợ"
+      },
+      "up1": {
+        "patri_older_male": "Bác",
+        "patri_older_female": "Bác dâu",
+        "patri_younger_male": "Chú",
+        "patri_younger_female": "Thím",
+        "matri_younger_male": "Cậu",
+        "matri_younger_female": "Mợ",
+        "parent_in_law_male": "Bố chồng/vợ",
+        "parent_in_law_female": "Mẹ chồng/vợ"
+      },
+      "0": {
+        "older_male": "Anh rể",
+        "older_female": "Chị dâu",
+        "younger_male": "Em rể",
+        "younger_female": "Em dâu"
+      },
+      "down1": {
+        "child_in_law_male": "Con rể",
+        "child_in_law_female": "Con dâu",
+        "nephew_in_law": "Cháu dâu/rể"
+      }
+    }
+  }
+}

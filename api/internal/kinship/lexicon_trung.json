@@ -1,0 +1,18 @@
+{
+  "trung": {
+    "blood": {
+      "up1": {
+        "patri_older_male": "Bác",
+        "patri_older_female": "Bác",
+        "patri_younger_male": "Chú",
+        "patri_younger_female": "O",
+        "matri_older_male": "Bác",
+        "matri_older_female": "Bác",
+        "matri_younger_male": "Cậu",
+        "matri_younger_female": "Dì",
+        "direct_male": "Ba",
+        "direct_female": "Mạ"
+      }
+    }
+  }
+}
