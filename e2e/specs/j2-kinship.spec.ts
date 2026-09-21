@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { demoLogin } from '../helpers/auth';
+import { loginViaMock } from '../helpers/auth';
 
 /**
  * Journey 2: Kinship (Xưng hô) — Nguyễn Văn An ↔ grandson (INV-05).
@@ -80,8 +80,9 @@ async function discoverGrandson(page: Page): Promise<MemberItem> {
 
 test.describe('Journey 2 — Xưng hô (Kinship)', () => {
   test('grandson calling Nguyễn Văn An yields exactly "Ông nội" / Cách 2 đời / Chi nội', async ({ page }) => {
-    // 1. Demo session
-    await demoLogin(page);
+    // 1. Mock session
+    // demo login blocked by app bug (iss/is_demo mismatch, jwt.go:41+94) — mock login per leader contract
+    await loginViaMock(page);
 
     // 2. Open kinship view
     await page.goto('/kinship');

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { demoLogin } from '../helpers/auth';
+import { loginViaMock } from '../helpers/auth';
 
 /**
  * Journey 1: Tree visualizer & generation navigation.
@@ -22,8 +22,9 @@ import { demoLogin } from '../helpers/auth';
  */
 test.describe('Journey 1 — Cây gia phả (Tree visualizer)', () => {
   test('renders patriarch Nguyễn Văn An and all 5 generation headings', async ({ page }) => {
-    // 1. Enter via demo session
-    await demoLogin(page);
+    // 1. Enter via mock session
+    // demo login blocked by app bug (iss/is_demo mismatch, jwt.go:41+94) — mock login per leader contract
+    await loginViaMock(page);
 
     // 2. Navigate to /tree (or click desktop nav "Gia phả")
     if (!page.url().includes('/tree')) {

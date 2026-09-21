@@ -54,10 +54,10 @@ test.describe('Journey 3 — Tài khoản (Linking)', () => {
     }
 
     // 2. Open AccountView through the real nav link "Tài khoản".
-    //    Scoped to the header <nav>: a bare a[href="/account"] also matches
-    //    the mobile tab bar and the OAuth-callback "Quay lại" button
-    //    (Playwright strict mode → violation).
-    await page.locator('nav a[href="/account"]').click();
+    //    Scoped to the DESKTOP header nav: the mobile tab bar is a second
+    //    <nav> with its own a[href="/account"], and the OAuth-callback view
+    //    adds a "Quay lại trang tài khoản" link (strict-mode violation).
+    await page.locator('header nav a[href="/account"]').click();
     await expect(page).toHaveURL(/\/account/);
     await expect(page.locator('[data-testid="user-display-name"]')).toBeVisible();
 

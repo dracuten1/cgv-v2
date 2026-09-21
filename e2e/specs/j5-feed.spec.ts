@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { demoLogin } from '../helpers/auth';
+import { loginViaMock } from '../helpers/auth';
 
 /**
  * Journey 5: Bảng tin (Feed) — compose, attach image, publish, verify.
@@ -26,8 +26,9 @@ test.describe('Journey 5 — Bảng tin (Feed)', () => {
   test('composes a post with a unique marker + image URL and shows it with author attribution', async ({ page }) => {
     const marker = `E2E-J5-${Date.now()}`;
 
-    // 1. Demo session → feed view
-    await demoLogin(page);
+    // 1. Mock session → feed view
+    // demo login blocked by app bug (iss/is_demo mismatch, jwt.go:41+94) — mock login per leader contract
+    await loginViaMock(page);
     await page.goto('/feed');
 
     // 2. The composer renders for authenticated users
