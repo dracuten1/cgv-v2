@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/dracuten1/cgv-v2/api/internal/auth"
@@ -87,33 +89,85 @@ func RecoveryMiddleware(logger *slog.Logger) gin.HandlerFunc {
 	}
 }
 
-// CORSMiddleware configures CORS headers: permissive in dev mode, same-origin in prod/demo.
+// CORSMiddleware configures CORS headers using a strict allow-list.
 func CORSMiddleware(cfg *config.Config) gin.HandlerFunc {
+	allowedOrigins := make(map[string]bool)
+	for _, o := range cfg.CORSAllowedOrigins {
+		allowedOrigins[o] = true
+	}
+
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
 
-		if cfg.AppEnv == config.EnvDev {
-			if origin != "" {
-				c.Header("Access-Control-Allow-Origin", origin)
-			} else {
-				c.Header("Access-Control-Allow-Origin", "*")
-			}
+		if origin != "" && allowedOrigins[origin] {
+			c.Header("Access-Control-Allow-Origin", origin)
 			c.Header("Access-Control-Allow-Credentials", "true")
-			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 			c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-Request-ID")
-		} else {
-			// In production/demo, Vue SPA and API are reverse-proxied behind Nginx under the same origin.
-			// When an Origin is sent that matches host, echo it.
-			if origin != "" {
-				c.Header("Access-Control-Allow-Origin", origin)
-				c.Header("Access-Control-Allow-Credentials", "true")
-				c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-				c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-Request-ID")
-			}
 		}
 
 		if c.Request.Method == http.MethodOptions {
-			c.AbortWithStatus(http.StatusNoContent)
+			if origin != "" && allowedOrigins[origin] {
+				c.AbortWithStatus(http.StatusNoContent)
+			} else {
+				c.AbortWithStatus(http.StatusForbidden)
+			}
+			return
+		}
+
+		c.Next()
+	}
+}
+
+// CSRFMiddleware checks Origin and Referer on state-changing methods (POST/PUT/PATCH/DELETE).
+func CSRFMiddleware(cfg *config.Config) gin.HandlerFunc {
+	allowedOrigins := make(map[string]bool)
+	for _, o := range cfg.CORSAllowedOrigins {
+		allowedOrigins[o] = true
+	}
+	if cfg.PublicBaseURL != "" {
+		allowedOrigins[cfg.PublicBaseURL] = true
+	}
+
+	return func(c *gin.Context) {
+		method := c.Request.Method
+		if method == http.MethodGet || method == http.MethodHead || method == http.MethodOptions {
+			c.Next()
+			return
+		}
+
+		origin := c.Request.Header.Get("Origin")
+		var candidateOrigin string
+
+		if origin != "" {
+			candidateOrigin = origin
+		} else {
+			referer := c.Request.Header.Get("Referer")
+			if referer != "" {
+				if u, err := url.Parse(referer); err == nil && u.Scheme != "" && u.Host != "" {
+					candidateOrigin = fmt.Sprintf("%s://%s", u.Scheme, u.Host)
+				}
+			}
+		}
+
+		if candidateOrigin == "" {
+			c.AbortWithStatusJSON(http.StatusForbidden, model.NewErrorEnvelope("csrf_origin_mismatch", "Yêu cầu bị từ chối: thiếu thông tin Origin hoặc Referer"))
+			return
+		}
+
+		// Check against allowed origins or current Host
+		matched := false
+		if allowedOrigins[candidateOrigin] {
+			matched = true
+		} else {
+			// Host header match (e.g. same origin)
+			if u, err := url.Parse(candidateOrigin); err == nil && strings.EqualFold(u.Host, c.Request.Host) {
+				matched = true
+			}
+		}
+
+		if !matched {
+			c.AbortWithStatusJSON(http.StatusForbidden, model.NewErrorEnvelope("csrf_origin_mismatch", "Yêu cầu bị từ chối: nguồn gốc yêu cầu (Origin/Referer) không hợp lệ"))
 			return
 		}
 

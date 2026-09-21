@@ -41,6 +41,7 @@ func NewRouter(deps Deps) *gin.Engine {
 	r.Use(RecoveryMiddleware(deps.Logger))
 	r.Use(RequestLogger(deps.Logger))
 	r.Use(CORSMiddleware(deps.Cfg))
+	r.Use(CSRFMiddleware(deps.Cfg))
 
 	// Instantiate handlers
 	authH := NewAuthHandler(deps.Cfg, deps.AuthService, deps.ContactStore)
@@ -67,7 +68,7 @@ func NewRouter(deps Deps) *gin.Engine {
 			authGroup.GET("/:provider/login", authH.Login)
 			authGroup.GET("/:provider/callback", authH.Callback)
 			authGroup.POST("/email/magic-link", authH.SendMagicLink)
-			authGroup.GET("/email/verify", authH.VerifyMagicLink)
+			authGroup.POST("/email/verify", authH.VerifyMagicLink)
 			authGroup.POST("/demo", authH.StartDemo)
 			authGroup.POST("/logout", authH.Logout)
 		}
@@ -90,6 +91,8 @@ func NewRouter(deps Deps) *gin.Engine {
 			// Current user profile & account linking
 			protected.GET("/me", authH.GetMe)
 			protected.GET("/me/link/:provider/start", authH.StartLinkProvider)
+			protected.POST("/me/link/:provider/start", authH.StartLinkProvider)
+			protected.GET("/me/link/:provider/callback", authH.LinkCallback)
 			protected.DELETE("/me/identities/:id", authH.UnlinkIdentity)
 			protected.POST("/me/contacts", authH.AddContact)
 			protected.POST("/me/contacts/:id/verify", authH.VerifyContact)

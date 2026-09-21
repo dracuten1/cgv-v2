@@ -14,11 +14,14 @@ import (
 func newTestConfig(demo bool) *config.Config {
 	issuer := config.ProdJWTIssuer
 	cookie := config.ProdCookieName
+	appEnv := config.EnvProd
 	if demo {
 		issuer = config.DemoJWTIssuer
 		cookie = config.DemoCookieName
+		appEnv = config.EnvDemo
 	}
 	return &config.Config{
+		AppEnv:           appEnv,
 		JWTSecret:        "test-jwt-secret-with-adequate-entropy-32b",
 		JWTIssuer:        issuer,
 		CookieName:       cookie,
@@ -162,6 +165,18 @@ func TestJWT_EnforceDualIssuerMismatches(t *testing.T) {
 		{
 			name:    "wrong secret rejected",
 			token:   mintCustom("u-1", config.ProdJWTIssuer, config.ProdJWTIssuer, false, time.Hour, []byte("wrong-secret-key-32b-length-here")),
+			service: newTestService(newTestConfig(false), newMemCore(), &fakeOutbox{}),
+			wantErr: "Mã xác thực không hợp lệ",
+		},
+		{
+			name:    "prod token rejected on demo config",
+			token:   mintCustom("u-1", config.ProdJWTIssuer, config.ProdJWTIssuer, false, time.Hour, secret),
+			service: newTestService(newTestConfig(true), newMemCore(), &fakeOutbox{}),
+			wantErr: "Mã xác thực không hợp lệ",
+		},
+		{
+			name:    "demo token rejected on prod config",
+			token:   mintCustom("u-1", config.DemoJWTIssuer, config.DemoJWTIssuer, true, time.Hour, secret),
 			service: newTestService(newTestConfig(false), newMemCore(), &fakeOutbox{}),
 			wantErr: "Mã xác thực không hợp lệ",
 		},

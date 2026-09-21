@@ -33,6 +33,7 @@ type googleProfile struct {
 type GoogleProvider struct {
 	ClientID     string
 	ClientSecret string
+	BaseURL      string
 
 	AuthEndpoint    string
 	TokenEndpoint   string
@@ -48,6 +49,7 @@ func NewGoogleProvider(cfg *config.Config) *GoogleProvider {
 	return &GoogleProvider{
 		ClientID:        cfg.GoogleClientID,
 		ClientSecret:    cfg.GoogleClientSecret,
+		BaseURL:         cfg.PublicBaseURL,
 		AuthEndpoint:    googleAuthURL,
 		TokenEndpoint:   googleTokenURL,
 		ProfileEndpoint: googleProfileURL,
@@ -125,7 +127,13 @@ func (g *GoogleProvider) Exchange(ctx context.Context, code, verifier string) (*
 }
 
 // redirectURI is the handler-bound callback path.
-func (g *GoogleProvider) redirectURI() string { return "/api/v1/auth/google/callback" }
+func (g *GoogleProvider) redirectURI() string {
+	base := strings.TrimRight(g.BaseURL, "/")
+	if base == "" {
+		base = "http://localhost:3456"
+	}
+	return base + "/api/v1/auth/google/callback"
+}
 
 // strings import guard (redirect constants are plain paths today).
 var _ = strings.TrimSpace

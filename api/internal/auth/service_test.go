@@ -2,9 +2,14 @@ package auth_test
 
 import (
 	"context"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
+	"github.com/dracuten1/cgv-v2/api/internal/auth"
 	"github.com/dracuten1/cgv-v2/api/internal/config"
 	"github.com/dracuten1/cgv-v2/api/internal/model"
 )
@@ -190,6 +195,73 @@ func TestMagicLink_TokenHashedNotStored(t *testing.T) {
 		}
 		if len(hash) != 64 { // sha256 hex length
 			t.Fatalf("stored token hash must be sha256 hex (64 chars), got %d", len(hash))
+		}
+	}
+}
+
+// TestCompleteLink_SessionSwapTakeoverPrevention (C2)
+// When User A is logged in and links a Google account already owned by User B,
+// CompleteLink returns ErrAlreadyLinked and User A's session stays User A.
+func TestCompleteLink_SessionSwapTakeoverPrevention(t *testing.T) {
+	ctx := context.Background()
+	svc, core, _, _ := newHarness(false)
+
+	userA := core.seedUser("User A", false)
+	userB := core.seedUser("User B", false)
+
+	// User B already owns Google identity "g-victim"
+	core.seedIdentity(userB, model.ProviderGoogle, "g-victim")
+
+	// User A attempts to complete link with Google account "g-victim"
+	// Let's create an HTTP request/response
+	w := newDiscardWriter()
+	r := newRequestWithCookies()
+
+	// Mint state for User A
+	urlStr, err := svc.StartLinkProvider(w, r, userA, model.ProviderMock)
+	if err != nil {
+		t.Fatalf("StartLinkProvider failed: %v", err)
+	}
+
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		t.Fatalf("parse url failed: %v", err)
+	}
+	stateParam := u.Query().Get("state")
+	cookies := w.Result().Cookies()
+	var stateCookie *http.Cookie
+	for _, c := range cookies {
+		if c.Name == "cgp_oauth_state" {
+			stateCookie = c
+			break
+		}
+	}
+	if stateCookie == nil {
+		t.Fatal("expected cgp_oauth_state cookie")
+	}
+
+	// User A tries to link mock code which maps to already-linked identity
+	// First let's seed an identity with mock provider for User B
+	core.seedIdentity(userB, model.ProviderMock, "mock:owned-by-b")
+
+	reqCallback := httptest.NewRequest(http.MethodGet, "/api/v1/me/link/mock/callback", nil)
+	reqCallback.AddCookie(stateCookie)
+	wCallback := httptest.NewRecorder()
+
+	err = svc.CompleteLink(ctx, wCallback, reqCallback, userA, model.ProviderMock, "owned-by-b", stateParam)
+	t.Logf("CompleteLink err: %v", err)
+	if !errors.Is(err, auth.ErrAlreadyLinked) {
+		t.Fatalf("expected ErrAlreadyLinked, got %v", err)
+	}
+
+	// Verify User A still only has their original identities (no mock:owned-by-b)
+	profileA, err := svc.CurrentUser(ctx, userA)
+	if err != nil {
+		t.Fatalf("CurrentUser(userA) failed: %v", err)
+	}
+	for _, id := range profileA.Identities {
+		if id.ProviderSubject == "mock:owned-by-b" {
+			t.Fatal("User A must not have been granted User B's identity!")
 		}
 	}
 }

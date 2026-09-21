@@ -63,6 +63,19 @@ export const useAuthStore = defineStore('auth', () => {
     return fetchMePromise;
   }
 
+  async function loginMagicLink(token: string): Promise<void> {
+    status.value = 'loading';
+    try {
+      const res = await authApi.verifyMagicLink(token);
+      user.value = res.user;
+      status.value = 'authenticated';
+      await fetchMe(true);
+    } catch (err) {
+      status.value = 'anonymous';
+      throw new Error(formatApiError(err));
+    }
+  }
+
   async function loginDemo(): Promise<void> {
     status.value = 'loading';
     try {
@@ -131,6 +144,7 @@ export const useAuthStore = defineStore('auth', () => {
     isDemo,
     displayName,
     fetchMe,
+    loginMagicLink,
     loginDemo,
     logout,
     linkProviderStart,

@@ -11,7 +11,7 @@ import (
 
 // MockProvider is the offline provider for dev/CI/E2E (Journey 3): zero
 // external HTTP, deterministic subjects. Enabled only when
-// config.MockOAuthEnabled is true — every method returns
+// config.MockOAuthEnabled is true and config.AppEnv == EnvDev — every method returns
 // ErrProviderDisabled otherwise.
 //
 // Exchange accepts ANY code; subject = "mock:<code>". A `verified_email:`
@@ -19,13 +19,15 @@ import (
 // auto-link and conflict branches without real providers.
 type MockProvider struct {
 	Enabled bool
+	AppEnv  config.AppEnv
 
 	oauthFlows
 }
 
 // NewMockProvider builds the mock adapter from configuration.
 func NewMockProvider(cfg *config.Config) *MockProvider {
-	return &MockProvider{Enabled: cfg.MockOAuthEnabled, oauthFlows: oauthFlows{secret: []byte(cfg.JWTSecret)}}
+	enabled := cfg.MockOAuthEnabled && cfg.AppEnv == config.EnvDev
+	return &MockProvider{Enabled: enabled, AppEnv: cfg.AppEnv, oauthFlows: oauthFlows{secret: []byte(cfg.JWTSecret)}}
 }
 
 // AuthURL returns the local callback URL carrying the state so the E2E
@@ -46,7 +48,7 @@ func (m *MockProvider) AuthURL(state, _ string) (string, error) {
 // The `unverified:` prefix produces a Verified=false claim for the
 // unverified-branch tests.
 func (m *MockProvider) Exchange(_ context.Context, code, _ string) (*ProviderClaims, error) {
-	if !m.Enabled {
+	if !m.Enabled || m.AppEnv != config.EnvDev {
 		return nil, ErrProviderDisabled
 	}
 	claims := &ProviderClaims{

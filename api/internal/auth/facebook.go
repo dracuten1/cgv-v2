@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/dracuten1/cgv-v2/api/internal/config"
 	"github.com/dracuten1/cgv-v2/api/internal/model"
@@ -35,6 +36,7 @@ type fbProfile struct {
 type FacebookProvider struct {
 	ClientID     string
 	ClientSecret string
+	BaseURL      string
 
 	AuthEndpoint    string
 	TokenEndpoint   string
@@ -50,6 +52,7 @@ func NewFacebookProvider(cfg *config.Config) *FacebookProvider {
 	return &FacebookProvider{
 		ClientID:        cfg.FacebookClientID,
 		ClientSecret:    cfg.FacebookClientSecret,
+		BaseURL:         cfg.PublicBaseURL,
 		AuthEndpoint:    facebookAuthURL,
 		TokenEndpoint:   facebookTokenURL,
 		ProfileEndpoint: facebookProfileURL,
@@ -130,4 +133,10 @@ func (f *FacebookProvider) Exchange(ctx context.Context, code, verifier string) 
 }
 
 // redirectURI is the handler-bound callback path.
-func (f *FacebookProvider) redirectURI() string { return "/api/v1/auth/facebook/callback" }
+func (f *FacebookProvider) redirectURI() string {
+	base := strings.TrimRight(f.BaseURL, "/")
+	if base == "" {
+		base = "http://localhost:3456"
+	}
+	return base + "/api/v1/auth/facebook/callback"
+}

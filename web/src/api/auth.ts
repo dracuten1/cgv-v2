@@ -20,10 +20,10 @@ export const authApi = {
     return apiClient.post<MessageResponse>('/auth/email/magic-link', { email });
   },
 
+  // W4 & C5: Magic link verify uses POST to prevent state-changing GETs.
+  // The backend AuthHandler /api/v1/auth/email/verify endpoint matches this POST request.
   verifyMagicLink(token: string): Promise<AuthSessionResponse> {
-    return apiClient.get<AuthSessionResponse>('/auth/email/verify', {
-      params: { token },
-    });
+    return apiClient.post<AuthSessionResponse>('/auth/email/verify', { token });
   },
 
   startDemo(): Promise<AuthSessionResponse> {

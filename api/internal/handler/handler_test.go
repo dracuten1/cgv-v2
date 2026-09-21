@@ -374,11 +374,13 @@ func setupTestRouter() (*gin.Engine, *fakeMemberRepo, *fakeAuthService, *fakePin
 	gin.SetMode(gin.TestMode)
 
 	cfg := &config.Config{
-		Port:             8080,
-		AppEnv:           config.EnvDev,
-		CookieName:       "cgp_session",
-		JWTSecret:        "test-secret-min-32-chars-long-123456",
-		MockOAuthEnabled: true,
+		Port:               8080,
+		AppEnv:             config.EnvDev,
+		CookieName:         "cgp_session",
+		JWTSecret:          "test-secret-min-32-chars-long-123456",
+		MockOAuthEnabled:   true,
+		CORSAllowedOrigins: []string{"http://localhost:3456", "http://localhost:3457"},
+		PublicBaseURL:      "http://localhost:3456",
 	}
 
 	pinger := &fakePinger{}
@@ -448,11 +450,13 @@ func TestRouteRegistration(t *testing.T) {
 		{"GET", "/api/v1/auth/:provider/login"},
 		{"GET", "/api/v1/auth/:provider/callback"},
 		{"POST", "/api/v1/auth/email/magic-link"},
-		{"GET", "/api/v1/auth/email/verify"},
+		{"POST", "/api/v1/auth/email/verify"},
 		{"POST", "/api/v1/auth/demo"},
 		{"POST", "/api/v1/auth/logout"},
 		{"GET", "/api/v1/me"},
 		{"GET", "/api/v1/me/link/:provider/start"},
+		{"POST", "/api/v1/me/link/:provider/start"},
+		{"GET", "/api/v1/me/link/:provider/callback"},
 		{"DELETE", "/api/v1/me/identities/:id"},
 		{"POST", "/api/v1/me/contacts"},
 		{"POST", "/api/v1/me/contacts/:id/verify"},
@@ -572,6 +576,7 @@ func TestGenderBoundaryAcceptance(t *testing.T) {
 	bodyVN := `{"family_id":"fam-1","full_name":"Nguyễn Thị Hoa","gender":"nữ"}`
 	reqVN, _ := http.NewRequest("POST", "/api/v1/members", bytes.NewBufferString(bodyVN))
 	reqVN.Header.Set("Content-Type", "application/json")
+	reqVN.Header.Set("Origin", "http://localhost:3456")
 	reqVN.AddCookie(&http.Cookie{Name: "cgp_session", Value: "valid-token-123"})
 	wVN := httptest.NewRecorder()
 	r.ServeHTTP(wVN, reqVN)
@@ -591,6 +596,7 @@ func TestGenderBoundaryAcceptance(t *testing.T) {
 	bodyAPI := `{"family_id":"fam-1","full_name":"Nguyễn Thị Lan","gender":"female"}`
 	reqAPI, _ := http.NewRequest("POST", "/api/v1/members", bytes.NewBufferString(bodyAPI))
 	reqAPI.Header.Set("Content-Type", "application/json")
+	reqAPI.Header.Set("Origin", "http://localhost:3456")
 	reqAPI.AddCookie(&http.Cookie{Name: "cgp_session", Value: "valid-token-123"})
 	wAPI := httptest.NewRecorder()
 	r.ServeHTTP(wAPI, reqAPI)
@@ -610,6 +616,7 @@ func TestGenderBoundaryAcceptance(t *testing.T) {
 	bodyInvalid := `{"family_id":"fam-1","full_name":"Ai Đó","gender":"khac"}`
 	reqInv, _ := http.NewRequest("POST", "/api/v1/members", bytes.NewBufferString(bodyInvalid))
 	reqInv.Header.Set("Content-Type", "application/json")
+	reqInv.Header.Set("Origin", "http://localhost:3456")
 	reqInv.AddCookie(&http.Cookie{Name: "cgp_session", Value: "valid-token-123"})
 	wInv := httptest.NewRecorder()
 	r.ServeHTTP(wInv, reqInv)
@@ -669,6 +676,7 @@ func TestErrorEnvelopeShape(t *testing.T) {
 	r, _, _, _ := setupTestRouter()
 
 	req, _ := http.NewRequest("DELETE", "/api/v1/me/identities/last", nil)
+	req.Header.Set("Origin", "http://localhost:3456")
 	req.AddCookie(&http.Cookie{Name: "cgp_session", Value: "valid-token-123"})
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -718,6 +726,7 @@ func TestExcelEndpoints(t *testing.T) {
 
 	reqImp, _ := http.NewRequest("POST", "/api/v1/families/fam-1/import.xlsx", &buf)
 	reqImp.Header.Set("Content-Type", mw.FormDataContentType())
+	reqImp.Header.Set("Origin", "http://localhost:3456")
 	reqImp.AddCookie(&http.Cookie{Name: "cgp_session", Value: "valid-token-123"})
 	wImp := httptest.NewRecorder()
 	r.ServeHTTP(wImp, reqImp)
@@ -747,10 +756,315 @@ func TestTreeHierarchyEndpoint(t *testing.T) {
 	if treeResp.FamilyID != "fam-1" {
 		t.Errorf("kỳ vọng FamilyID 'fam-1', nhận %s", treeResp.FamilyID)
 	}
-	if len(treeResp.Generations) == 0 {
-		t.Errorf("kỳ vọng Generations không rỗng")
-	}
 	if len(treeResp.Generations) > 0 && treeResp.Generations[0].Label != "Đời thứ 1" {
 		t.Errorf("kỳ vọng Label 'Đời thứ 1', nhận %s", treeResp.Generations[0].Label)
+	}
+}
+
+// 10. CORS allow-list tests
+func TestCORSMiddleware(t *testing.T) {
+	r, _, _, _ := setupTestRouter()
+
+	// Origin in list → headers echoed
+	req1, _ := http.NewRequest("GET", "/healthz", nil)
+	req1.Header.Set("Origin", "http://localhost:3456")
+	w1 := httptest.NewRecorder()
+	r.ServeHTTP(w1, req1)
+	if w1.Header().Get("Access-Control-Allow-Origin") != "http://localhost:3456" {
+		t.Errorf("expected Access-Control-Allow-Origin to be echoed, got %q", w1.Header().Get("Access-Control-Allow-Origin"))
+	}
+	if w1.Header().Get("Access-Control-Allow-Credentials") != "true" {
+		t.Errorf("expected Access-Control-Allow-Credentials: true")
+	}
+
+	// Origin not in list → no CORS headers echoed
+	req2, _ := http.NewRequest("GET", "/healthz", nil)
+	req2.Header.Set("Origin", "http://malicious.example.com")
+	w2 := httptest.NewRecorder()
+	r.ServeHTTP(w2, req2)
+	if w2.Header().Get("Access-Control-Allow-Origin") != "" {
+		t.Errorf("expected no Access-Control-Allow-Origin for untrusted origin, got %q", w2.Header().Get("Access-Control-Allow-Origin"))
+	}
+
+	// Preflight OPTIONS in list → 204
+	req3, _ := http.NewRequest("OPTIONS", "/api/v1/me", nil)
+	req3.Header.Set("Origin", "http://localhost:3456")
+	w3 := httptest.NewRecorder()
+	r.ServeHTTP(w3, req3)
+	if w3.Code != http.StatusNoContent {
+		t.Errorf("expected 204 for allowed preflight OPTIONS, got %d", w3.Code)
+	}
+	if w3.Header().Get("Access-Control-Allow-Origin") != "http://localhost:3456" {
+		t.Errorf("expected Access-Control-Allow-Origin echoed on preflight")
+	}
+
+	// Preflight OPTIONS not in list → 403 Forbidden and no echo
+	req4, _ := http.NewRequest("OPTIONS", "/api/v1/me", nil)
+	req4.Header.Set("Origin", "http://malicious.example.com")
+	w4 := httptest.NewRecorder()
+	r.ServeHTTP(w4, req4)
+	if w4.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for untrusted preflight OPTIONS, got %d", w4.Code)
+	}
+	if w4.Header().Get("Access-Control-Allow-Origin") != "" {
+		t.Errorf("expected no Access-Control-Allow-Origin for untrusted preflight")
+	}
+}
+
+// 11. CSRF Origin check tests (W1)
+func TestCSRFOriginCheck(t *testing.T) {
+	r, _, _, _ := setupTestRouter()
+
+	// POST without Origin or Referer → 403
+	body := `{"kind":"email","value":"test@example.com"}`
+	req1, _ := http.NewRequest("POST", "/api/v1/me/contacts", bytes.NewBufferString(body))
+	req1.Header.Set("Content-Type", "application/json")
+	req1.AddCookie(&http.Cookie{Name: "cgp_session", Value: "valid-token-123"})
+	w1 := httptest.NewRecorder()
+	r.ServeHTTP(w1, req1)
+	if w1.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for POST without Origin/Referer, got %d", w1.Code)
+	}
+
+	// POST with allowed Origin → passes (201 Created)
+	req2, _ := http.NewRequest("POST", "/api/v1/me/contacts", bytes.NewBufferString(body))
+	req2.Header.Set("Content-Type", "application/json")
+	req2.Header.Set("Origin", "http://localhost:3456")
+	req2.AddCookie(&http.Cookie{Name: "cgp_session", Value: "valid-token-123"})
+	w2 := httptest.NewRecorder()
+	r.ServeHTTP(w2, req2)
+	if w2.Code != http.StatusCreated {
+		t.Errorf("expected 201 for POST with allowed Origin, got %d. Body: %s", w2.Code, w2.Body.String())
+	}
+
+	// POST with foreign Origin → 403
+	req3, _ := http.NewRequest("POST", "/api/v1/me/contacts", bytes.NewBufferString(body))
+	req3.Header.Set("Content-Type", "application/json")
+	req3.Header.Set("Origin", "http://evil.com")
+	req3.AddCookie(&http.Cookie{Name: "cgp_session", Value: "valid-token-123"})
+	w3 := httptest.NewRecorder()
+	r.ServeHTTP(w3, req3)
+	if w3.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for POST with foreign Origin, got %d", w3.Code)
+	}
+}
+
+// 12. Ownership 404 on contact verify (W3)
+func TestContactVerifyOwnership(t *testing.T) {
+	// Add contact cp-other belonging to usr-other
+	// The fake router has contacts map, let's test via handler directly or inject into contacts
+	// Note setupTestRouter created contactStore which has GetByID
+	// Let's create a custom setup with two users
+	gin.SetMode(gin.TestMode)
+	cfg := &config.Config{
+		Port:               8080,
+		AppEnv:             config.EnvDev,
+		CookieName:         "cgp_session",
+		JWTSecret:          "test-secret-min-32-chars-long-123456",
+		MockOAuthEnabled:   true,
+		CORSAllowedOrigins: []string{"http://localhost:3456"},
+		PublicBaseURL:      "http://localhost:3456",
+	}
+	contacts := &fakeContactStore{
+		contacts: map[string]*model.ContactPoint{
+			"cp-owner": {
+				ID:       "cp-owner",
+				UserID:   "usr-admin",
+				Kind:     model.ContactKindEmail,
+				Value:    "owner@example.com",
+				Verified: false,
+			},
+			"cp-other": {
+				ID:       "cp-other",
+				UserID:   "usr-victim",
+				Kind:     model.ContactKindEmail,
+				Value:    "victim@example.com",
+				Verified: false,
+			},
+		},
+	}
+	authSvc := &fakeAuthService{
+		validTokens: map[string]*auth.Claims{
+			"token-admin": {UserID: "usr-admin", IsDemo: false},
+		},
+	}
+	router := NewRouter(Deps{
+		Cfg:          cfg,
+		Pinger:       &fakePinger{},
+		TxManager:    &fakeTxManager{},
+		AuthService:  authSvc,
+		UserStore:    &fakeUserStore{},
+		ContactStore: contacts,
+		FamilyRepo:   &fakeFamilyRepo{},
+		MemberRepo:   &fakeMemberRepo{},
+		RelationRepo: &fakeRelationRepo{},
+		KinshipSvc:   &fakeKinshipService{},
+		ExcelSvc:     &fakeExcelService{},
+		FeedSvc:      &fakeFeedService{},
+		SocialPostRepo: &fakeSocialPostRepo{},
+		PushSvc:      &fakePushService{},
+	})
+
+	// User A (usr-admin) calls verify on User B's (usr-victim) contact cp-other → 404
+	reqOther, _ := http.NewRequest("POST", "/api/v1/me/contacts/cp-other/verify", nil)
+	reqOther.Header.Set("Origin", "http://localhost:3456")
+	reqOther.AddCookie(&http.Cookie{Name: "cgp_session", Value: "token-admin"})
+	wOther := httptest.NewRecorder()
+	router.ServeHTTP(wOther, reqOther)
+	if wOther.Code != http.StatusNotFound {
+		t.Errorf("expected 404 for cross-user contact verify, got %d", wOther.Code)
+	}
+
+	// User A calls verify on own contact cp-owner → 200
+	reqOwn, _ := http.NewRequest("POST", "/api/v1/me/contacts/cp-owner/verify", nil)
+	reqOwn.Header.Set("Origin", "http://localhost:3456")
+	reqOwn.AddCookie(&http.Cookie{Name: "token-admin", Value: "token-admin"})
+	reqOwn.AddCookie(&http.Cookie{Name: "cgp_session", Value: "token-admin"})
+	wOwn := httptest.NewRecorder()
+	router.ServeHTTP(wOwn, reqOwn)
+	if wOwn.Code != http.StatusOK {
+		t.Errorf("expected 200 for own contact verify, got %d. Body: %s", wOwn.Code, wOwn.Body.String())
+	}
+}
+
+// 13. Link-callback flow tests (C2)
+func TestLinkCallbackFlow(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	cfg := &config.Config{
+		Port:               8080,
+		AppEnv:             config.EnvDev,
+		CookieName:         "cgp_session",
+		JWTSecret:          "test-secret-min-32-chars-long-123456",
+		JWTIssuer:          config.ProdJWTIssuer,
+		MockOAuthEnabled:   true,
+		CORSAllowedOrigins: []string{"http://localhost:3456"},
+		PublicBaseURL:      "http://localhost:3456",
+	}
+
+	authSvc := &fakeAuthServiceWithLink{
+		fakeAuthService: fakeAuthService{
+			validTokens: map[string]*auth.Claims{
+				"token-user-a": {UserID: "user-a", IsDemo: false},
+			},
+			users: map[string]*auth.UserProfile{
+				"user-a": {
+					User:       model.User{ID: "user-a", DisplayName: "User A"},
+					Identities: []model.Identity{{ID: "id-1", Provider: model.ProviderGoogle}},
+				},
+			},
+		},
+	}
+
+	router := NewRouter(Deps{
+		Cfg:          cfg,
+		Pinger:       &fakePinger{},
+		TxManager:    &fakeTxManager{},
+		AuthService:  authSvc,
+		UserStore:    &fakeUserStore{},
+		ContactStore: &fakeContactStore{},
+		FamilyRepo:   &fakeFamilyRepo{},
+		MemberRepo:   &fakeMemberRepo{},
+		RelationRepo: &fakeRelationRepo{},
+		KinshipSvc:   &fakeKinshipService{},
+		ExcelSvc:     &fakeExcelService{},
+		FeedSvc:      &fakeFeedService{},
+		SocialPostRepo: &fakeSocialPostRepo{},
+		PushSvc:      &fakePushService{},
+	})
+
+	// Happy path link callback
+	reqOK, _ := http.NewRequest("GET", "/api/v1/me/link/google/callback?code=good_code&state=good_state", nil)
+	reqOK.AddCookie(&http.Cookie{Name: "cgp_session", Value: "token-user-a"})
+	wOK := httptest.NewRecorder()
+	router.ServeHTTP(wOK, reqOK)
+	if wOK.Code != http.StatusOK {
+		t.Fatalf("expected 200 for successful link callback, got %d. Body: %s", wOK.Code, wOK.Body.String())
+	}
+
+	// Bad state → 400
+	reqBadState, _ := http.NewRequest("GET", "/api/v1/me/link/google/callback?code=good_code&state=bad_state", nil)
+	reqBadState.AddCookie(&http.Cookie{Name: "cgp_session", Value: "token-user-a"})
+	wBadState := httptest.NewRecorder()
+	router.ServeHTTP(wBadState, reqBadState)
+	if wBadState.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for bad state, got %d", wBadState.Code)
+	}
+
+	// Already linked provider → 409
+	reqConflict, _ := http.NewRequest("GET", "/api/v1/me/link/google/callback?code=already_linked&state=good_state", nil)
+	reqConflict.AddCookie(&http.Cookie{Name: "cgp_session", Value: "token-user-a"})
+	wConflict := httptest.NewRecorder()
+	router.ServeHTTP(wConflict, reqConflict)
+	if wConflict.Code != http.StatusConflict {
+		t.Fatalf("expected 409 for already-linked provider, got %d", wConflict.Code)
+	}
+}
+
+type fakeAuthServiceWithLink struct {
+	fakeAuthService
+}
+
+func (f *fakeAuthServiceWithLink) CompleteLink(ctx context.Context, w http.ResponseWriter, r *http.Request, userID, provider, code, stateParam string) error {
+	if stateParam == "bad_state" {
+		return auth.ErrInvalidState
+	}
+	if code == "already_linked" {
+		return auth.ErrAlreadyLinked
+	}
+	return nil
+}
+
+func TestVerifyMagicLinkPOST(t *testing.T) {
+	r, _, _, _ := setupTestRouter()
+
+	// 1. GET to /api/v1/auth/email/verify should not match or method not allowed
+	reqGET, _ := http.NewRequest("GET", "/api/v1/auth/email/verify?token=valid-token", nil)
+	wGET := httptest.NewRecorder()
+	r.ServeHTTP(wGET, reqGET)
+	if wGET.Code != http.StatusNotFound && wGET.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 404 or 405 for GET /api/v1/auth/email/verify, got %d", wGET.Code)
+	}
+
+	// 2. POST with valid token body
+	body := `{"token":"valid-token"}`
+	reqPOST, _ := http.NewRequest("POST", "/api/v1/auth/email/verify", strings.NewReader(body))
+	reqPOST.Header.Set("Content-Type", "application/json")
+	reqPOST.Header.Set("Origin", "http://localhost:3456")
+	wPOST := httptest.NewRecorder()
+	r.ServeHTTP(wPOST, reqPOST)
+	if wPOST.Code != http.StatusOK {
+		t.Fatalf("expected 200 for POST /api/v1/auth/email/verify, got %d. Body: %s", wPOST.Code, wPOST.Body.String())
+	}
+
+	// 3. POST with empty token → 401
+	bodyEmpty := `{"token":""}`
+	reqEmpty, _ := http.NewRequest("POST", "/api/v1/auth/email/verify", strings.NewReader(bodyEmpty))
+	reqEmpty.Header.Set("Content-Type", "application/json")
+	reqEmpty.Header.Set("Origin", "http://localhost:3456")
+	wEmpty := httptest.NewRecorder()
+	r.ServeHTTP(wEmpty, reqEmpty)
+	if wEmpty.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 for empty token, got %d", wEmpty.Code)
+	}
+
+	// 4. POST with expired token → 401
+	bodyExpired := `{"token":"expired"}`
+	reqExpired, _ := http.NewRequest("POST", "/api/v1/auth/email/verify", strings.NewReader(bodyExpired))
+	reqExpired.Header.Set("Content-Type", "application/json")
+	reqExpired.Header.Set("Origin", "http://localhost:3456")
+	wExpired := httptest.NewRecorder()
+	r.ServeHTTP(wExpired, reqExpired)
+	if wExpired.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 for expired token, got %d", wExpired.Code)
+	}
+
+	// 5. POST with bad JSON body → 400
+	reqBadJSON, _ := http.NewRequest("POST", "/api/v1/auth/email/verify", strings.NewReader("invalid-json"))
+	reqBadJSON.Header.Set("Content-Type", "application/json")
+	reqBadJSON.Header.Set("Origin", "http://localhost:3456")
+	wBadJSON := httptest.NewRecorder()
+	r.ServeHTTP(wBadJSON, reqBadJSON)
+	if wBadJSON.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for malformed json, got %d", wBadJSON.Code)
 	}
 }

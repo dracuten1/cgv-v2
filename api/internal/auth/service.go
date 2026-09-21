@@ -162,9 +162,8 @@ func (s *Service) validateState(w http.ResponseWriter, r *http.Request, statePar
 }
 
 // StartLinkProvider begins the "add another login method" flow for an
-// EXISTING user (GET /api/v1/me/link/:provider/start): mint the state
-// cookie, return the authorize URL. The handler keeps the userID server-side
-// (session) and passes it into CompleteLink.
+// EXISTING user (GET /api/v1/me/link/:provider/start): mint a signed state JWT,
+// set the state cookie, return the authorize URL.
 func (s *Service) StartLinkProvider(w http.ResponseWriter, r *http.Request, userID, provider string) (string, error) {
 	if _, err := s.users.GetByID(r.Context(), userID); err != nil {
 		if isNotFoundErr(err) {
@@ -172,7 +171,26 @@ func (s *Service) StartLinkProvider(w http.ResponseWriter, r *http.Request, user
 		}
 		return "", fmt.Errorf("không thể truy vấn tài khoản: %w", err)
 	}
-	return s.LoginURL(w, r, provider)
+
+	adapter, _, err := s.providerAdapter(provider)
+	if err != nil {
+		return "", err
+	}
+	nonce, err := s.flows.SetStateCookie(w, r)
+	if err != nil {
+		return "", fmt.Errorf("không thể tạo phiên bảo mật đăng nhập: %w", err)
+	}
+	verifier, challenge, err := s.flows.pkcePair()
+	if err != nil {
+		return "", err
+	}
+
+	stateJWT, err := s.IssueLinkState(userID, provider, nonce)
+	if err != nil {
+		return "", err
+	}
+	stateParam := bindState(s.flows.secret, stateJWT, verifier)
+	return adapter.AuthURL(stateParam, challenge)
 }
 
 // CompleteLink finishes provider linking for an EXISTING user: exchange the
@@ -184,7 +202,7 @@ func (s *Service) CompleteLink(ctx context.Context, w http.ResponseWriter, r *ht
 	if _, _, err := s.providerAdapter(provider); err != nil {
 		return err
 	}
-	verifier, err := s.validateState(w, r, stateParam)
+	verifier, err := s.validateLinkState(w, r, userID, provider, stateParam)
 	if err != nil {
 		return err
 	}
@@ -231,6 +249,29 @@ func (s *Service) CompleteLink(ctx context.Context, w http.ResponseWriter, r *ht
 		}
 		return nil
 	})
+}
+
+// validateLinkState consumes the state cookie and validates the signed link state JWT.
+func (s *Service) validateLinkState(w http.ResponseWriter, r *http.Request, currentUserID, provider, stateParam string) (string, error) {
+	cookieNonce, err := s.flows.ConsumeStateCookie(r, w)
+	if err != nil {
+		return "", fmt.Errorf("ConsumeStateCookie: %w", err)
+	}
+	signedPayload, verifier, ok := unbindState(s.flows.secret, stateParam)
+	if !ok {
+		return "", fmt.Errorf("unbindState: %w", ErrInvalidState)
+	}
+	linkClaims, err := s.VerifyLinkState(signedPayload)
+	if err != nil {
+		return "", fmt.Errorf("VerifyLinkState: %w", err)
+	}
+	if !constantTimeEquals(cookieNonce, linkClaims.Nonce) {
+		return "", fmt.Errorf("constantTimeEquals: cookieNonce=%s linkNonce=%s: %w", cookieNonce, linkClaims.Nonce, ErrInvalidState)
+	}
+	if linkClaims.UserID != currentUserID || linkClaims.Provider != provider {
+		return "", fmt.Errorf("claims mismatch: %w", ErrInvalidState)
+	}
+	return verifier, nil
 }
 
 // confirmContact inserts-or-marks a contact point verified for userID.

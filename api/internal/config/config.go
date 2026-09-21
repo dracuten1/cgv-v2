@@ -34,6 +34,12 @@ const (
 	ProdCookieName = "cgp_session"
 )
 
+// Typed configuration validation errors.
+var (
+	ErrMockOAuthForbidden = fmt.Errorf("vi phạm bảo mật: MOCK_OAUTH_ENABLED chỉ được phép kích hoạt trong môi trường phát triển (dev)")
+	ErrJWTSecretTooShort  = fmt.Errorf("cấu hình bảo mật không hợp lệ: JWT_SECRET phải có độ dài tối thiểu 32 ký tự trong môi trường demo/prod")
+)
+
 // Config holds the runtime configuration parameters for the CGP v2 API backend.
 type Config struct {
 	// Server
@@ -77,6 +83,12 @@ type Config struct {
 
 	// AutoSeed runs database migrations and seeds on startup if DB is empty.
 	AutoSeed bool
+
+	// CORSAllowedOrigins is the parsed allow-list of CORS origins.
+	CORSAllowedOrigins []string
+
+	// PublicBaseURL is the public base URL of the application (e.g. http://localhost:3456).
+	PublicBaseURL string
 }
 
 // getEnvOrDefault reads an environment variable or falls back to a default value.
@@ -161,6 +173,17 @@ func Load() (*Config, error) {
 	mockOAuth := getEnvBool("MOCK_OAUTH_ENABLED", env == EnvDev)
 	autoSeed := getEnvBool("AUTO_SEED", true)
 
+	rawCORS := getEnvOrDefault("CORS_ALLOWED_ORIGINS", "http://localhost:3456,http://localhost:3457")
+	var corsOrigins []string
+	for _, o := range strings.Split(rawCORS, ",") {
+		o = strings.TrimSpace(o)
+		if o != "" {
+			corsOrigins = append(corsOrigins, o)
+		}
+	}
+
+	publicBaseURL := strings.TrimRight(strings.TrimSpace(getEnvOrDefault("PUBLIC_BASE_URL", "http://localhost:3456")), "/")
+
 	cfg := &Config{
 		Port:                 port,
 		AppEnv:               env,
@@ -169,6 +192,8 @@ func Load() (*Config, error) {
 		JWTSecret:            jwtSecret,
 		JWTIssuer:            jwtIssuer,
 		CookieName:           cookieName,
+		CORSAllowedOrigins:   corsOrigins,
+		PublicBaseURL:        publicBaseURL,
 		ZaloClientID:         getEnvOrDefault("ZALO_CLIENT_ID", ""),
 		ZaloClientSecret:     getEnvOrDefault("ZALO_CLIENT_SECRET", ""),
 		GoogleClientID:       getEnvOrDefault("GOOGLE_CLIENT_ID", ""),
@@ -201,8 +226,29 @@ func (c *Config) Validate() error {
 	}
 
 	// 2. JWT Secret requirement for prod/demo.
-	if isStrict && strings.TrimSpace(c.JWTSecret) == "" {
-		return fmt.Errorf("cấu hình bảo mật không hợp lệ: JWT_SECRET không được để trống trong môi trường %s", c.AppEnv)
+	if isStrict {
+		if strings.TrimSpace(c.JWTSecret) == "" {
+			return fmt.Errorf("cấu hình bảo mật không hợp lệ: JWT_SECRET không được để trống trong môi trường %s", c.AppEnv)
+		}
+		if len(c.JWTSecret) < 32 {
+			return ErrJWTSecretTooShort
+		}
+	}
+
+	// C4: MockOAuth forbidden in prod/demo modes.
+	if c.MockOAuthEnabled && c.AppEnv != EnvDev {
+		return ErrMockOAuthForbidden
+	}
+
+	// W5: Validate PUBLIC_BASE_URL if set (reject trailing path other than / or empty).
+	if c.PublicBaseURL != "" {
+		u, err := url.Parse(c.PublicBaseURL)
+		if err != nil || u.Scheme == "" || u.Host == "" {
+			return fmt.Errorf("cấu hình không hợp lệ: PUBLIC_BASE_URL '%s' không phải URL hợp lệ", c.PublicBaseURL)
+		}
+		if u.Path != "" && u.Path != "/" {
+			return fmt.Errorf("cấu hình không hợp lệ: PUBLIC_BASE_URL '%s' không được chứa đường dẫn con khác '/'", c.PublicBaseURL)
+		}
 	}
 
 	// 3. Mode A Demo Isolation Matrix (INV-04, ADR-011).

@@ -71,18 +71,27 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 // Callback handles GET /api/v1/auth/:provider/callback
 func (h *AuthHandler) Callback(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			loginURL := getPublicBaseURL(h.cfg, c) + "/auth/login?error=server_error"
+			c.Redirect(http.StatusFound, loginURL)
+		}
+	}()
+
 	provider := c.Param("provider")
 	code := c.Query("code")
 	stateParam := c.Query("state")
 
 	if code == "" || stateParam == "" {
-		respondError(c, auth.ErrInvalidState)
+		loginURL := getPublicBaseURL(h.cfg, c) + "/auth/login?error=invalid_state"
+		c.Redirect(http.StatusFound, loginURL)
 		return
 	}
 
 	res, err := h.authSvc.HandleCallback(c.Request.Context(), c.Writer, c.Request, provider, code, stateParam)
 	if err != nil {
-		respondError(c, err)
+		loginURL := getPublicBaseURL(h.cfg, c) + "/auth/login?error=auth_failed"
+		c.Redirect(http.StatusFound, loginURL)
 		return
 	}
 
@@ -109,7 +118,7 @@ func (h *AuthHandler) SendMagicLink(c *gin.Context) {
 		return
 	}
 
-	verifyBaseURL := getRequestOrigin(c) + "/auth/email/verify"
+	verifyBaseURL := getPublicBaseURL(h.cfg, c) + "/auth/email/verify"
 	if err := h.authSvc.SendMagicLink(c.Request.Context(), req.Email, verifyBaseURL); err != nil {
 		respondError(c, err)
 		return
@@ -120,15 +129,22 @@ func (h *AuthHandler) SendMagicLink(c *gin.Context) {
 	})
 }
 
-// VerifyMagicLink handles GET /api/v1/auth/email/verify?token=
+// VerifyMagicLink handles POST /api/v1/auth/email/verify with JSON body {token}
 func (h *AuthHandler) VerifyMagicLink(c *gin.Context) {
-	token := c.Query("token")
-	if token == "" {
+	var req struct {
+		Token string `json:"token"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.NewErrorEnvelope(model.CodeValidationError, "Dữ liệu yêu cầu không hợp lệ"))
+		return
+	}
+
+	if req.Token == "" {
 		respondError(c, auth.ErrTokenUsedOrExpired)
 		return
 	}
 
-	res, err := h.authSvc.VerifyMagicLink(c.Request.Context(), token)
+	res, err := h.authSvc.VerifyMagicLink(c.Request.Context(), req.Token)
 	if err != nil {
 		respondError(c, err)
 		return
@@ -196,7 +212,7 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 	c.JSON(http.StatusOK, profile)
 }
 
-// StartLinkProvider handles GET /api/v1/me/link/:provider/start
+// StartLinkProvider handles POST /api/v1/me/link/:provider/start and GET /api/v1/me/link/:provider/start
 func (h *AuthHandler) StartLinkProvider(c *gin.Context) {
 	userID := GetUserID(c)
 	provider := c.Param("provider")
@@ -207,7 +223,40 @@ func (h *AuthHandler) StartLinkProvider(c *gin.Context) {
 		return
 	}
 
+	if c.Request.Method == http.MethodPost {
+		c.JSON(http.StatusOK, gin.H{"url": url})
+		return
+	}
 	c.Redirect(http.StatusFound, url)
+}
+
+// LinkCallback handles GET /api/v1/me/link/:provider/callback
+func (h *AuthHandler) LinkCallback(c *gin.Context) {
+	userID := GetUserID(c)
+	provider := c.Param("provider")
+	code := c.Query("code")
+	stateParam := c.Query("state")
+
+	if code == "" || stateParam == "" {
+		respondError(c, auth.ErrInvalidState)
+		return
+	}
+
+	if err := h.authSvc.CompleteLink(c.Request.Context(), c.Writer, c.Request, userID, provider, code, stateParam); err != nil {
+		respondError(c, err)
+		return
+	}
+
+	profile, err := h.authSvc.CurrentUser(c.Request.Context(), userID)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "Liên kết phương thức đăng nhập thành công",
+		"identities": profile.Identities,
+	})
 }
 
 // UnlinkIdentity handles DELETE /api/v1/me/identities/:id
@@ -265,9 +314,10 @@ func (h *AuthHandler) AddContact(c *gin.Context) {
 // VerifyContact handles POST /api/v1/me/contacts/:id/verify
 func (h *AuthHandler) VerifyContact(c *gin.Context) {
 	contactID := c.Param("id")
+	userID := GetUserID(c)
 
 	contact, err := h.contacts.GetByID(c.Request.Context(), contactID)
-	if err != nil || contact == nil {
+	if err != nil || contact == nil || (userID != "" && contact.UserID != userID) {
 		c.JSON(http.StatusNotFound, model.NewErrorEnvelope(model.CodeNotFound, "Không tìm thấy thông tin liên hệ"))
 		return
 	}
@@ -279,7 +329,7 @@ func (h *AuthHandler) VerifyContact(c *gin.Context) {
 
 	switch contact.Kind {
 	case model.ContactKindEmail:
-		verifyBaseURL := getRequestOrigin(c) + "/auth/email/verify"
+		verifyBaseURL := getPublicBaseURL(h.cfg, c) + "/auth/email/verify"
 		if err := h.authSvc.SendMagicLink(c.Request.Context(), contact.Value, verifyBaseURL); err != nil {
 			respondError(c, err)
 			return
@@ -331,6 +381,14 @@ func clearAuthCookie(c *gin.Context, cfg *config.Config, cookieName string) {
 	secure := cfg.AppEnv != config.EnvDev
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(cookieName, "", -1, "/", "", secure, true)
+}
+
+// getPublicBaseURL determines the base URL from config or request origin.
+func getPublicBaseURL(cfg *config.Config, c *gin.Context) string {
+	if cfg.PublicBaseURL != "" {
+		return strings.TrimRight(cfg.PublicBaseURL, "/")
+	}
+	return getRequestOrigin(c)
 }
 
 // getRequestOrigin determines the scheme + host of the incoming request.

@@ -73,6 +73,22 @@
 
       <!-- Magic Link Form -->
       <form class="space-y-4 mb-6" @submit.prevent="submitMagicLink">
+        <!-- Magic link sent confirmation notice -->
+        <div
+          v-if="magicLinkSent"
+          class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-800 space-y-1"
+        >
+          <div class="flex items-center gap-2 font-medium">
+            <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Đã gửi liên kết đăng nhập</span>
+          </div>
+          <p class="text-xs text-emerald-700 leading-normal">
+            Mở email và nhấn liên kết để đăng nhập. Liên kết sẽ mở ứng dụng và tự động đăng nhập tài khoản của bạn.
+          </p>
+        </div>
+
         <AppInput
           v-model="email"
           type="email"
@@ -140,6 +156,7 @@ const toast = useToast();
 
 const email = ref('');
 const magicLinkLoading = ref(false);
+const magicLinkSent = ref(false);
 const demoLoading = ref(false);
 const rawProviders = ref<ProviderInfo[]>([]);
 
@@ -185,6 +202,7 @@ async function submitMagicLink() {
   magicLinkLoading.value = true;
   try {
     await authApi.sendMagicLink(email.value.trim());
+    magicLinkSent.value = true;
     toast.success('Đã gửi liên kết đăng nhập đến email của bạn.');
     email.value = '';
   } catch (err) {

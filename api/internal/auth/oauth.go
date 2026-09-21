@@ -92,9 +92,10 @@ func unsignState(secret []byte, signed string) (string, bool) {
 	return nonce, true
 }
 
-// splitSigned splits "nonce.mac" into its two parts.
-func splitSigned(s string) (nonce, mac string, ok bool) {
-	i := strings.IndexByte(s, '.')
+// splitSigned splits "payload.mac" into its two parts.
+// When payload itself contains dots (such as a signed JWT), it splits on the LAST dot.
+func splitSigned(s string) (payload, mac string, ok bool) {
+	i := strings.LastIndexByte(s, '.')
 	if i <= 0 || i == len(s)-1 {
 		return "", "", false
 	}

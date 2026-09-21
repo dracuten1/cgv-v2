@@ -88,12 +88,73 @@ func (s *Service) VerifyToken(tokenStr string) (*Claims, error) {
 		return nil, ErrInvalidToken
 	}
 	if claims.Issuer == "" || claims.Audience == "" ||
-		claims.Issuer != claims.Audience || !issuerMatches(claims.Issuer) {
+		claims.Issuer != claims.Audience || claims.Issuer != s.cfg.JWTIssuer {
 		return nil, ErrInvalidToken
 	}
 	// Dual-issuer enforcement: issuer pair must agree with the demo flag.
 	if (claims.Issuer == config.DemoJWTIssuer) != claims.IsDemo {
 		return nil, ErrInvalidToken
+	}
+	return claims, nil
+}
+
+// LinkStateClaims represents the signed state JWT for account linking.
+type LinkStateClaims struct {
+	UserID   string `json:"sub"`
+	Provider string `json:"provider"`
+	Nonce    string `json:"nonce"`
+	jwt.RegisteredClaims
+}
+
+// IssueLinkState signs a state JWT for account linking (exp 10m, aud: "link").
+func (s *Service) IssueLinkState(userID, provider, nonce string) (string, error) {
+	now := time.Now()
+	issuer := s.cfg.JWTIssuer
+	if issuer == "" {
+		issuer = config.ProdJWTIssuer
+	}
+	claims := &LinkStateClaims{
+		UserID:   userID,
+		Provider: provider,
+		Nonce:    nonce,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    issuer,
+			Audience:  jwt.ClaimStrings{"link"},
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(10 * time.Minute)),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signed, err := token.SignedString([]byte(s.cfg.JWTSecret))
+	if err != nil {
+		return "", fmt.Errorf("không thể ký trạng thái liên kết tài khoản: %w", err)
+	}
+	return signed, nil
+}
+
+// VerifyLinkState parses and validates a link state JWT.
+func (s *Service) VerifyLinkState(stateJWT string) (*LinkStateClaims, error) {
+	key := func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("phương thức ký không được hỗ trợ: %v", t.Header["alg"])
+		}
+		return []byte(s.cfg.JWTSecret), nil
+	}
+	issuer := s.cfg.JWTIssuer
+	if issuer == "" {
+		issuer = config.ProdJWTIssuer
+	}
+	parsed, err := jwt.ParseWithClaims(stateJWT, &LinkStateClaims{}, key,
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+		jwt.WithExpirationRequired(),
+		jwt.WithAudience("link"),
+		jwt.WithIssuer(issuer))
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidState, err)
+	}
+	claims, ok := parsed.Claims.(*LinkStateClaims)
+	if !ok || !parsed.Valid {
+		return nil, ErrInvalidState
 	}
 	return claims, nil
 }

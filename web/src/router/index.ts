@@ -16,6 +16,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/auth/email/verify',
+    name: 'email-verify',
+    component: () => import('@/views/EmailVerifyView.vue'),
+    meta: {
+      guest: true,
+      title: 'Xác thực email — Cây Gia Phả',
+    },
+  },
+  {
     path: '/tree',
     name: 'tree',
     component: () => import('@/views/TreeView.vue'),

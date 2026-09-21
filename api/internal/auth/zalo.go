@@ -55,6 +55,7 @@ type ZaloProvider struct {
 	// ErrProviderDisabled.
 	ClientID     string
 	ClientSecret string
+	BaseURL      string
 
 	// AuthEndpoint/TokenEndpoint/ProfileEndpoint are fields (not consts) so
 	// tests point them at an httptest server; production wires the defaults.
@@ -73,6 +74,7 @@ func NewZaloProvider(cfg *config.Config) *ZaloProvider {
 	return &ZaloProvider{
 		ClientID:        cfg.ZaloClientID,
 		ClientSecret:    cfg.ZaloClientSecret,
+		BaseURL:         cfg.PublicBaseURL,
 		AuthEndpoint:    zaloAuthURL,
 		TokenEndpoint:   zaloTokenURL,
 		ProfileEndpoint: zaloProfileURL,
@@ -161,4 +163,10 @@ func (z *ZaloProvider) profileURL(accessToken string) string {
 
 // redirectURI is the handler-bound callback (cycle-3 mounts it on
 // /api/v1/auth/zalo/callback).
-func (z *ZaloProvider) redirectURI() string { return "/api/v1/auth/zalo/callback" }
+func (z *ZaloProvider) redirectURI() string {
+	base := strings.TrimRight(z.BaseURL, "/")
+	if base == "" {
+		base = "http://localhost:3456"
+	}
+	return base + "/api/v1/auth/zalo/callback"
+}

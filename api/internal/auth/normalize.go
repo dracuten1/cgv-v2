@@ -3,7 +3,6 @@ package auth
 import (
 	"strings"
 
-	"github.com/dracuten1/cgv-v2/api/internal/config"
 	"github.com/dracuten1/cgv-v2/api/internal/model"
 )
 
@@ -50,9 +49,4 @@ func enforceConfigured(clientID string, known bool) error {
 		return ErrProviderDisabled
 	}
 	return nil
-}
-
-// issuerMatches reports whether v is one of the two recognized CGP issuers.
-func issuerMatches(v string) bool {
-	return v == config.DemoJWTIssuer || v == config.ProdJWTIssuer
 }

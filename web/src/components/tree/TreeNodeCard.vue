@@ -69,7 +69,7 @@
         <div class="mt-0.5 flex items-center space-x-1.5 text-[11px] text-slate-500">
           <span
             :class="[
-              'inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-medium leading-none',
+              'inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-medium leading-normal',
               uiGender === 'Nam'
                 ? 'bg-sky-50 text-sky-700 border border-sky-200'
                 : 'bg-rose-50 text-rose-700 border border-rose-200',

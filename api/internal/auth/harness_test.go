@@ -9,6 +9,7 @@ import (
 // returns the pieces tests assert on.
 func newHarness(demo bool) (*auth.Service, *memCore, *fakeOutbox, *fakeTx) {
 	cfg := newTestConfig(demo)
+	cfg.AppEnv = config.EnvDev // mock OAuth tests require dev env
 	core := newMemCore()
 	outbox := &fakeOutbox{}
 	tx := &fakeTx{}
@@ -24,10 +25,11 @@ func newHarness(demo bool) (*auth.Service, *memCore, *fakeOutbox, *fakeTx) {
 	return svc, core, outbox, tx
 }
 
-// realConfig is a production-mode config with mock OAuth enabled for
+// realConfig is a dev-mode config with mock OAuth enabled for
 // provider-independent tests.
 func realConfig() *config.Config {
 	cfg := newTestConfig(false)
+	cfg.AppEnv = config.EnvDev
 	cfg.MockOAuthEnabled = true
 	return cfg
 }

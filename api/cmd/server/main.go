@@ -100,6 +100,10 @@ func main() {
 			return nil
 		})
 		if err != nil {
+			if cfg.AppEnv == config.EnvDemo || cfg.DemoMode {
+				logger.Error("KHỞI ĐỘNG THẤT BẠI: AutoSeed thất bại trong môi trường Demo", slog.Any("error", err))
+				os.Exit(1)
+			}
 			logger.Warn("Cảnh báo trong quá trình AutoSeed", slog.Any("error", err))
 		}
 	}

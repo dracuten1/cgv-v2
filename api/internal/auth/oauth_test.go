@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/dracuten1/cgv-v2/api/internal/auth"
+	"github.com/dracuten1/cgv-v2/api/internal/config"
 	"github.com/dracuten1/cgv-v2/api/internal/model"
 )
 
@@ -110,7 +111,9 @@ func TestMockProvider_ClaimPrefixes(t *testing.T) {
 		{code: "verified_phone:0912345678", wantSubject: "mock:verified_phone:0912345678", wantPhone: "0912345678", wantPhoneVer: true},
 	}
 	for _, tc := range cases {
-		p := auth.NewMockProvider(newTestConfig(false))
+		cfg := newTestConfig(false)
+		cfg.AppEnv = config.EnvDev
+		p := auth.NewMockProvider(cfg)
 		claims, err := p.Exchange(nil, tc.code, "")
 		if err != nil {
 			t.Fatalf("Exchange(%q) failed: %v", tc.code, err)
