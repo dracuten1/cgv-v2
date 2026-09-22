@@ -117,6 +117,11 @@ func s256Challenge(verifier string) string {
 // multi-instance deployment would swap this for a shared store).
 type oauthFlows struct {
 	secret []byte
+	// secure gates the Secure flag on the state cookie (set AND burn): dev
+	// and non-localhost plain-HTTP deployments must not mark it, or
+	// RFC 6265bis browsers silently drop it and the callback fails with
+	// invalid_state. Derived from cfg.SecureCookies() at construction.
+	secure bool
 
 	mu       sync.Mutex
 	consumed map[string]time.Time // nonce → consumed-at
@@ -145,8 +150,10 @@ func (f *oauthFlows) markConsumed(nonce string) bool {
 }
 
 // SetStateCookie issues a fresh signed state nonce, stores it in an
-// httpOnly/SameSite=Lax/Secure burn-on-read cookie (5-min TTL) and returns
-// the nonce for binding into the authorize URL's state parameter.
+// httpOnly/SameSite=Lax burn-on-read cookie (5-min TTL; Secure only when the
+// deployment is TLS — cfg.SecureCookies() — so plain-HTTP non-localhost
+// browsers keep it) and returns the nonce for binding into the authorize
+// URL's state parameter.
 func (f *oauthFlows) SetStateCookie(w http.ResponseWriter, r *http.Request) (string, error) {
 	nonce, err := randomToken(stateRandomBytes)
 	if err != nil {
@@ -158,7 +165,7 @@ func (f *oauthFlows) SetStateCookie(w http.ResponseWriter, r *http.Request) (str
 		Path:     "/",
 		MaxAge:   int(stateTTL.Seconds()),
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   f.secure,
 		SameSite: http.SameSiteLaxMode,
 	})
 	return nonce, nil
@@ -174,13 +181,14 @@ func (f *oauthFlows) ConsumeStateCookie(r *http.Request, w http.ResponseWriter) 
 		return "", ErrInvalidState
 	}
 	// Burn on read — delete the cookie regardless of the validation outcome.
+	// Secure mirrors the set path so the deletion matches the stored cookie.
 	http.SetCookie(w, &http.Cookie{
 		Name:     stateCookieName,
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   f.secure,
 		SameSite: http.SameSiteLaxMode,
 	})
 	nonce, mac, ok := splitSigned(c.Value)

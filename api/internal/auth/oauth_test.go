@@ -34,6 +34,9 @@ func TestStateCookie_BurnOnRead(t *testing.T) {
 		t.Fatalf("LoginURL failed: %v", err)
 	}
 	stateParam := stateURL[strings.Index(stateURL, "state=")+len("state="):]
+	if amp := strings.IndexByte(stateParam, '&'); amp >= 0 {
+		stateParam = stateParam[:amp]
+	}
 
 	cookies := w1.Result().Cookies()
 	if len(cookies) != 1 {
@@ -43,7 +46,9 @@ func TestStateCookie_BurnOnRead(t *testing.T) {
 	if c.Name != "cgp_oauth_state" {
 		t.Fatalf("unexpected cookie name %q", c.Name)
 	}
-	if !c.HttpOnly || !c.Secure || c.SameSite != http.SameSiteLaxMode {
+	// Dev config (plain HTTP) must NOT mark Secure: RFC 6265bis browsers
+	// drop Secure cookies over non-localhost plain HTTP.
+	if !c.HttpOnly || c.Secure || c.SameSite != http.SameSiteLaxMode {
 		t.Fatalf("cookie flags wrong: httpOnly=%v secure=%v sameSite=%v", c.HttpOnly, c.Secure, c.SameSite)
 	}
 	if c.MaxAge <= 0 || c.MaxAge > 300 {
@@ -91,6 +96,55 @@ func TestStateCookie_BurnOnRead(t *testing.T) {
 	}
 	if locks := core.locksTaken(); len(locks) > 1 {
 		t.Fatalf("at most one lock in the happy path, got %v", locks)
+	}
+}
+
+// TestStateCookie_SecureFlagMatrix pins the cfg.SecureCookies() contract for
+// the state cookie across the env × scheme matrix. Regression: Secure was
+// hardcoded true, so plain-HTTP non-localhost deployments (dev over
+// Tailscale) silently lost the cookie and every callback failed with
+// invalid_state.
+func TestStateCookie_SecureFlagMatrix(t *testing.T) {
+	cases := []struct {
+		name       string
+		appEnv     config.AppEnv
+		publicURL  string
+		wantSecure bool
+	}{
+		{name: "dev+plain-http", appEnv: config.EnvDev, publicURL: "http://tuyens-mac-mini.tail48a1b0.ts.net:3456", wantSecure: false},
+		{name: "dev+https", appEnv: config.EnvDev, publicURL: "https://cgp.example.com", wantSecure: false},
+		{name: "prod+https", appEnv: config.EnvProd, publicURL: "https://cgp.example.com", wantSecure: true},
+		{name: "prod+plain-http", appEnv: config.EnvProd, publicURL: "http://cgp.example.com", wantSecure: false},
+		{name: "demo+https", appEnv: config.EnvDemo, publicURL: "https://demo.cgp.example.com", wantSecure: true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newTestConfig(false)
+			cfg.AppEnv = tc.appEnv
+			cfg.PublicBaseURL = tc.publicURL
+			cfg.GoogleClientID = "gid" // mock is prod-disabled; Google AuthURL is offline
+			svc := newTestService(cfg, newMemCore(), &fakeOutbox{})
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodGet, "/api/v1/auth/google/login", nil)
+			if _, err := svc.LoginURL(w, r, model.ProviderGoogle); err != nil {
+				t.Fatalf("LoginURL failed: %v", err)
+			}
+
+			var sc *http.Cookie
+			for _, c := range w.Result().Cookies() {
+				if c.Name == "cgp_oauth_state" {
+					sc = c
+					break
+				}
+			}
+			if sc == nil {
+				t.Fatal("expected cgp_oauth_state cookie from LoginURL")
+			}
+			if sc.Secure != tc.wantSecure {
+				t.Fatalf("Secure = %v, want %v (env=%s url=%s)", sc.Secure, tc.wantSecure, tc.appEnv, tc.publicURL)
+			}
+		})
 	}
 }
 
@@ -159,6 +213,9 @@ func TestHandleCallback_LinkIntentIsolation(t *testing.T) {
 		t.Fatalf("StartLinkProvider failed: %v", err)
 	}
 	linkState := linkURL[strings.Index(linkURL, "state=")+len("state="):]
+	if amp := strings.IndexByte(linkState, '&'); amp >= 0 {
+		linkState = linkState[:amp]
+	}
 	linkCookie := w1.Result().Cookies()[0]
 
 	// 2. Mint normal login state
@@ -169,6 +226,9 @@ func TestHandleCallback_LinkIntentIsolation(t *testing.T) {
 		t.Fatalf("LoginURL failed: %v", err)
 	}
 	loginState := loginURL[strings.Index(loginURL, "state=")+len("state="):]
+	if amp := strings.IndexByte(loginState, '&'); amp >= 0 {
+		loginState = loginState[:amp]
+	}
 	loginCookie := w2.Result().Cookies()[0]
 
 	// 3. Link-state JWT with matching cookie dispatched to HandleCallback:

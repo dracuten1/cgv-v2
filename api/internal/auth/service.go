@@ -66,7 +66,7 @@ func NewService(cfg *config.Config, tx TxRunner, deps ServiceDeps) *Service {
 		google:     NewGoogleProvider(cfg),
 		facebook:   NewFacebookProvider(cfg),
 		mock:       NewMockProvider(cfg),
-		flows:      oauthFlows{secret: []byte(cfg.JWTSecret)},
+		flows:      oauthFlows{secret: []byte(cfg.JWTSecret), secure: cfg.SecureCookies()},
 	}
 }
 

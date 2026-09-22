@@ -55,7 +55,7 @@ func NewGoogleProvider(cfg *config.Config) *GoogleProvider {
 		TokenEndpoint:   googleTokenURL,
 		ProfileEndpoint: googleProfileURL,
 		HTTP:            oauthHTTPClient,
-		oauthFlows:      oauthFlows{secret: []byte(cfg.JWTSecret)},
+		oauthFlows:      oauthFlows{secret: []byte(cfg.JWTSecret), secure: cfg.SecureCookies()},
 	}
 }
 

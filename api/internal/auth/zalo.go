@@ -79,7 +79,7 @@ func NewZaloProvider(cfg *config.Config) *ZaloProvider {
 		TokenEndpoint:   zaloTokenURL,
 		ProfileEndpoint: zaloProfileURL,
 		HTTP:            oauthHTTPClient,
-		oauthFlows:      oauthFlows{secret: []byte(cfg.JWTSecret)},
+		oauthFlows:      oauthFlows{secret: []byte(cfg.JWTSecret), secure: cfg.SecureCookies()},
 	}
 }
 

@@ -27,7 +27,7 @@ type MockProvider struct {
 // NewMockProvider builds the mock adapter from configuration.
 func NewMockProvider(cfg *config.Config) *MockProvider {
 	enabled := cfg.MockOAuthEnabled && cfg.AppEnv == config.EnvDev
-	return &MockProvider{Enabled: enabled, AppEnv: cfg.AppEnv, oauthFlows: oauthFlows{secret: []byte(cfg.JWTSecret)}}
+	return &MockProvider{Enabled: enabled, AppEnv: cfg.AppEnv, oauthFlows: oauthFlows{secret: []byte(cfg.JWTSecret), secure: cfg.SecureCookies()}}
 }
 
 // AuthURL returns the local callback URL carrying the state so the E2E
@@ -36,7 +36,7 @@ func (m *MockProvider) AuthURL(state, _ string) (string, error) {
 	if !m.Enabled {
 		return "", ErrProviderDisabled
 	}
-	return fmt.Sprintf("/api/v1/auth/mock/callback?state=%s", state), nil
+	return fmt.Sprintf("/api/v1/auth/mock/callback?state=%s&code=verified_email:dev-user@test.vn", state), nil
 }
 
 // Exchange fabricates claims from the code:

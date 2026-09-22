@@ -214,6 +214,26 @@ func Load() (*Config, error) {
 	return cfg, nil
 }
 
+// SecureCookies reports whether cookies must carry the Secure flag.
+//
+// RFC 6265bis makes browsers drop Secure cookies over plain HTTP except on
+// localhost/127.0.0.1, so a non-localhost plain-HTTP deployment (dev over
+// Tailscale or LAN) must NOT set it. Rule:
+//   - dev environments never set Secure (plain-HTTP localhost/Tailscale);
+//   - every other environment sets Secure only when PublicBaseURL is https
+//     (the TLS terminator may sit upstream, so the configured public scheme
+//     is the source of truth, not the request scheme).
+//
+// The session cookies (handler) and the OAuth state cookie (auth flows) MUST
+// both derive the flag from here so the two never drift apart again.
+func (c *Config) SecureCookies() bool {
+	if c.AppEnv == EnvDev {
+		return false
+	}
+	u, err := url.Parse(strings.TrimSpace(c.PublicBaseURL))
+	return err == nil && strings.EqualFold(u.Scheme, "https")
+}
+
 // Validate checks configuration invariants.
 // Returns a non-nil error describing the violation in Vietnamese.
 // Callers should invoke ValidateOrDie() during boot before net.Listen.
