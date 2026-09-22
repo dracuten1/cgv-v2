@@ -396,3 +396,33 @@ func isVietnamese(s string) bool {
 	}
 	return false
 }
+
+// TestConfig_SecureCookies pins the cookie Secure-flag rule shared by the
+// session cookies (handler) and the OAuth state cookie (auth flows):
+// dev never sets Secure (plain-HTTP localhost/Tailscale); every other
+// environment sets Secure only when PublicBaseURL is https.
+func TestConfig_SecureCookies(t *testing.T) {
+	cases := []struct {
+		name       string
+		appEnv     AppEnv
+		publicURL  string
+		wantSecure bool
+	}{
+		{name: "dev+plain-http-non-localhost", appEnv: EnvDev, publicURL: "http://host.tailnet.ts.net:3456", wantSecure: false},
+		{name: "dev+empty-base-url", appEnv: EnvDev, publicURL: "", wantSecure: false},
+		{name: "dev+https", appEnv: EnvDev, publicURL: "https://cgp.example.com", wantSecure: false},
+		{name: "prod+https", appEnv: EnvProd, publicURL: "https://cgp.example.com", wantSecure: true},
+		{name: "prod+plain-http", appEnv: EnvProd, publicURL: "http://cgp.example.com", wantSecure: false},
+		{name: "prod+https-uppercase-scheme", appEnv: EnvProd, publicURL: "HTTPS://cgp.example.com", wantSecure: true},
+		{name: "demo+https", appEnv: EnvDemo, publicURL: "https://demo.cgp.example.com", wantSecure: true},
+		{name: "demo+plain-http", appEnv: EnvDemo, publicURL: "http://localhost:3457", wantSecure: false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &Config{AppEnv: tc.appEnv, PublicBaseURL: tc.publicURL}
+			if got := cfg.SecureCookies(); got != tc.wantSecure {
+				t.Fatalf("SecureCookies() = %v, want %v (env=%s url=%q)", got, tc.wantSecure, tc.appEnv, tc.publicURL)
+			}
+		})
+	}
+}

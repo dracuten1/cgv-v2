@@ -362,9 +362,11 @@ func setAuthCookie(c *gin.Context, cfg *config.Config, cookieName, token string)
 		cookieName = getCookieName(cfg)
 	}
 
-	// 24 hours max-age
+	// 24 hours max-age. Secure follows cfg.SecureCookies() — the same rule
+	// as the OAuth state cookie — so plain-HTTP non-localhost deployments
+	// (dev over Tailscale/LAN) keep their cookies.
 	maxAge := int(auth.TokenTTL.Seconds())
-	secure := cfg.AppEnv != config.EnvDev
+	secure := cfg.SecureCookies()
 
 	// http.SetCookie via Gin helper
 	// SameSite Lax
@@ -377,7 +379,7 @@ func clearAuthCookie(c *gin.Context, cfg *config.Config, cookieName string) {
 	if cookieName == "" {
 		cookieName = getCookieName(cfg)
 	}
-	secure := cfg.AppEnv != config.EnvDev
+	secure := cfg.SecureCookies()
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(cookieName, "", -1, "/", "", secure, true)
 }

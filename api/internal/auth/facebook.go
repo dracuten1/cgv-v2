@@ -57,7 +57,7 @@ func NewFacebookProvider(cfg *config.Config) *FacebookProvider {
 		TokenEndpoint:   facebookTokenURL,
 		ProfileEndpoint: facebookProfileURL,
 		HTTP:            oauthHTTPClient,
-		oauthFlows:      oauthFlows{secret: []byte(cfg.JWTSecret)},
+		oauthFlows:      oauthFlows{secret: []byte(cfg.JWTSecret), secure: cfg.SecureCookies()},
 	}
 }
 
