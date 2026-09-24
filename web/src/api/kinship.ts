@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { KinshipResult } from '@/types/api';
+import type { KinshipResult, KinshipLabelsResponse } from '@/types/api';
 
 export interface KinshipQueryParams {
   from: string;
@@ -16,5 +16,23 @@ export const kinshipApi = {
         dialect: params.dialect || 'bac',
       },
     });
+  },
+
+  // Decision 2C: one batched dictionary of kinship terms for the whole
+  // family, relative to `fromMemberId`.
+  getFamilyKinshipLabels(
+    familyId: string,
+    fromMemberId: string,
+    dialect?: 'bac' | 'trung' | 'nam' | string
+  ): Promise<KinshipLabelsResponse> {
+    return apiClient.get<KinshipLabelsResponse>(
+      `/families/${encodeURIComponent(familyId)}/kinship-labels`,
+      {
+        params: {
+          from: fromMemberId,
+          dialect: dialect || 'bac',
+        },
+      }
+    );
   },
 };
