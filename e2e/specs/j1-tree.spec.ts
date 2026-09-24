@@ -111,9 +111,11 @@ test.describe('Journey 1 — Cây gia phả (Tree visualizer)', () => {
    */
   test('authenticates non-demo user, binds to Gen-3 member, verifies "Tôi" identity, auto-centering, compass, and kinship badges', async ({ page, request }) => {
     // 1. Mock non-demo login with verified email.
-    // Unique per run: guarantees a never-linked fresh user each run (Rule 5
-    // clean claim), immune to first-wins code handling or stale identities.
-    await loginViaMock(page, `verified_email:j1-identity-${Date.now()}@cgp.test`);
+    // STABLE identity (original design): the fixed code maps to one durable
+    // user; on re-runs the re-bind of the SAME member is idempotent
+    // (auth.Service.LinkMember Rule 3 → 200). Effective only since the
+    // helper replaces (not appends) the code param — see e2e/helpers/auth.ts.
+    await loginViaMock(page, 'verified_email:j1-identity-test@cgp.test');
 
     // 2. Link authenticated user to Gen-3 grandson Nguyễn Văn Bình
     // GrandsonID: bbbbbbb2-0000-4000-8000-000000000002 (Family 1, Gen 3)
