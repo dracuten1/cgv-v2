@@ -157,7 +157,7 @@ function traceAncestryBranches(
 /**
  * Normalizes an array of roots:
  * 1. Deep clones to maintain immutability (M10).
- * 2. Identifies in-laws and spouses to assemble FamilyUnits.
+ * 2. Splices in-law spouses into their partner's placement and prunes duplicated roots so each person renders exactly once.
  * 3. Prunes spliced in-laws from root positions (M7).
  * 4. Orders generation 1 roots according to Tier-1 paternal left, maternal right (D1) or FullName ASC fallback.
  * 5. Deterministically sorts children throughout all levels (birth_date ASC).
