@@ -5,15 +5,15 @@
     type="button"
     :aria-label="ariaLabel"
     :class="[
-      'absolute -translate-x-1/2 -translate-y-1/2 rounded-full cursor-pointer transition-transform duration-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#C85A32]',
-      selected ? 'ring-2 ring-[#C85A32] scale-125' : 'hover:scale-125',
+      'absolute -translate-x-1/2 -translate-y-1/2 rounded-full cursor-pointer transition-transform duration-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-terracotta',
+      selected ? 'ring-2 ring-terracotta scale-125' : 'hover:scale-125',
     ]"
     :style="{
       left: `${node.x + node.width / 2}px`,
       top: `${node.y + node.height / 2}px`,
       width: '14px',
       height: '14px',
-      backgroundColor: `var(${accentVar}, #C85A32)`,
+      backgroundColor: `var(${accentVar}, var(--color-terracotta))`,
     }"
     @click.stop="onClick"
   />
@@ -24,9 +24,9 @@
     type="button"
     :aria-label="ariaLabel"
     :class="[
-      'absolute text-left rounded-lg transition-all cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#C85A32]',
+      'absolute text-left rounded-lg transition-all cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-terracotta',
       'border border-tree-card-border bg-tree-card-bg hover:border-tree-card-border-hover',
-      isSelf ? 'ring-2 ring-tree-self-ring shadow-sm' : (selected ? 'ring-2 ring-[#C85A32] shadow-md' : 'shadow-xs hover:shadow-md'),
+      isSelf ? 'ring-2 ring-tree-self-ring shadow-sm' : (selected ? 'ring-2 ring-terracotta shadow-md' : 'shadow-xs hover:shadow-md'),
       !node.is_living ? 'opacity-85' : '',
     ]"
     :style="{
@@ -35,7 +35,7 @@
       width: `${node.width}px`,
       height: `${node.height}px`,
       borderLeftWidth: '4px',
-      borderLeftColor: `var(${accentVar}, #C85A32)`,
+      borderLeftColor: `var(${accentVar}, var(--color-terracotta))`,
     }"
     @click.stop="onClick"
   >

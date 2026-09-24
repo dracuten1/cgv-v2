@@ -92,7 +92,7 @@
       class="bg-white rounded-xl border border-slate-200 py-16 flex flex-col items-center justify-center gap-3"
       data-testid="tree-loading"
     >
-      <svg class="animate-spin h-8 w-8 text-[#C85A32]" fill="none" viewBox="0 0 24 24">
+      <svg class="animate-spin h-8 w-8 text-terracotta" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
       </svg>
@@ -193,8 +193,8 @@ function chipClass(genIndex: number | null): string[] {
   return [
     'inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer',
     active
-      ? 'bg-[#C85A32] text-white border-[#C85A32]'
-      : 'bg-white text-slate-600 border-slate-200 hover:border-[#C85A32] hover:text-[#983F1E]',
+      ? 'bg-terracotta text-white border-terracotta'
+      : 'bg-white text-slate-600 border-slate-200 hover:border-terracotta hover:text-terracotta-dark',
   ];
 }
 
