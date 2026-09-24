@@ -126,6 +126,7 @@ import {
   fitToViewport,
 } from '@/composables/useTreeLayout';
 import { useTreeViewport } from '@/composables/useTreeViewport';
+import { TREE_CONNECTOR_COLOR, TREE_CONNECTOR_NODE_COLOR } from './treeTokens';
 
 defineOptions({ name: 'TreeVisualizer' });
 
@@ -243,13 +244,14 @@ function drawEdges(): void {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, layout.value.width, layout.value.height);
 
-  // Read CSS variables once per layout pass (Token-vs-Hex discipline)
-  let connectorColor = '#93C5FD';
-  let nodeColor = '#3B82F6';
+  // Read CSS variables once per layout pass (Token-vs-Hex discipline).
+  // Fallback hexes live in treeTokens.ts — single source of truth for canvas-only constants.
+  let connectorColor = TREE_CONNECTOR_COLOR;
+  let nodeColor = TREE_CONNECTOR_NODE_COLOR;
   if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     const style = getComputedStyle(document.documentElement);
-    connectorColor = style.getPropertyValue('--tree-connector').trim() || '#93C5FD';
-    nodeColor = style.getPropertyValue('--tree-connector-node').trim() || '#3B82F6';
+    connectorColor = style.getPropertyValue('--tree-connector').trim() || TREE_CONNECTOR_COLOR;
+    nodeColor = style.getPropertyValue('--tree-connector-node').trim() || TREE_CONNECTOR_NODE_COLOR;
   }
 
   // Render orthogonal edges if available, otherwise fallback to legacy edges
