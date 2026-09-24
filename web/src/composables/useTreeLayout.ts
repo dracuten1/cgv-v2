@@ -308,7 +308,7 @@ export function layoutTree(
           id: spouseNode.id,
           full_name: spouseNode.full_name,
           gender: spouseNode.gender,
-          generation_index: spouseNode.generation_index || node.generation_index,
+          generation_index: spouseNode.generation_index ?? node.generation_index,
           birth_date: spouseNode.birth_date ?? null,
           death_date: spouseNode.death_date ?? null,
           is_living: spouseNode.is_living,
