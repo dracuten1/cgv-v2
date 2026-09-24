@@ -160,16 +160,20 @@ test.describe('Journey 1 — Cây gia phả (Tree visualizer)', () => {
 
     // 8. Verify kinship badges ([data-testid="kinship-badge"]) appear on ancestor nodes
     // Relative to Bình (Gen 3):
-    // - Patriarch An (Gen 1) is "Ông nội" (badge text "Nội")
-    // - Father Kiên (Gen 2) is "Bố" (badge text "Bố")
-    const kinshipBadges = page.locator('[data-testid="kinship-badge"]');
-    await expect(kinshipBadges.first()).toBeVisible();
+    // - Patriarch An (Gen 1) is "Ông nội" (badge text "Nội", title "Ông nội")
+    // - Father Kiên (Gen 2) is "Bố" (badge text "Bố", title "Bố")
+    const patriarchCard = page.getByRole('button', { name: /Nguyễn Văn An, Đời thứ 1/i });
+    await expect(patriarchCard).toBeVisible();
+    const patriarchBadge = patriarchCard.locator('[data-testid="kinship-badge"]');
+    await expect(patriarchBadge).toBeVisible();
+    await expect(patriarchBadge).toHaveText('Nội');
+    await expect(patriarchBadge).toHaveAttribute('title', 'Ông nội');
 
-    const badgeTexts = await kinshipBadges.allTextContents();
-    // Expect at least "Nội" or "Bố" among visible ancestor kinship badges
-    const hasExpectedAncestorBadge = badgeTexts.some((text) =>
-      text.includes('Nội') || text.includes('Bố') || text.includes('Mẹ')
-    );
-    expect(hasExpectedAncestorBadge).toBe(true);
+    const fatherCard = page.getByRole('button', { name: /Nguyễn Văn Kiên, Đời thứ 2/i });
+    await expect(fatherCard).toBeVisible();
+    const fatherBadge = fatherCard.locator('[data-testid="kinship-badge"]');
+    await expect(fatherBadge).toBeVisible();
+    await expect(fatherBadge).toHaveText('Bố');
+    await expect(fatherBadge).toHaveAttribute('title', 'Bố');
   });
 });

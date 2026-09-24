@@ -101,4 +101,20 @@ describe('TreeVisualizer.vue — Phase 3 Auto-Centering & Compass', () => {
     const world = wrapper.find('[data-testid="tree-world"]');
     expect(world.attributes('style')).toContain('scale(1)');
   });
+
+  it('renders exactly one canvas node for all connectors', async () => {
+    const store = useTreeStore();
+    store.roots = [
+      makeNode('m1', 'Nguyễn Văn An', {
+        children: [makeNode('m2', 'Nguyễn Văn Bình', { generation_index: 2 })],
+      }),
+    ];
+
+    const wrapper = mount(TreeVisualizer, {
+      global: { plugins: [pinia] },
+    });
+    await flushPromises();
+
+    expect(wrapper.findAll('canvas')).toHaveLength(1);
+  });
 });
