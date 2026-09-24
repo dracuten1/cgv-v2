@@ -607,4 +607,18 @@ func TestExcel_PostCommitInvalidation_Pin(t *testing.T) {
 	if len(inv3.invalidatedFamilies) != 0 {
 		t.Fatalf("kỳ vọng KHÔNG gọi Invalidate khi parse lỗi, nhưng đã gọi: %v", inv3.invalidatedFamilies)
 	}
+
+	// Sub-test 4: Repository ImportStaged failure does NOT trigger Invalidate
+	inv4 := &testInvalidator{}
+	txm4 := &testTxRunner{failTx: false}
+	repo4 := &testImportRepo{failImport: true}
+	svc4 := NewService(nil, repo4, txm4, inv4)
+
+	summary4, err4 := svc4.ImportFamily(context.Background(), familyID, data)
+	if err4 == nil {
+		t.Fatalf("kỳ vọng lỗi khi ImportStaged thất bại")
+	}
+	if len(inv4.invalidatedFamilies) != 0 {
+		t.Fatalf("kỳ vọng KHÔNG gọi Invalidate khi ImportStaged lỗi, nhưng đã gọi: %v (summary=%+v)", inv4.invalidatedFamilies, summary4)
+	}
 }
