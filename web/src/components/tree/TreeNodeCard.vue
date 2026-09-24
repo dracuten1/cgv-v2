@@ -80,7 +80,7 @@
         <div class="mt-0.5 flex items-center space-x-1.5 text-[11px] text-slate-500">
           <span
             :class="[
-              'inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-medium leading-normal',
+              'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-normal',
               uiGender === 'Nam'
                 ? 'bg-sky-50 text-sky-700 border border-sky-200'
                 : 'bg-rose-50 text-rose-700 border border-rose-200',
@@ -93,7 +93,7 @@
           <!-- "Tôi" badge (if self) -->
           <span
             v-if="isSelf"
-            class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-tree-self-badge text-tree-self-text border border-blue-200"
+            class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-tree-self-badge text-tree-self-text border border-blue-200"
             style="line-height: 1.45;"
             title="Bản thân"
             data-testid="self-badge"
@@ -104,7 +104,7 @@
           <!-- Kinship badge (if relative and not self) -->
           <span
             v-else-if="kinshipInfo.badge"
-            class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200"
+            class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200"
             style="line-height: 1.45;"
             :title="kinshipInfo.full"
             data-testid="kinship-badge"
@@ -196,8 +196,8 @@ async function handleLinkSelf(): Promise<void> {
   try {
     await authStore.linkSelfToMember(props.node.id);
     toast.success(`Đã liên kết tài khoản với ${props.node.full_name}`);
-  } catch (err: any) {
-    toast.error(err?.message || 'Không thể liên kết tài khoản.');
+  } catch (err: unknown) {
+    toast.error(err instanceof Error ? err.message : 'Không thể liên kết tài khoản.');
   }
 }
 
