@@ -154,16 +154,7 @@ export const useAuthStore = defineStore('auth', () => {
         await treeStore.fetchKinshipLabels(treeStore.familyId, memberId);
       }
     } catch (err) {
-      if (err instanceof ApiError && err.status === 403) {
-        throw new Error('Tài khoản dùng thử không thể liên kết với thành viên gia phả.');
-      }
-      if (err instanceof ApiError && err.status === 409) {
-        throw new Error('Thành viên này đã được liên kết với một tài khoản khác.');
-      }
-      if (err instanceof ApiError && err.status === 404) {
-        throw new Error('Không tìm thấy thành viên trong gia phả.');
-      }
-      throw new Error(formatApiError(err));
+      throw err;
     }
   }
 
