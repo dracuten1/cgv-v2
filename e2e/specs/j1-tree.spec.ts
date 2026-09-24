@@ -129,7 +129,7 @@ test.describe('Journey 1 — Cây gia phả (Tree visualizer)', () => {
     });
     expect(linkResp.ok()).toBeTruthy();
     const linkedProfile = await linkResp.json();
-    expect(linkedProfile.member_id).toBe(BINH_ID);
+    expect(linkedProfile.User.member_id).toBe(BINH_ID);
 
     // 3. Reload /tree to pick up the newly linked member and fetch kinship labels
     await page.goto('/tree');
