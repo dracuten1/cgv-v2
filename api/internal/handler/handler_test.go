@@ -3118,3 +3118,52 @@ func TestLinkMember_InvalidMember(t *testing.T) {
 		t.Errorf("kỳ vọng 400 khi thiếu member_id, nhận %d", w2.Code)
 	}
 }
+
+// M4 / INV-01 — MemberInput.AvatarURL accepts ONLY bundled /static/avatars/
+// paths on Create AND Update; external URLs are rejected with 400.
+func TestMemberAvatarURLValidation(t *testing.T) {
+	r, _, _, _ := setupTestRouter()
+
+	post := func(body string) *httptest.ResponseRecorder {
+		req, _ := http.NewRequest("POST", "/api/v1/members", bytes.NewBufferString(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Origin", "http://localhost:3456")
+		req.AddCookie(&http.Cookie{Name: "cgp_session", Value: "valid-token-123"})
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		return w
+	}
+
+	// External https:// URL → 400 (SSRF / IP-leak guard).
+	w := post(`{"family_id":"fam-1","full_name":"Nguyễn Văn Xấu","gender":"nam","avatar_url":"https://evil.example.com/a.png"}`)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("kỳ vọng 400 cho avatar_url ngoài, nhận %d. Body: %s", w.Code, w.Body.String())
+	}
+
+	// Non-avatar path → 400.
+	w2 := post(`{"family_id":"fam-1","full_name":"Nguyễn Văn Xấu","gender":"nam","avatar_url":"/uploads/a.png"}`)
+	if w2.Code != http.StatusBadRequest {
+		t.Fatalf("kỳ vọng 400 cho đường dẫn không phải /static/avatars/, nhận %d", w2.Code)
+	}
+
+	// Conforming bundled path → 201.
+	w3 := post(`{"family_id":"fam-1","full_name":"Nguyễn Văn Đẹp","gender":"nam","avatar_url":"/static/avatars/avatar-m1.svg"}`)
+	if w3.Code != http.StatusCreated {
+		t.Fatalf("kỳ vọng 201 cho avatar_url hợp lệ, nhận %d. Body: %s", w3.Code, w3.Body.String())
+	}
+	var created model.Member
+	if err := json.Unmarshal(w3.Body.Bytes(), &created); err != nil {
+		t.Fatalf("parse member json thất bại: %v", err)
+	}
+
+	// Update with a bad avatar → 400.
+	reqUpd, _ := http.NewRequest("PUT", "/api/v1/members/"+created.ID, bytes.NewBufferString(`{"full_name":"Nguyễn Văn Đẹp","gender":"nam","avatar_url":"http://tracker.vn/x.webp"}`))
+	reqUpd.Header.Set("Content-Type", "application/json")
+	reqUpd.Header.Set("Origin", "http://localhost:3456")
+	reqUpd.AddCookie(&http.Cookie{Name: "cgp_session", Value: "valid-token-123"})
+	wUpd := httptest.NewRecorder()
+	r.ServeHTTP(wUpd, reqUpd)
+	if wUpd.Code != http.StatusBadRequest {
+		t.Fatalf("kỳ vọng 400 cho update avatar_url ngoài, nhận %d", wUpd.Code)
+	}
+}
