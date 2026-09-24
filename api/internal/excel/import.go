@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -13,6 +14,23 @@ import (
 	"github.com/dracuten1/cgv-v2/api/internal/model"
 	"github.com/xuri/excelize/v2"
 )
+
+// avatarURLPattern enforces INV-01 (self-hosted assets only, M4):
+// avatar_url must be a bundled /static/avatars/ path — external URLs
+// are rejected to prevent SSRF / IP-leak.
+var avatarURLPattern = regexp.MustCompile(`^/static/avatars/[A-Za-z0-9_-]+\.(png|svg|webp|jpg)$`)
+
+// validateAvatarURL checks whether the avatarURL conforms to M4 regex.
+// Nil or empty string is legal (no avatar).
+func validateAvatarURL(avatarURL *string) error {
+	if avatarURL == nil || *avatarURL == "" {
+		return nil
+	}
+	if !avatarURLPattern.MatchString(*avatarURL) {
+		return fmt.Errorf("đường dẫn ảnh đại diện không hợp lệ: chỉ chấp nhận /static/avatars/<tên>.(png|svg|webp|jpg)")
+	}
+	return nil
+}
 
 // StagedImport holds parsed and validated records ready for insertion.
 type StagedImport struct {
@@ -126,6 +144,7 @@ func Parse(data []byte) (*StagedImport, error) {
 		spousesStr := getCell(6)
 		livingStr := getCell(7)
 		notesStr := getCell(8)
+		avatarStr := getCell(9)
 
 		if fullName == "" {
 			staged.Errors = append(staged.Errors, fmt.Sprintf("Dòng %d, Cột 'Họ và tên': họ và tên không được để trống", rowNum))
@@ -136,6 +155,15 @@ func Parse(data []byte) (*StagedImport, error) {
 		gender, gErr := model.ParseGenderVN(genderStr)
 		if gErr != nil {
 			staged.Errors = append(staged.Errors, fmt.Sprintf("Dòng %d, Cột 'Giới tính': %s", rowNum, gErr.Error()))
+		}
+
+		// Avatar URL validation via M4 regex (INV-01)
+		var avatarPtr *string
+		if avatarStr != "" {
+			avatarPtr = &avatarStr
+			if err := validateAvatarURL(avatarPtr); err != nil {
+				staged.Errors = append(staged.Errors, fmt.Sprintf("Dòng %d, Cột 10 (Ảnh đại diện): %s", rowNum, err.Error()))
+			}
 		}
 
 		// Generation index
@@ -215,6 +243,7 @@ func Parse(data []byte) (*StagedImport, error) {
 			BirthDate:       birthDate,
 			DeathDate:       deathDate,
 			IsLiving:        isLiving,
+			AvatarURL:       avatarPtr,
 			Notes:           notesPtr,
 		}
 
