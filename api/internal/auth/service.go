@@ -405,7 +405,7 @@ func (s *Service) LinkMember(ctx context.Context, userID, memberID string) (*Use
 
 	// Rule 2 — member must exist.
 	if s.members == nil {
-		return nil, fmt.Errorf("cổng tra cứu thành viên chưa được cấu hình")
+		return nil, errors.New("cổng tra cứu thành viên chưa được cấu hình")
 	}
 	if _, err := s.members.GetByID(ctx, memberID); err != nil {
 		if isNotFoundErr(err) {

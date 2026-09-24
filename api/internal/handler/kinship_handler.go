@@ -107,10 +107,6 @@ func (h *KinshipHandler) GetFamilyKinshipLabels(c *gin.Context) {
 		return
 	}
 
-	if labels == nil {
-		labels = map[string]string{}
-	}
-
 	c.JSON(http.StatusOK, KinshipLabelsResponse{
 		FamilyID: familyID,
 		From:     fromID,
