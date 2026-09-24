@@ -110,14 +110,21 @@ test.describe('Journey 1 — Cây gia phả (Tree visualizer)', () => {
    * 8. Assert Kinship badges appear on related ancestor nodes (e.g. "Bố" / "Nội").
    */
   test('authenticates non-demo user, binds to Gen-3 member, verifies "Tôi" identity, auto-centering, compass, and kinship badges', async ({ page, request }) => {
-    // 1. Mock non-demo login with verified email
-    await loginViaMock(page, 'verified_email:j1-identity-test@cgp.test');
+    // 1. Mock non-demo login with verified email.
+    // Unique per run: guarantees a never-linked fresh user each run (Rule 5
+    // clean claim), immune to first-wins code handling or stale identities.
+    await loginViaMock(page, `verified_email:j1-identity-${Date.now()}@cgp.test`);
 
     // 2. Link authenticated user to Gen-3 grandson Nguyễn Văn Bình
     // GrandsonID: bbbbbbb2-0000-4000-8000-000000000002 (Family 1, Gen 3)
     // Cross-reference: BINH_ID = fixture.go:32 GrandsonID (Nguyễn Văn Bình) — keep in sync with seed.
     const BINH_ID = 'bbbbbbb2-0000-4000-8000-000000000002';
+    // CSRF middleware (api/internal/handler/middleware.go CSRFMiddleware)
+    // rejects state-changing requests without Origin/Referer; Playwright's
+    // page.request sends neither — mimic a same-origin browser fetch.
+    const origin = new URL(page.url()).origin;
     const linkResp = await page.request.post('/api/v1/me/member', {
+      headers: { Origin: origin },
       data: { member_id: BINH_ID },
     });
     expect(linkResp.ok()).toBeTruthy();
