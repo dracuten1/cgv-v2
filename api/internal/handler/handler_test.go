@@ -3024,6 +3024,85 @@ func TestLinkMember_Idempotent(t *testing.T) {
 	}
 }
 
+// Rule 5 / M-D — re-bind to a different unclaimed member releases the old binding.
+// Authenticated user already linked to member M1 requests POST /me/member with a
+// different unclaimed member M2:
+// - HTTP 200
+// - user.MemberID == M2
+// - M1 is released (unclaimed: GetByMemberID returns nil, another user can now claim M1)
+// - M2 is claimed (GetByMemberID returns user, another user claiming M2 gets 409)
+func TestLinkMember_Rebind_ReleasesOldMember(t *testing.T) {
+	r, userStore, svc := setupLinkMemberRouter(t)
+	u1, err := userStore.Create(context.Background(), "Người Dùng 1", false)
+	if err != nil {
+		t.Fatalf("tạo user 1 thất bại: %v", err)
+	}
+	u2, err := userStore.Create(context.Background(), "Người Dùng 2", false)
+	if err != nil {
+		t.Fatalf("tạo user 2 thất bại: %v", err)
+	}
+
+	cookie1 := linkTestCookie(t, svc, u1)
+	cookie2 := linkTestCookie(t, svc, u2)
+
+	// Step 1: User 1 links to Member A (linkTestMemberA)
+	w1 := postMeMember(r, cookie1, `{"member_id":"`+linkTestMemberA+`"}`)
+	if w1.Code != http.StatusOK {
+		t.Fatalf("kỳ vọng 200 cho user 1 liên kết member A, nhận %d. Body: %s", w1.Code, w1.Body.String())
+	}
+
+	// Verify User 1 holds Member A
+	holderA, err := userStore.GetByMemberID(context.Background(), linkTestMemberA)
+	if err != nil || holderA == nil || holderA.ID != u1.ID {
+		t.Fatalf("kỳ vọng user 1 là chủ sở hữu member A, nhận holder=%v err=%v", holderA, err)
+	}
+
+	// Step 2: User 1 re-binds to Member B (linkTestMemberB)
+	w2 := postMeMember(r, cookie1, `{"member_id":"`+linkTestMemberB+`"}`)
+	if w2.Code != http.StatusOK {
+		t.Fatalf("kỳ vọng 200 khi user 1 re-bind sang member B, nhận %d. Body: %s", w2.Code, w2.Body.String())
+	}
+
+	var profile1 auth.UserProfile
+	if err := json.Unmarshal(w2.Body.Bytes(), &profile1); err != nil {
+		t.Fatalf("parse profile json thất bại: %v", err)
+	}
+	if profile1.User.MemberID == nil || *profile1.User.MemberID != linkTestMemberB {
+		t.Fatalf("kỳ vọng profile user 1 có member_id = B (%s), nhận %v", linkTestMemberB, profile1.User.MemberID)
+	}
+
+	// Verify persisted state: user 1 has Member B
+	storedU1, err := userStore.GetByID(context.Background(), u1.ID)
+	if err != nil || storedU1.MemberID == nil || *storedU1.MemberID != linkTestMemberB {
+		t.Fatalf("kỳ vọng db user 1 có member_id = B, nhận %v (err=%v)", storedU1.MemberID, err)
+	}
+
+	// Step 3: Assert Member A is RELEASED (unclaimed)
+	holderAAfter, err := userStore.GetByMemberID(context.Background(), linkTestMemberA)
+	if err != nil {
+		t.Fatalf("lỗi khi tra cứu member A sau re-bind: %v", err)
+	}
+	if holderAAfter != nil {
+		t.Fatalf("kỳ vọng member A được giải phóng (unclaimed), nhưng vẫn bị sở hữu bởi user %s", holderAAfter.ID)
+	}
+
+	// Step 4: User 2 can now claim the released Member A without conflict
+	w3 := postMeMember(r, cookie2, `{"member_id":"`+linkTestMemberA+`"}`)
+	if w3.Code != http.StatusOK {
+		t.Fatalf("kỳ vọng user 2 liên kết thành công với member A đã giải phóng, nhận %d. Body: %s", w3.Code, w3.Body.String())
+	}
+	holderANew, _ := userStore.GetByMemberID(context.Background(), linkTestMemberA)
+	if holderANew == nil || holderANew.ID != u2.ID {
+		t.Fatalf("kỳ vọng user 2 là chủ mới của member A, nhận %v", holderANew)
+	}
+
+	// Step 5: User 2 trying to claim Member B (held by User 1) gets 409 Conflict
+	w4 := postMeMember(r, cookie2, `{"member_id":"`+linkTestMemberB+`"}`)
+	if w4.Code != http.StatusConflict {
+		t.Fatalf("kỳ vọng 409 khi user 2 cố liên kết member B (đã thuộc user 1), nhận %d", w4.Code)
+	}
+}
+
 // Task 1.2/1.3 — Rule 4 + 23505: a member claimed by another user → 409.
 // The pre-check path is exercised here; the idx_users_member_id_unique race
 // (pgx SQLSTATE 23505) is proven at the repository seam in
@@ -3055,12 +3134,14 @@ func TestLinkMember_Conflict_409(t *testing.T) {
 	}
 }
 
-// Task 1.2/1.3 — Rule 1: demo accounts are NEVER linkable (403 + code).
+// Task 1.2/1.3 / M-C — Rule 1: demo accounts are NEVER linkable (403 + code).
+// The test uses a NONEXISTENT member_id to assert Rule-1-first ordering:
+// demo check must fire BEFORE Rule 2 member existence lookup (returning 403, NOT 404).
 func TestLinkMember_DemoIsolation_403(t *testing.T) {
 	r, userStore, svc := setupLinkMemberRouter(t)
 	demo, _ := userStore.Create(context.Background(), "Tài khoản dùng thử", true)
 
-	w := postMeMember(r, linkTestCookie(t, svc, demo), `{"member_id":"`+linkTestMemberA+`"}`)
+	w := postMeMember(r, linkTestCookie(t, svc, demo), `{"member_id":"`+linkTestStranger+`"}`)
 	if w.Code != http.StatusForbidden {
 		t.Fatalf("kỳ vọng 403 cho tài khoản demo, nhận %d. Body: %s", w.Code, w.Body.String())
 	}

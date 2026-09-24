@@ -362,11 +362,21 @@ func TestUserRepo_LinkMember_Maps23505(t *testing.T) {
 		t.Fatalf("expected LinkMember UPDATE, got %q", fe.lastSQL)
 	}
 
-	// A non-23505 SQLSTATE (e.g. 23503 FK) must NOT map to the claim conflict.
+	// M-A: A 23503 SQLSTATE (foreign key violation, member deleted in TOCTOU race)
+	// must map to ErrMemberNotFound (→ 404 at the handler seam), NOT a claim conflict.
 	fe.scriptedErr = &pgconn.PgError{Code: "23503", Message: "foreign key violation"}
 	err = repo.LinkMember(context.Background(), "u-1", "m-missing")
-	if err == nil || errors.Is(err, authrepo.ErrMemberAlreadyClaimed) {
-		t.Fatalf("23503 must stay a wrapped business error, got %v", err)
+	if err == nil {
+		t.Fatal("expected error for 23503 FK race")
+	}
+	if errors.Is(err, authrepo.ErrMemberAlreadyClaimed) {
+		t.Fatalf("23503 must NOT map to ErrMemberAlreadyClaimed, got %v", err)
+	}
+	if !errors.Is(err, authrepo.ErrMemberNotFound) {
+		t.Fatalf("expected ErrMemberNotFound for 23503, got %v", err)
+	}
+	if !errors.Is(err, auth.ErrMemberNotFound) {
+		t.Fatal("repo sentinel must alias auth.ErrMemberNotFound")
 	}
 }
 

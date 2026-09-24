@@ -431,9 +431,14 @@ func (s *Service) LinkMember(ctx context.Context, userID, memberID string) (*Use
 	// Rule 5 — unlinked claim (or re-link from an old member): execute the
 	// write. The partial unique index idx_users_member_id_unique turns a
 	// lost concurrent race into 23505 → ErrMemberAlreadyClaimed (409).
+	// A TOCTOU race where member is deleted before UPDATE turns 23503 →
+	// ErrMemberNotFound (404, M-A).
 	if err := s.users.LinkMember(ctx, userID, memberID); err != nil {
 		if errors.Is(err, ErrMemberAlreadyClaimed) {
 			return nil, ErrMemberAlreadyClaimed
+		}
+		if errors.Is(err, ErrMemberNotFound) {
+			return nil, ErrMemberNotFound
 		}
 		if isNotFoundErr(err) {
 			return nil, ErrUserNotFound

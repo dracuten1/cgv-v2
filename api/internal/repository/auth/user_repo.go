@@ -43,6 +43,10 @@ var (
 	// idx_users_member_id_unique (pgx 23505): another user already holds the
 	// member link (M1 Rule 4 race path, → 409 CodeConflict).
 	ErrMemberAlreadyClaimed = auth.ErrMemberAlreadyClaimed
+	// ErrMemberNotFound is returned when LinkMember violates foreign key
+	// constraint on member_id (pgx 23503): the target member was deleted
+	// in a TOCTOU race (M-A, → 404 CodeNotFound).
+	ErrMemberNotFound = auth.ErrMemberNotFound
 )
 
 // userColumns is the shared users projection.
@@ -158,12 +162,17 @@ func (r *UserRepository) GetByMemberID(ctx context.Context, memberID string) (*m
 // LinkMember binds users.member_id to a family-tree member (1:1).
 // A concurrent double-claim violating idx_users_member_id_unique
 // (pgx 23505) maps to auth.ErrMemberAlreadyClaimed (→ 409 Conflict).
+// A foreign key violation on member_id (pgx 23503, member deleted in TOCTOU race)
+// maps to auth.ErrMemberNotFound (→ 404 Not Found, M-A).
 func (r *UserRepository) LinkMember(ctx context.Context, userID, memberID string) error {
 	tag, err := r.executor(ctx).Exec(ctx,
 		`UPDATE users SET member_id = $2 WHERE id = $1`, userID, memberID)
 	if err != nil {
 		if isPgUniqueViolation(err) {
 			return ErrMemberAlreadyClaimed
+		}
+		if isPgForeignKeyViolation(err) {
+			return ErrMemberNotFound
 		}
 		return fmt.Errorf("không thể liên kết thành viên gia phả %s vào người dùng %s: %w", memberID, userID, err)
 	}
