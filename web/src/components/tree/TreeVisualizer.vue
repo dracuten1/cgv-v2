@@ -69,35 +69,46 @@
       />
     </div>
 
-    <!-- Zoom controls (desktop affordance; gestures cover touch) -->
-    <div class="absolute right-3 bottom-3 flex flex-col gap-1.5 z-10">
-      <button
-        type="button"
-        class="w-8 h-8 rounded-lg bg-white/95 border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-xs flex items-center justify-center cursor-pointer text-lg leading-none"
-        aria-label="Phóng to"
-        @click="zoomBy(1.2)"
-      >
-        +
-      </button>
-      <button
-        type="button"
-        class="w-8 h-8 rounded-lg bg-white/95 border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-xs flex items-center justify-center cursor-pointer text-lg leading-none"
-        aria-label="Thu nhỏ"
-        @click="zoomBy(1 / 1.2)"
-      >
-        −
-      </button>
-      <button
-        type="button"
-        class="w-8 h-8 rounded-lg bg-white/95 border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-xs flex items-center justify-center cursor-pointer"
-        aria-label="Vừa khung nhìn"
-        data-testid="fit-view"
-        @click="fitView"
-      >
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-        </svg>
-      </button>
+    <!-- Floating navigation & zoom controls (bottom-right cluster) -->
+    <div class="absolute right-3 bottom-3 flex flex-col items-center gap-2 z-10">
+      <!-- Compass 4-way pan & center control -->
+      <TreeCompassControl
+        @pan="panBy"
+        @center="handleCompassCenter"
+      />
+
+      <!-- Zoom & Fit controls -->
+      <div class="flex flex-col gap-1.5">
+        <button
+          type="button"
+          class="w-8 h-8 rounded-lg bg-white/95 border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-xs flex items-center justify-center cursor-pointer text-lg leading-none"
+          aria-label="Phóng to"
+          data-testid="zoom-in"
+          @click="zoomBy(1.2)"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          class="w-8 h-8 rounded-lg bg-white/95 border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-xs flex items-center justify-center cursor-pointer text-lg leading-none"
+          aria-label="Thu nhỏ"
+          data-testid="zoom-out"
+          @click="zoomBy(1 / 1.2)"
+        >
+          −
+        </button>
+        <button
+          type="button"
+          class="w-8 h-8 rounded-lg bg-white/95 border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-xs flex items-center justify-center cursor-pointer"
+          aria-label="Vừa khung nhìn"
+          data-testid="fit-view"
+          @click="fitView"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -105,6 +116,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, toRefs, watch } from 'vue';
 import TreeNodeCard from './TreeNodeCard.vue';
+import TreeCompassControl from './TreeCompassControl.vue';
 import { useTreeStore } from '@/stores/tree';
 import { useAuthStore } from '@/stores/auth';
 import {
@@ -136,6 +148,7 @@ const {
   onPointerCancel,
   onWheel,
   zoomBy,
+  panBy,
   setTransform,
   worldViewport,
 } = useTreeViewport(viewportEl);
@@ -148,12 +161,62 @@ const culled = computed(() =>
   cullVisibleNodes(layout.value, worldViewport(), transform.zoom)
 );
 
+/** Has initial positioning (auto-center or fitView) executed? */
+const hasInitialCentered = ref(false);
+
 function fitView(): void {
   const rect = viewportEl.value?.getBoundingClientRect();
   const width = rect?.width || 800;
   const height = rect?.height || 600;
   const { zoom, tx, ty } = fitToViewport(layout.value, { width, height });
   setTransform(zoom, tx, ty);
+}
+
+/**
+ * Focus viewport on a specific node (centered at zoom 1.0).
+ * Returns true if the node was found and centered, false otherwise.
+ */
+function focusNode(nodeId: string): boolean {
+  const target = layout.value.nodes.find((n) => n.id === nodeId);
+  if (!target) return false;
+
+  const rect = viewportEl.value?.getBoundingClientRect();
+  const width = rect?.width || 800;
+  const height = rect?.height || 600;
+
+  const targetCenterX = target.x + target.width / 2;
+  const targetCenterY = target.y + target.height / 2;
+
+  const zoom = 1.0;
+  const tx = width / 2 - targetCenterX * zoom;
+  const ty = height / 2 - targetCenterY * zoom;
+
+  setTransform(zoom, tx, ty);
+  return true;
+}
+
+/**
+ * Auto-center on initial layout: focuses on "Tôi" node at zoom 1.0 if linked,
+ * otherwise falls back to fitView().
+ */
+function autoCenterInitial(): void {
+  const selfId = authStore.user?.member_id;
+  if (selfId && focusNode(selfId)) {
+    return;
+  }
+  fitView();
+}
+
+/**
+ * Compass Center button handler: focus "Tôi" node if linked,
+ * else reset transform to (1, 0, 0).
+ */
+function handleCompassCenter(): void {
+  const selfId = authStore.user?.member_id;
+  if (selfId && focusNode(selfId)) {
+    return;
+  }
+  setTransform(1, 0, 0);
 }
 
 function drawEdges(): void {
@@ -236,7 +299,12 @@ onMounted(async () => {
   await nextTick();
   drawEdges();
   if (layout.value.nodes.length > 0) {
-    fitView();
+    if (!hasInitialCentered.value) {
+      autoCenterInitial();
+      hasInitialCentered.value = true;
+    } else {
+      fitView();
+    }
   }
 });
 
@@ -244,7 +312,14 @@ onMounted(async () => {
 watch(layout, async () => {
   await nextTick();
   drawEdges();
-  fitView();
+  if (layout.value.nodes.length > 0) {
+    if (!hasInitialCentered.value) {
+      autoCenterInitial();
+      hasInitialCentered.value = true;
+    } else {
+      fitView();
+    }
+  }
 });
 
 // Redraw after culled set changes visibility of canvas siblings (same size)

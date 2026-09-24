@@ -13,17 +13,24 @@ export function getInitials(fullName: string): string {
   return (prev[0] + last[0]).toUpperCase();
 }
 
-/** ("1930-04-12", "2001-08-30") → "1930 – 2001"; ("1930-…", null) → "1930". */
+/** ("1930-04-12", "2001-08-30") → "1930 – 2001"; living ("1942-…", null) → "s. 1942". */
 export function getYearsText(
   birthDate?: string | null,
-  deathDate?: string | null
+  deathDate?: string | null,
+  isLiving: boolean = true
 ): string {
   const bYear = birthDate ? birthDate.substring(0, 4) : '';
   const dYear = deathDate ? deathDate.substring(0, 4) : '';
 
+  // If living (or deathDate is null/empty) and birthDate exists: return "s. ${birthYear}"
+  if ((isLiving || !deathDate) && bYear) {
+    return `s. ${bYear}`;
+  }
+
+  // Deceased cases:
   if (bYear && dYear) return `${bYear} – ${dYear}`;
-  if (bYear) return bYear;
-  if (dYear) return `– ${dYear}`;
+  if (dYear) return `? – ${dYear}`;
+  if (bYear) return `${bYear} – ?`;
   return '';
 }
 

@@ -209,6 +209,11 @@ export function useTreeViewport(
     );
   }
 
+  /** Programmatic pan step (e.g. compass control). */
+  function panBy(dx: number, dy: number): void {
+    setTransform(transform.zoom, transform.tx + dx, transform.ty + dy);
+  }
+
   function setTransform(zoom: number, tx: number, ty: number): void {
     transform.zoom = clamp(zoom, minZoom, maxZoom);
     transform.tx = tx;
@@ -237,6 +242,7 @@ export function useTreeViewport(
     onPointerCancel,
     onWheel,
     zoomBy,
+    panBy,
     setTransform,
     worldViewport,
   };

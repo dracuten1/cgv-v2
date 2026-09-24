@@ -162,6 +162,15 @@ describe('useTreeViewport — gesture math (Arch §7.2)', () => {
     expect(vp.gesturing.value).toBe(false);
   });
 
+  it('panBy(dx, dy) adjusts transform.tx and transform.ty', () => {
+    const vp = makeViewport();
+    vp.setTransform(1.5, 100, 200);
+    vp.panBy(50, -30);
+    expect(vp.transform.zoom).toBe(1.5);
+    expect(vp.transform.tx).toBe(150);
+    expect(vp.transform.ty).toBe(170);
+  });
+
   it('worldViewport() inverts the transform into world coordinates', () => {
     const vp = makeViewport();
     vp.setTransform(2, -100, -200); // zoom 2x, panned

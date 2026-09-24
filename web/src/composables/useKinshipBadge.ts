@@ -36,11 +36,27 @@ export function kinshipBadge(term: string | null | undefined): string {
 }
 
 /**
+ * Format a canonical kinship term into { badge, full }.
+ * Maps canonical terms to short badges ("Bản thân" → "Tôi", "Ông nội" → "Nội", etc.)
+ * while preserving the full term for tooltips and accessibility.
+ */
+export function formatKinshipBadge(canonicalTerm?: string | null): { badge: string; full: string } {
+  if (!canonicalTerm) {
+    return { badge: '', full: '' };
+  }
+  return {
+    badge: kinshipBadge(canonicalTerm),
+    full: canonicalTerm,
+  };
+}
+
+/**
  * Composable seam for components (keeps the import surface stable if the
  * mapping later grows per-dialect variants).
  */
 export function useKinshipBadge() {
   return {
     badge: kinshipBadge,
+    format: formatKinshipBadge,
   };
 }

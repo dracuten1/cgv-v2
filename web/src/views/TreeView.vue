@@ -71,6 +71,19 @@
           <span class="opacity-60">({{ gen.count }})</span>
         </button>
       </div>
+
+      <!-- Unlinked user info banner/chip (INV-02: line-height >= 1.45) -->
+      <div
+        v-if="showUnlinkedBanner"
+        class="flex items-center gap-2 p-2.5 rounded-lg bg-blue-50/80 border border-blue-200 text-xs text-blue-800"
+        style="line-height: 1.45;"
+        data-testid="unlinked-banner"
+      >
+        <svg class="w-4 h-4 shrink-0 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Liên kết tài khoản của bạn với một thành viên trong cây để xem xưng hô gia đình.</span>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -165,6 +178,15 @@ const selectedFamily = computed<Family | null>(
 );
 
 const activeFilter = computed(() => store.generationFilter);
+
+// Toolbar prompt only for logged-in && member_id == null && !isDemo users
+const showUnlinkedBanner = computed(() => {
+  return (
+    auth.isAuthenticated &&
+    !auth.user?.member_id &&
+    !auth.isDemo
+  );
+});
 
 function chipClass(genIndex: number | null): string[] {
   const active = activeFilter.value === genIndex;

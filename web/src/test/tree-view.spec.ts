@@ -19,6 +19,7 @@ vi.mock('@/api/me', () => ({
 import { familiesApi } from '@/api/families';
 import { ApiError } from '@/api/client';
 import { useTreeStore } from '@/stores/tree';
+import { useAuthStore } from '@/stores/auth';
 import type { TreeResponse } from '@/types/api';
 
 const mockedListFamilies = vi.mocked(familiesApi.listFamilies);
@@ -152,5 +153,45 @@ describe('TreeView', () => {
     expect(wrapper.find('[data-testid="excel-import-auth-hint"]').text()).toContain(
       'Đăng nhập để nhập Excel'
     );
+  });
+
+  it('shows unlinked user banner when logged-in without member_id and not demo', async () => {
+    const authStore = useAuthStore();
+    authStore.user = {
+      id: 'u1',
+      display_name: 'Người dùng',
+      is_demo: false,
+      is_admin: false,
+      member_id: null,
+      created_at: '',
+      updated_at: '',
+    };
+    authStore.status = 'authenticated';
+
+    const wrapper = mountTree();
+    await flushPromises();
+
+    const banner = wrapper.find('[data-testid="unlinked-banner"]');
+    expect(banner.exists()).toBe(true);
+    expect(banner.text()).toContain('Liên kết tài khoản của bạn với một thành viên trong cây để xem xưng hô gia đình.');
+  });
+
+  it('hides unlinked user banner for demo users', async () => {
+    const authStore = useAuthStore();
+    authStore.user = {
+      id: 'demo-u',
+      display_name: 'Demo User',
+      is_demo: true,
+      is_admin: false,
+      member_id: null,
+      created_at: '',
+      updated_at: '',
+    };
+    authStore.status = 'authenticated';
+
+    const wrapper = mountTree();
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="unlinked-banner"]').exists()).toBe(false);
   });
 });

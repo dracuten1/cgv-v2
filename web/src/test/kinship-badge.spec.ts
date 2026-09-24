@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { kinshipBadge, useKinshipBadge } from '@/composables/useKinshipBadge';
+import { kinshipBadge, formatKinshipBadge, useKinshipBadge } from '@/composables/useKinshipBadge';
 
-describe('useKinshipBadge — canonical term abbreviation (Phase 1, M5)', () => {
+describe('useKinshipBadge — canonical term abbreviation (Phase 1 & Phase 3)', () => {
   it('maps "Bản thân" to "Tôi"', () => {
     expect(kinshipBadge('Bản thân')).toBe('Tôi');
   });
@@ -47,10 +47,20 @@ describe('useKinshipBadge — canonical term abbreviation (Phase 1, M5)', () => 
     expect(kinshipBadge('Không xác định được quan hệ')).toBe('Không xác định được quan hệ');
   });
 
+  it('formats { badge, full } for tooltips via formatKinshipBadge', () => {
+    expect(formatKinshipBadge('Bản thân')).toEqual({ badge: 'Tôi', full: 'Bản thân' });
+    expect(formatKinshipBadge('Ông nội')).toEqual({ badge: 'Nội', full: 'Ông nội' });
+    expect(formatKinshipBadge('Con gái')).toEqual({ badge: 'Con', full: 'Con gái' });
+    expect(formatKinshipBadge('Bố')).toEqual({ badge: 'Bố', full: 'Bố' });
+    expect(formatKinshipBadge('')).toEqual({ badge: '', full: '' });
+    expect(formatKinshipBadge(null)).toEqual({ badge: '', full: '' });
+  });
+
   it('exposes the same pure mapper via the composable seam', () => {
-    const { badge } = useKinshipBadge();
+    const { badge, format } = useKinshipBadge();
     expect(badge('Bản thân')).toBe('Tôi');
     expect(badge('Ông nội')).toBe('Nội');
     expect(badge('Con trai')).toBe('Con');
+    expect(format('Ông ngoại')).toEqual({ badge: 'Ngoại', full: 'Ông ngoại' });
   });
 });
