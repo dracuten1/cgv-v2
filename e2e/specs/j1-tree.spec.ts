@@ -59,10 +59,9 @@ test.describe('Journey 1 — Cây gia phả (Tree visualizer)', () => {
     }
   });
 
-  // EXPECTED-FAIL until VerifyToken (jwt.go:96) accepts demo-issuer tokens minted by dev-mode service — leader fix pending
   test('renders patriarch Nguyễn Văn An and all 5 generation headings (demo login)', async ({ page }) => {
-    // 1. Enter via demo session
-    // EXPECTED-FAIL until VerifyToken (jwt.go:96) accepts demo-issuer tokens minted by dev-mode service — leader fix pending
+    // 1. Enter via demo session — dev-mode dual-issuer relaxation (jwt.go:105-108, 1cb4fd7)
+    // accepts demo-issuer tokens minted by the dev-mode service.
     await demoLogin(page);
 
     // 2. Navigate to /tree (or click desktop nav "Gia phả")
