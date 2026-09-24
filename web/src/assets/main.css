@@ -25,6 +25,17 @@
   --color-slate-light: #F1F5F9;
   --color-slate-border: #E2E8F0;
 
+  /* Vietnamese Genealogy Tree Blues */
+  --color-tree-bg: #F8FAFC;
+  --color-tree-card-bg: #FFFFFF;
+  --color-tree-card-border: #BFDBFE;
+  --color-tree-card-border-hover: #60A5FA;
+  --color-tree-connector: #93C5FD;
+  --color-tree-connector-node: #3B82F6;
+  --color-tree-self-ring: #2563EB;
+  --color-tree-self-badge: #DBEAFE;
+  --color-tree-self-text: #1E40AF;
+
   /* Generation tokens 1-4 (pastels for bands/badges) */
   --color-gen-1: #E07A5F;
   --color-gen-1-soft: #FBECE8;
@@ -40,6 +51,10 @@
 }
 
 :root {
+  --tree-connector: #93C5FD;
+  --tree-connector-node: #3B82F6;
+  --tree-self-ring: #2563EB;
+
   --gen-1: #E07A5F;
   --gen-1-soft: #FBECE8;
   --gen-2: #81B29A;

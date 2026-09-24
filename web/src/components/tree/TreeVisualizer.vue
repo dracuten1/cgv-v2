@@ -106,6 +106,7 @@
 import { computed, nextTick, onMounted, ref, toRefs, watch } from 'vue';
 import TreeNodeCard from './TreeNodeCard.vue';
 import { useTreeStore } from '@/stores/tree';
+import { useAuthStore } from '@/stores/auth';
 import {
   useTreeLayout,
   cullVisibleNodes,
@@ -116,14 +117,16 @@ import { useTreeViewport } from '@/composables/useTreeViewport';
 defineOptions({ name: 'TreeVisualizer' });
 
 const store = useTreeStore();
+const authStore = useAuthStore();
 
 const viewportEl = ref<HTMLElement | null>(null);
 const canvasEl = ref<HTMLCanvasElement | null>(null);
 
 const { roots: rootsRef, generations: generationsRef, generationFilter: filterRef } = toRefs(store);
+const linkedMemberRef = computed(() => authStore.user?.member_id);
 
-/** MEMOIZED: re-runs only when roots or generationFilter change. */
-const layout = useTreeLayout(rootsRef, generationsRef, filterRef);
+/** MEMOIZED: re-runs only when roots, generationFilter, or linkedMemberId change. */
+const layout = useTreeLayout(rootsRef, generationsRef, filterRef, linkedMemberRef);
 
 const {
   transform,
@@ -158,33 +161,69 @@ function drawEdges(): void {
   const ctx = canvas?.getContext('2d');
   if (!canvas || !ctx) return; // jsdom: getContext returns null — safe no-op
 
-  const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
-  if (canvas.width !== Math.ceil(layout.value.width * dpr)) {
+  // M11 Canvas Backing-Store & DPR Guard
+  let dpr = Math.min((typeof window !== 'undefined' && window.devicePixelRatio) || 1, 2);
+  const pixelCount = layout.value.width * dpr * layout.value.height * dpr;
+  if (pixelCount > 16_777_216) {
+    console.warn('Canvas backing store exceeds 16M pixels; falling back to dpr=1 to prevent texture overflow');
+    dpr = 1;
+  }
+
+  if (canvas.width !== Math.ceil(layout.value.width * dpr) || canvas.height !== Math.ceil(layout.value.height * dpr)) {
     canvas.width = Math.ceil(layout.value.width * dpr);
     canvas.height = Math.ceil(layout.value.height * dpr);
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, layout.value.width, layout.value.height);
 
-  for (const edge of layout.value.edges) {
-    ctx.beginPath();
-    if (edge.type === 'spouse') {
-      // Short horizontal link between pair
-      ctx.strokeStyle = '#94A3B8';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([4, 3]);
-      ctx.moveTo(edge.fromX, edge.fromY);
-      ctx.lineTo(edge.toX, edge.toY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    } else {
-      // Parent→child smooth vertical bezier
-      ctx.strokeStyle = '#CBD5E1';
-      ctx.lineWidth = 2;
-      const midY = (edge.fromY + edge.toY) / 2;
-      ctx.moveTo(edge.fromX, edge.fromY);
-      ctx.bezierCurveTo(edge.fromX, midY, edge.toX, midY, edge.toX, edge.toY);
-      ctx.stroke();
+  // Read CSS variables once per layout pass (Token-vs-Hex discipline)
+  let connectorColor = '#93C5FD';
+  let nodeColor = '#3B82F6';
+  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    const style = getComputedStyle(document.documentElement);
+    connectorColor = style.getPropertyValue('--tree-connector').trim() || '#93C5FD';
+    nodeColor = style.getPropertyValue('--tree-connector-node').trim() || '#3B82F6';
+  }
+
+  // Render orthogonal edges if available, otherwise fallback to legacy edges
+  const orthoEdges = layout.value.orthogonalEdges;
+  if (orthoEdges && orthoEdges.length > 0) {
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = connectorColor;
+
+    for (const edge of orthoEdges) {
+      for (const seg of edge.segments) {
+        ctx.beginPath();
+        ctx.moveTo(seg.x1, seg.y1);
+        ctx.lineTo(seg.x2, seg.y2);
+        ctx.stroke();
+      }
+
+      // Midpoint junction dot for spouse connectors (r = 3px)
+      if (edge.midpoint) {
+        ctx.beginPath();
+        ctx.fillStyle = nodeColor;
+        ctx.arc(edge.midpoint.x, edge.midpoint.y, edge.midpoint.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  } else {
+    for (const edge of layout.value.edges) {
+      ctx.beginPath();
+      if (edge.type === 'spouse') {
+        ctx.strokeStyle = connectorColor;
+        ctx.lineWidth = 2;
+        ctx.moveTo(edge.fromX, edge.fromY);
+        ctx.lineTo(edge.toX, edge.toY);
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = connectorColor;
+        ctx.lineWidth = 2;
+        const midY = (edge.fromY + edge.toY) / 2;
+        ctx.moveTo(edge.fromX, edge.fromY);
+        ctx.bezierCurveTo(edge.fromX, midY, edge.toX, midY, edge.toX, edge.toY);
+        ctx.stroke();
+      }
     }
   }
 }
