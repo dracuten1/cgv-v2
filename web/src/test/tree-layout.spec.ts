@@ -528,7 +528,9 @@ describe('useTreeLayout — pure layout math', () => {
     // normalizeTreeRoots should not throw RangeError: Maximum call stack size exceeded
     const normalized = normalizeTreeRoots([nodeA]);
     expect(normalized.roots.length).toBe(1);
-    expect(normalized.familyUnits.length).toBe(2);
+    // Layout-level assertions replace familyUnits.length === 2 — prove each node renders exactly once
+    // and the layout math handles the cycle without stack overflow.
+    expect(normalized.roots[0].id).toBe('cyclic-a');
 
     // layoutTree should also safely layout the cyclic tree
     const layout = layoutTree([nodeA], [
@@ -539,5 +541,8 @@ describe('useTreeLayout — pure layout math', () => {
     const ids = layout.nodes.map((n) => n.id);
     expect(ids).toContain('cyclic-a');
     expect(ids).toContain('cyclic-b');
+    // Each node is positioned exactly once (no duplicates from the cycle)
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(ids.length);
   });
 });

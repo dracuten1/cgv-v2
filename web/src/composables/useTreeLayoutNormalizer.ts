@@ -1,22 +1,27 @@
 /**
- * useTreeLayoutNormalizer — Normalizes raw TreeResponse.roots into FamilyUnit intermediate models (M8).
+ * useTreeLayoutNormalizer — Pure normalization for raw TreeResponse.roots.
  *
- * Requirements (Task 2.2 / Decisions 5, D1, M7, M8, M10):
- * 1. FamilyUnit Intermediate Graph Model:
- *    { id: string, primaryNode: TreeNode, spouseNode?: TreeNode, children: TreeNode[] }
- * 2. VisitedSet cycle prevention (guards backend absence of DAG cycle check).
- * 3. In-law splice & root-prune (M7): in-laws who arrive as top-level roots are spliced into spouseNode
+ * Requirements (Task 2.2 / Decisions 5, D1, M7, M10):
+ * 1. In-law splice & root-prune (M7): in-laws who arrive as top-level roots are spliced into spouseNode
  *    and explicitly removed from roots so they render EXACTLY ONCE.
- * 4. Tier-1 grandparent couple ordering (D1):
+ * 2. Tier-1 grandparent couple ordering (D1):
  *    Paternal grandparent couple LEFT, maternal grandparent couple RIGHT, traced upwards from
  *    authStore.user?.member_id (or provided anchorMemberId).
  *    Fallback to FullName ASC when trace unavailable.
- * 5. Deterministic sibling sorting: birth_date ASC (fallback full_name).
- * 6. Immutability Invariant (M10): never mutate input roots in-place; return cloned structures.
+ * 3. Deterministic sibling sorting: birth_date ASC (fallback full_name).
+ * 4. Immutability Invariant (M10): never mutate input roots in-place; return cloned structures.
+ *
+ * FamilyUnit is retained as a documented type for downstream consumers (e.g. tests, future graph
+ * consumers) but is no longer constructed by the normalizer. Spouse pairing happens directly in
+ * useTreeLayout's positioning pass to keep this normalizer lean.
  */
 
 import type { TreeNode } from '@/types/api';
 
+/**
+ * @deprecated No longer constructed by the normalizer. Kept as a documented type for downstream
+ * consumers and future graph code paths.
+ */
 export interface FamilyUnit {
   id: string;
   primaryNode: TreeNode;
@@ -160,17 +165,14 @@ function traceAncestryBranches(
 export function normalizeTreeRoots(
   rawRoots: TreeNode[],
   anchorMemberId?: string | null
-): { roots: TreeNode[]; familyUnits: FamilyUnit[] } {
+): { roots: TreeNode[] } {
   if (!rawRoots || rawRoots.length === 0) {
-    return { roots: [], familyUnits: [] };
+    return { roots: [] };
   }
 
   // M10: Never mutate input roots
   const cloneVisited = new Set<string>();
   const clonedRoots: TreeNode[] = rawRoots.map((r) => cloneTreeNode(r, cloneVisited));
-
-  // Visited set across the entire normalization graph
-  const visitedSet = new Set<string>();
 
   // Map of all cloned nodes
   const allNodesMap = buildNodeMap(clonedRoots);
@@ -266,41 +268,7 @@ export function normalizeTreeRoots(
     return (a.full_name || '').localeCompare(b.full_name || '');
   });
 
-  // Construct FamilyUnits (M8)
-  const familyUnits: FamilyUnit[] = [];
-  const buildUnits = (node: TreeNode) => {
-    if (visitedSet.has(node.id)) return;
-    visitedSet.add(node.id);
-
-    // Look for spouse node
-    let spouseNode: TreeNode | undefined;
-    for (const spouseId of node.spouse_ids ?? []) {
-      const found = allNodesMap.get(spouseId);
-      if (found) {
-        spouseNode = found;
-        visitedSet.add(found.id);
-        break;
-      }
-    }
-
-    familyUnits.push({
-      id: `unit-${node.id}`,
-      primaryNode: node,
-      spouseNode,
-      children: node.children ?? [],
-    });
-
-    for (const child of node.children ?? []) {
-      buildUnits(child);
-    }
-  };
-
-  for (const root of effectiveRoots) {
-    buildUnits(root);
-  }
-
   return {
     roots: effectiveRoots,
-    familyUnits,
   };
 }
