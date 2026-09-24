@@ -3,6 +3,10 @@ package seed
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -28,15 +32,17 @@ func TestFixture_FamilyCount(t *testing.T) {
 	}
 }
 
-// TestFixture_TotalMembers: the hard acceptance gate — 53 members total.
+// TestFixture_TotalMembers: the hard acceptance gate — 55 members total
+// (Family 1 grew from 24 → 26 in F5 when the maternal grandparents were
+// appended for tier-1 dual-couple rendering).
 func TestFixture_TotalMembers(t *testing.T) {
 	fams := seedAll()
 	total := 0
 	for _, f := range fams {
 		total += len(f.memb)
 	}
-	if total != 53 {
-		t.Fatalf("tổng số thành viên = %d, muốn đúng 53", total)
+	if total != 55 {
+		t.Fatalf("tổng số thành viên = %d, muốn đúng 55", total)
 	}
 }
 
@@ -61,10 +67,11 @@ func TestFixture_Family1SpansFiveGenerations(t *testing.T) {
 	}
 }
 
-// TestFixture_PerFamilyTotals: the documented split 24/16/13.
+// TestFixture_PerFamilyTotals: the documented split 26/16/13 (Family 1 grew
+// from 24 → 26 in F5).
 func TestFixture_PerFamilyTotals(t *testing.T) {
 	fams := seedAll()
-	want := []int{24, 16, 13}
+	want := []int{26, 16, 13}
 	for i, f := range fams {
 		if len(f.memb) != want[i] {
 			t.Errorf("dòng họ %q có %d thành viên, muốn %d", f.name, len(f.memb), want[i])
@@ -408,6 +415,82 @@ func TestFixture_FeedPosts(t *testing.T) {
 	}
 }
 
+// TestFixture_MaternalGrandparentsLinkToThao pins the F5 acceptance clause:
+// tier-1 must render BOTH root couples side-by-side (paternal An+Đoan L and
+// maternal Lê+Hoàng R) so the reference-design dual-couple element is
+// exercised end-to-end. Specifically:
+//   - Lê Văn Khải (aaaaaaa1-…-000000000018) and Hoàng Thị Phượng
+//     (aaaaaaa1-…-000000000019) are both in Family 1, Gen 1.
+//   - They are spouses of each other (marriage before Thảo's birth).
+//   - Both are blood parents of Lê Thị Thảo (aaaaaaa1-…-000000000006,
+//     Gen 2 — the Gen-2 "mother" the F5 ruling pinpoints).
+//   - Their own parents are not in the fixture (they're the apex of the
+//     maternal branch) and they have no other children — keeps the family
+//     focused on the journey-1 grandson's lineage.
+func TestFixture_MaternalGrandparentsLinkToThao(t *testing.T) {
+	const (
+		khaiID   = "aaaaaaa1-0000-4000-8000-000000000018"
+		phuongID = "aaaaaaa1-0000-4000-8000-000000000019"
+		thaoID   = "aaaaaaa1-0000-4000-8000-000000000006"
+	)
+	f1 := seedAll()[0]
+	idx := byID(t, f1)
+
+	for _, id := range []string{khaiID, phuongID, thaoID} {
+		if _, ok := idx[id]; !ok {
+			t.Fatalf("dòng họ 1 thiếu thành viên F5: %s", id)
+		}
+	}
+	if idx[khaiID].FullName != "Lê Văn Khải" {
+		t.Errorf("tên ông ngoại = %q, muốn \"Lê Văn Khải\"", idx[khaiID].FullName)
+	}
+	if idx[phuongID].FullName != "Hoàng Thị Phượng" {
+		t.Errorf("tên bà ngoại = %q, muốn \"Hoàng Thị Phượng\"", idx[phuongID].FullName)
+	}
+	if idx[khaiID].Gender != "male" || idx[khaiID].GenerationIndex != 1 {
+		t.Errorf("ông ngoại giới tính/thế hệ = %q/%d, muốn male/1",
+			idx[khaiID].Gender, idx[khaiID].GenerationIndex)
+	}
+	if idx[phuongID].Gender != "female" || idx[phuongID].GenerationIndex != 1 {
+		t.Errorf("bà ngoại giới tính/thế hệ = %q/%d, muốn female/1",
+			idx[phuongID].Gender, idx[phuongID].GenerationIndex)
+	}
+
+	// Marriage edge between the two maternal grandparents.
+	spouses := spouseMap(t, f1)
+	if got := spouses[khaiID]; got != phuongID {
+		t.Errorf("ông ngoại chưa kết hôn với bà ngoại: got %q, want %q", got, phuongID)
+	}
+	if got := spouses[phuongID]; got != khaiID {
+		t.Errorf("bà ngoại chưa kết hôn với ông ngoại: got %q, want %q", got, khaiID)
+	}
+
+	// Both must be blood parents of Thảo (the Gen-2 mother per the F5 ruling).
+	motherParents := map[string]bool{}
+	for _, e := range f1.pc {
+		if e.ChildID != thaoID {
+			continue
+		}
+		motherParents[e.ParentID] = true
+	}
+	if !motherParents[khaiID] {
+		t.Errorf("ông ngoại %s không phải cha ruột của Thảo %s", khaiID, thaoID)
+	}
+	if !motherParents[phuongID] {
+		t.Errorf("bà ngoại %s không phải mẹ ruột của Thảo %s", phuongID, thaoID)
+	}
+
+	// Maternal grandparents must not have any other children in the fixture —
+	// the F5 ruling scopes them tightly to "parents of the Gen-2 mother" so
+	// the tier-1 layout stays clean (one paternal + one maternal couple).
+	for _, e := range f1.pc {
+		if (e.ParentID == khaiID || e.ParentID == phuongID) && e.ChildID != thaoID {
+			t.Errorf("maternal grandparent %s có con ngoài Thảo: %s — vi phạm phạm vi F5",
+				e.ParentID, e.ChildID)
+		}
+	}
+}
+
 // TestFixture_AllLivingHaveAvatarsOrNot is not a rule — but gender values
 // must be canonical ("male"/"female") per INV-03.
 func TestFixture_GenderCanonical(t *testing.T) {
@@ -420,6 +503,83 @@ func TestFixture_GenderCanonical(t *testing.T) {
 	}
 }
 
+// TestFixture_AvatarsInShippedAllowlist pins the F3 contract: every seeded
+// avatar_url must reference one of the 8 SVG files shipped in
+// web/public/static/avatars/. Without this guard, drifting the fixture URL
+// (e.g. back to a .png name) would silently reintroduce the masked-404
+// anti-pattern reported by the tester — the seed would still parse, the
+// column would still hold a path, and the live stack would serve the SPA
+// fallback HTML in place of a real avatar.
+//
+// The shipped filenames are read directly from web/public/static/avatars/ so
+// the test fails loudly if either side drifts (a new SVG is added → add its
+// basename to fixture.go; a fixture.go URL is renamed → add/rename the SVG).
+func TestFixture_AvatarsInShippedAllowlist(t *testing.T) {
+	// Locate the repo root from the api/ working directory: this test runs
+	// via `go test ./internal/seed/...` so os.Getwd is .../api.
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("không xác định được thư mục làm việc: %v", err)
+	}
+	// Allow either api/ or repo-root cwd (CI may run from the repo root).
+	avatarDir := filepath.Join(cwd, "..", "..", "web", "public", "static", "avatars")
+	if _, err := os.Stat(avatarDir); err != nil {
+		avatarDir = filepath.Join(cwd, "web", "public", "static", "avatars")
+	}
+	if _, err := os.Stat(avatarDir); err != nil {
+		t.Skipf("không tìm thấy %s (chỉ chạy trong repo layout chuẩn): %v", avatarDir, err)
+	}
+
+	entries, err := os.ReadDir(avatarDir)
+	if err != nil {
+		t.Fatalf("không đọc được %s: %v", avatarDir, err)
+	}
+	shipped := map[string]bool{}
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		shipped[e.Name()] = true
+	}
+	if len(shipped) == 0 {
+		t.Fatalf("thư mục %s rỗng — thiếu avatar mẫu", avatarDir)
+	}
+
+	for _, f := range seedAll() {
+		for _, m := range f.memb {
+			if m.AvatarURL == nil || *m.AvatarURL == "" {
+				continue
+			}
+			// Strip leading slash so we compare bare filenames.
+			raw := strings.TrimPrefix(*m.AvatarURL, "/static/avatars/")
+			if raw == *m.AvatarURL {
+				// Path is not in the expected /static/avatars/ namespace —
+				// ValidateAvatarURL would reject it at runtime, so this is a
+				// separate fail from the allowlist check.
+				t.Errorf("%s: avatar_url %q không nằm trong /static/avatars/", m.FullName, *m.AvatarURL)
+				continue
+			}
+			if !shipped[raw] {
+				t.Errorf(
+					"%s: avatar_url %q tham chiếu %q nhưng %s chỉ chứa: %v",
+					m.FullName, *m.AvatarURL, raw, avatarDir, sortedKeys(shipped),
+				)
+			}
+		}
+	}
+}
+
+// sortedKeys returns the keys of a string-set in stable order — keeps the
+// test failure message deterministic.
+func sortedKeys(set map[string]bool) []string {
+	out := make([]string, 0, len(set))
+	for k := range set {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
 // TestRunWithExecutor_Regression verifies that RunWithExecutor accepts an existing DBTX
 // without opening a nested transaction, and respects the already-seeded guard.
 func TestRunWithExecutor_Regression(t *testing.T) {
@@ -428,7 +588,7 @@ func TestRunWithExecutor_Regression(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RunWithExecutor failed on empty database: %v", err)
 	}
-	if sum.Families != 3 || sum.Members != 53 {
+	if sum.Families != 3 || sum.Members != 55 {
 		t.Fatalf("unexpected summary: %+v", sum)
 	}
 

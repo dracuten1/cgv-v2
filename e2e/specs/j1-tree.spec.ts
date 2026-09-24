@@ -18,6 +18,9 @@ import { demoLogin, loginViaMock } from '../helpers/auth';
  *
  * Assertions:
  * - Patriarch "Nguyễn Văn An" visible in tree immediately.
+ * - Maternal grandparents "Lê Văn Khải" and "Hoàng Thị Phượng" visible
+ *   (F5 — both Gen-1 couples render side-by-side per D1; ordering may
+ *   be L/R or R/L depending on layout determinism).
  * - Exact-diacritic headings "Đời thứ 1" through "Đời thứ 5" all visible.
  */
 test.describe('Journey 1 — Cây gia phả (Tree visualizer)', () => {
@@ -41,6 +44,16 @@ test.describe('Journey 1 — Cây gia phả (Tree visualizer)', () => {
     // accessible name so the check is zoom-independent (exact name + generation).
     const patriarch = page.getByRole('button', { name: 'Nguyễn Văn An, Đời thứ 1' });
     await expect(patriarch).toBeVisible();
+
+    // F5: tier-1 must render BOTH root couples (paternal + maternal) so the
+    // reference-design dual-couple element is exercised. Both maternal
+    // grandparents are Gen 1 in Family 1 (seed fixture.go, IDs
+    // aaaaaaa1-…-000000000018 / 000000000019). Assert by accessible name only
+    // — keeps the check zoom-independent and ordering-agnostic.
+    const maternalGrandfather = page.getByRole('button', { name: 'Lê Văn Khải, Đời thứ 1' });
+    await expect(maternalGrandfather).toBeVisible();
+    const maternalGrandmother = page.getByRole('button', { name: 'Hoàng Thị Phượng, Đời thứ 1' });
+    await expect(maternalGrandmother).toBeVisible();
 
     // 4. Assert all 5 generations are visible with exact Vietnamese diacritics.
     // We check both the generation filter chip strip and the live DOM headings.

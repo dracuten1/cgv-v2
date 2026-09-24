@@ -48,18 +48,29 @@ func date(year, month, day int) *time.Time {
 	return &t
 }
 
-// Family1 seeds "Gia phả họ Nguyễn Văn" — 24 members spanning generations
+// Family1 seeds "Gia phả họ Nguyễn Văn" — 26 members spanning generations
 // 1..5, rooted at Nguyễn Văn An.
 //
 // Notation: Gen / name / (birth–death | birth– ) [avatar]
 func family1() seedFamily {
 	f := seedFamily{id: Family1ID, name: Family1Name}
 
-	// ---- Generation 1 (2 members): thủy tổ + wife -------------------------
+	// ---- Generation 1 (4 members): 2 root couples — paternal (An+Đoan)
+	//                                 + maternal grandparents of the main
+	//                                 grandson Bình (parents of Thảo) -------
 	an := f.member("aaaaaaa1-0000-4000-8000-000000000001", RootAncestorName, model.GenderMale, 1,
 		date(1928, 3, 15), date(2015, 10, 2), "/static/avatars/avatar-m1.svg", "Thủy tổ gia phả")
 	doan := f.member("aaaaaaa1-0000-4000-8000-000000000002", "Trần Thị Đoan", model.GenderFemale, 1,
 		date(1932, 7, 21), date(2018, 4, 9), "/static/avatars/avatar-f1.svg", "Vợ thủy tổ, quê làng Phú Thứ")
+	// Maternal grandparents of Bình (parents of Thảo). IDs appended at the
+	// tail of the Family1 ID space so all pre-existing member UUIDs stay
+	// byte-stable (F5 stability contract).
+	khai := f.member("aaaaaaa1-0000-4000-8000-000000000018", "Lê Văn Khải", model.GenderMale, 1,
+		date(1926, 4, 12), date(2012, 8, 22), "/static/avatars/avatar-m3.svg",
+		"Ông ngoại họ Lê, làng Phú Thứ")
+	phuong := f.member("aaaaaaa1-0000-4000-8000-000000000019", "Hoàng Thị Phượng", model.GenderFemale, 1,
+		date(1930, 11, 3), date(2019, 6, 10), "/static/avatars/avatar-f4.svg",
+		"Bà ngoại họ Lê, quê làng Đông")
 
 	// ---- Generation 2 (5 members: 3 children of An + 2 in-laws) -----------
 	kien := f.member("aaaaaaa1-0000-4000-8000-000000000003", "Nguyễn Văn Kiên", model.GenderMale, 2,
@@ -115,6 +126,7 @@ func family1() seedFamily {
 
 	// Spouse edges (each family's married couples per generation).
 	f.spouse(an, doan, 1952)
+	f.spouse(khai, phuong, 1950) // Lê Văn Khải + Hoàng Thị Phượng (maternal grandparents of Bình)
 	f.spouse(kien, thao, 1976)
 	f.spouse(cuc, tuan, 1980)
 	f.spouse(binh, huong, 2004)
@@ -130,6 +142,11 @@ func family1() seedFamily {
 	f.child(doan, kien)
 	f.child(doan, cuc)
 	f.child(doan, hung)
+
+	// Maternal grandparents → Thảo (so tier-1 renders the couple side-by-side
+	// with An+Đoan per the reference design).
+	f.child(khai, thao)
+	f.child(phuong, thao)
 
 	f.child(kien, binh)
 	f.child(kien, mai)
