@@ -115,6 +115,7 @@ test.describe('Journey 1 — Cây gia phả (Tree visualizer)', () => {
 
     // 2. Link authenticated user to Gen-3 grandson Nguyễn Văn Bình
     // GrandsonID: bbbbbbb2-0000-4000-8000-000000000002 (Family 1, Gen 3)
+    // Cross-reference: BINH_ID = fixture.go:32 GrandsonID (Nguyễn Văn Bình) — keep in sync with seed.
     const BINH_ID = 'bbbbbbb2-0000-4000-8000-000000000002';
     const linkResp = await page.request.post('/api/v1/me/member', {
       data: { member_id: BINH_ID },
