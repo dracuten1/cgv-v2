@@ -24,6 +24,8 @@ import { demoLogin, loginViaMock } from '../helpers/auth';
  * - Exact-diacritic headings "Đời thứ 1" through "Đời thứ 5" all visible.
  */
 test.describe('Journey 1 — Cây gia phả (Tree visualizer)', () => {
+  test.use({ baseURL: 'http://tuyens-mac-mini.tail48a1b0.ts.net:3456' });
+
   test('renders patriarch Nguyễn Văn An and all 5 generation headings', async ({ page }) => {
     // 1. Enter via mock session
     // demo login blocked by app bug (iss/is_demo mismatch, jwt.go:41+94) — mock login per leader contract
