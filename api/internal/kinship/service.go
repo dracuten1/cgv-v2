@@ -86,9 +86,5 @@ func (s *Service) GetLabels(ctx context.Context, familyID, fromID, dialect strin
 		return nil, fmt.Errorf("không thể chuẩn bị đồ thị dòng họ: %w", err)
 	}
 
-	if _, ok := g.Nodes[fromID]; !ok {
-		return nil, ErrMemberNotFound
-	}
-
 	return s.engine.CalculateAllFrom(g, fromID, dialect)
 }

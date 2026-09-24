@@ -72,6 +72,11 @@ describe('TreeNodeCard', () => {
     expect(wrapper.find('[data-testid="years-text"]').text()).toBe('s. 1930');
   });
 
+  it('renders "1930 – ?" for deceased member with birth year but unknown death year', () => {
+    const wrapper = mountCard(makeNode({ death_date: null, is_living: false }));
+    expect(wrapper.find('[data-testid="years-text"]').text()).toBe('1930 – ?');
+  });
+
   it('renders initials circle and full name', () => {
     const wrapper = mountCard(makeNode());
     expect(wrapper.text()).toContain('Nguyễn Văn An');

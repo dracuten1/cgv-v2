@@ -177,7 +177,7 @@ func (e *Engine) CalculateAllFrom(g *Graph, fromID, dialect string) (map[string]
 	dialect = NormalizeDialect(dialect)
 
 	if _, ok := g.Nodes[fromID]; !ok {
-		return nil, fmt.Errorf("không tìm thấy thành viên bắt đầu: %s", fromID)
+		return nil, fmt.Errorf("%w: %s", ErrMemberNotFound, fromID)
 	}
 
 	labels := make(map[string]string, len(g.Nodes))

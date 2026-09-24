@@ -84,6 +84,6 @@ const uiGender = computed(() => toUiGender(props.gender));
 const accentVar = computed(() => genAccentVar(props.generationIndex));
 const softAccentVar = computed(() => genSoftVar(props.generationIndex));
 const initials = computed(() => getInitials(props.fullName));
-const yearsText = computed(() => getYearsText(props.birthDate, props.deathDate));
+const yearsText = computed(() => getYearsText(props.birthDate, props.deathDate, props.isLiving));
 const generationLabel = computed(() => `Đời thứ ${props.generationIndex}`);
 </script>
