@@ -154,10 +154,11 @@ When `auth.user.member_id` is `null` (user has not linked their profile to a tre
   - Adding a link action directly on the tree card menu ("Đây là tôi" button on member details or card popover) is included in the tree plan. Full account settings page redesign is deferred to a follow-up.
 
 ### Backend Delta
-- **Migration (M1)**: Add `api/migrations/005_unique_users_member_id.sql` with:
+- **Migration (M1 / M-B)**: Add `api/migrations/005_unique_users_member_id.sql` with:
   ```sql
   CREATE UNIQUE INDEX idx_users_member_id_unique ON users(member_id) WHERE member_id IS NOT NULL;
   ```
+  - *Pre-flight Diagnostic & Remediation*: Before index creation, a pre-flight DO-block queries `SELECT member_id, count(*) FROM users WHERE member_id IS NOT NULL GROUP BY member_id HAVING count(*) > 1`. On detected duplicates, it raises an exception formatting offending `member_id` and associated user IDs via `string_agg` and emits `USING HINT = 'deduplicate users.member_id before re-running migration'`. A clean database proceeds directly to index creation without overhead.
 - **Handler**: Add `LinkMember(c *gin.Context)` to `api/internal/handler/auth_handler.go`.
   - Check demo status: if `user.IsDemo` $\to$ return 403 `model.CodeDemoIsolationViolation`.
   - Validate `member_id` belongs to a valid member (404 on miss).
@@ -216,7 +217,7 @@ When `auth.user.member_id` is `null` (user has not linked their profile to a tre
 
 ### Resolution
 - **Pure Client-Side Normalization**: Do not alter the backend `GET /api/v1/families/:id/tree` JSON contract. Modifying tree serialization risks breaking existing consumers (such as Excel export/import and kinship paths).
-- *FamilyUnit single-spouse limit (M-H)*: `buildUnits` breaks on FIRST spouse (`useTreeLayoutNormalizer.ts:272`) while layout renders ALL spouses independently (`useTreeLayout.ts:295-325`); no spouse-count-sensitive consumer of `FamilyUnit` exists in `web/src`.
+- *FamilyUnit single-spouse limit & layout pairing mechanism (Leader Adjudication #1 / M8 / M-H)*: `FamilyUnit` is retained as a documented intermediate type with a single-spouse limit, but it is NOT the layout pairing mechanism. `useTreeLayout` performs spouse pairing directly across all spouses, and the separate `buildUnits` pass was removed as dead code.
 - **Client Graph Normalizer (`tree-graph-normalizer.ts`)**:
   1. Build a local member map across all generations and roots.
   2. For Generation 1 (roots), identify married pairs via `spouse_ids`. Treat the primary lineage member as the primary root and synthesize the spouse as a co-located partner block.
@@ -299,3 +300,4 @@ To satisfy the reference design (blue card borders, blue connectors, blue "Tôi"
 | **Tree Layout** | Client Normalizer: Pair Generation 1 roots into side-by-side couple blocks. | Avoids breaking existing `/tree` payload contract used by Excel/Kinship tools. | Frontend must sort children deterministically by birth date. |
 | **Tokens & Styling** | Define semantic `--color-tree-*` blue tokens in Tailwind v4 `@theme`. | Prevents hex sprawl; keeps terracotta for buttons/forms while adopting blue reference design. | Update `tree-node-card.spec.ts` for `"s. "` birth date prefix. |
 | **Public Route Load (MR-01)** | Batched label endpoint caching per `(family_id, version)`. Dedicated rate-limiting DEFERRED. | Leader deferred active rate-limiting to follow-up; kinship engine's version-keyed cache provides current mitigation against duplicate graph builds. | Follow-up initiative will introduce IP/token rate limits if needed. |
+| **Excel Export/Import Avatar Round-Trip (#7)** | Known limitation: Excel EXPORT omits the avatar column (9 columns) while IMPORT reads column 10, dropping avatars across round-trip. | Export preserves legacy 9-column sheet contract. On import, `import.go` retains invalid avatar pointer on staged member, but this is harmlessly triple-guarded by parse validation, `ImportStaged`, and non-rendering. | Avatars must be managed through member CRUD API or seeded. |
