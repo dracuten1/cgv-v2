@@ -32,6 +32,7 @@ export const useTreeStore = defineStore('tree', () => {
     familyId.value = id;
     loading.value = true;
     error.value = null;
+    kinshipLabels.value = {};
 
     try {
       const res = await familiesApi.getTree(id);
@@ -84,11 +85,12 @@ export const useTreeStore = defineStore('tree', () => {
     fromMemberId: string,
     dialect?: 'bac' | 'trung' | 'nam' | string
   ): Promise<void> {
+    kinshipLabels.value = {};
     try {
       const res = await kinshipApi.getFamilyKinshipLabels(famId, fromMemberId, dialect);
       kinshipLabels.value = res.labels ?? {};
     } catch (err) {
-      // Keep prior labels; surface for diagnostics only.
+      // Surface for diagnostics only.
       console.warn('[tree] không thể tải nhãn xưng hô:', formatApiError(err));
     }
   }
