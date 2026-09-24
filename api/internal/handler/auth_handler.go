@@ -235,6 +235,45 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 	c.JSON(http.StatusOK, profile)
 }
 
+// LinkMemberInput is the body for POST /api/v1/me/member. The pointer stays
+// nil-safe (D4): a null member_id is reserved for a future unlink operation
+// and is rejected today.
+type LinkMemberInput struct {
+	MemberID *string `json:"member_id"`
+}
+
+// LinkMember handles POST /api/v1/me/member (JWT-protected): binds the
+// authenticated user to a family-tree member. All five M1 linking rules live
+// in auth.Service.LinkMember; the response is the SAME auth.UserProfile
+// payload as GET /me (no new DTO).
+func (h *AuthHandler) LinkMember(c *gin.Context) {
+	userID := GetUserID(c)
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, model.NewErrorEnvelope(model.CodeUnauthorized, "Chưa đăng nhập"))
+		return
+	}
+
+	var input LinkMemberInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, model.NewErrorEnvelope(model.CodeValidationError, "Dữ liệu liên kết thành viên không hợp lệ"))
+		return
+	}
+
+	// Nil member_id is reserved for a future unlink operation (D4).
+	if input.MemberID == nil || strings.TrimSpace(*input.MemberID) == "" {
+		c.JSON(http.StatusBadRequest, model.NewErrorEnvelope(model.CodeValidationError, "Mã thành viên (member_id) không được để trống"))
+		return
+	}
+
+	profile, err := h.authSvc.LinkMember(c.Request.Context(), userID, strings.TrimSpace(*input.MemberID))
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, profile)
+}
+
 // StartLinkProvider handles POST /api/v1/me/link/:provider/start and GET /api/v1/me/link/:provider/start
 func (h *AuthHandler) StartLinkProvider(c *gin.Context) {
 	userID := GetUserID(c)

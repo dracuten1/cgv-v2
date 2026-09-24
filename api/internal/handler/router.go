@@ -22,6 +22,7 @@ type Deps struct {
 	MemberRepo     MemberRepository
 	RelationRepo   RelationshipRepository
 	KinshipSvc     KinshipService
+	KinshipInv     KinshipCacheInvalidator
 	ExcelSvc       ExcelService
 	FeedSvc        FeedService
 	FeedNamer      feed.AuthorNamer
@@ -45,8 +46,8 @@ func NewRouter(deps Deps) *gin.Engine {
 
 	// Instantiate handlers
 	authH := NewAuthHandler(deps.Cfg, deps.AuthService, deps.ContactStore)
-	treeH := NewTreeHandler(deps.TxManager, deps.FamilyRepo, deps.MemberRepo, deps.RelationRepo, deps.SocialPostRepo)
-	kinshipH := NewKinshipHandler(deps.KinshipSvc, deps.MemberRepo)
+	treeH := NewTreeHandler(deps.TxManager, deps.FamilyRepo, deps.MemberRepo, deps.RelationRepo, deps.SocialPostRepo, deps.KinshipInv)
+	kinshipH := NewKinshipHandler(deps.KinshipSvc, deps.MemberRepo, deps.FamilyRepo)
 	excelH := NewExcelHandler(deps.ExcelSvc, deps.FamilyRepo)
 	feedH := NewFeedHandler(deps.FeedSvc, deps.UserStore, deps.FeedNamer)
 	pushH := NewPushHandler(deps.PushSvc)
@@ -83,6 +84,9 @@ func NewRouter(deps Deps) *gin.Engine {
 
 		v1.GET("/kinship", kinshipH.Calculate)
 
+		// Batched kinship labels (Decision 2C): one dictionary per family.
+		v1.GET("/families/:id/kinship-labels", kinshipH.GetFamilyKinshipLabels)
+
 		// Public Account Link Callback (OAuth provider redirects carry no JWT cookie)
 		v1.GET("/me/link/:provider/callback", authH.LinkCallback)
 
@@ -92,6 +96,7 @@ func NewRouter(deps Deps) *gin.Engine {
 		{
 			// Current user profile & account linking
 			protected.GET("/me", authH.GetMe)
+			protected.POST("/me/member", authH.LinkMember)
 			protected.GET("/me/link/:provider/start", authH.StartLinkProvider)
 			protected.POST("/me/link/:provider/start", authH.StartLinkProvider)
 			protected.DELETE("/me/identities/:id", authH.UnlinkIdentity)

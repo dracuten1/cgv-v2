@@ -7,6 +7,7 @@ import (
 
 	"github.com/dracuten1/cgv-v2/api/internal/auth"
 	"github.com/dracuten1/cgv-v2/api/internal/feed"
+	"github.com/dracuten1/cgv-v2/api/internal/kinship"
 	"github.com/dracuten1/cgv-v2/api/internal/model"
 	pushdomain "github.com/dracuten1/cgv-v2/api/internal/push"
 	genrepo "github.com/dracuten1/cgv-v2/api/internal/repository/genealogy"
@@ -25,7 +26,7 @@ func respondError(c *gin.Context, err error) {
 	case errors.Is(err, auth.ErrProviderDisabled), errors.Is(err, auth.ErrUnknownProvider):
 		c.JSON(http.StatusNotFound, model.NewErrorEnvelope(model.CodeNotFound, err.Error()))
 		return
-	case errors.Is(err, auth.ErrUserNotFound), errors.Is(err, auth.ErrIdentityNotFound):
+	case errors.Is(err, auth.ErrUserNotFound), errors.Is(err, auth.ErrIdentityNotFound), errors.Is(err, auth.ErrMemberNotFound):
 		c.JSON(http.StatusNotFound, model.NewErrorEnvelope(model.CodeNotFound, err.Error()))
 		return
 	case errors.Is(err, auth.ErrDemoIsolation):
@@ -34,7 +35,7 @@ func respondError(c *gin.Context, err error) {
 	case errors.Is(err, auth.ErrLastIdentity):
 		c.JSON(http.StatusConflict, model.NewErrorEnvelope(model.CodeLastIdentityCannotBeRemoved, err.Error()))
 		return
-	case errors.Is(err, auth.ErrAlreadyLinked):
+	case errors.Is(err, auth.ErrAlreadyLinked), errors.Is(err, auth.ErrMemberAlreadyClaimed):
 		c.JSON(http.StatusConflict, model.NewErrorEnvelope(model.CodeConflict, err.Error()))
 		return
 	case errors.Is(err, auth.ErrInvalidState):
@@ -55,6 +56,9 @@ func respondError(c *gin.Context, err error) {
 		return
 	case errors.Is(err, genrepo.ErrDuplicate):
 		c.JSON(http.StatusConflict, model.NewErrorEnvelope(model.CodeConflict, "Dữ liệu đã tồn tại"))
+		return
+	case errors.Is(err, kinship.ErrMemberNotFound):
+		c.JSON(http.StatusNotFound, model.NewErrorEnvelope(model.CodeNotFound, err.Error()))
 		return
 	}
 

@@ -57,15 +57,15 @@ func family1() seedFamily {
 
 	// ---- Generation 1 (2 members): thủy tổ + wife -------------------------
 	an := f.member("aaaaaaa1-0000-4000-8000-000000000001", RootAncestorName, model.GenderMale, 1,
-		date(1928, 3, 15), date(2015, 10, 2), "/static/avatars/nguyen-van-an.png", "Thủy tổ gia phả")
+		date(1928, 3, 15), date(2015, 10, 2), "/static/avatars/avatar-m1.svg", "Thủy tổ gia phả")
 	doan := f.member("aaaaaaa1-0000-4000-8000-000000000002", "Trần Thị Đoan", model.GenderFemale, 1,
-		date(1932, 7, 21), date(2018, 4, 9), "/static/avatars/tran-thi-doan.png", "Vợ thủy tổ, quê làng Phú Thứ")
+		date(1932, 7, 21), date(2018, 4, 9), "/static/avatars/avatar-f1.svg", "Vợ thủy tổ, quê làng Phú Thứ")
 
 	// ---- Generation 2 (5 members: 3 children of An + 2 in-laws) -----------
 	kien := f.member("aaaaaaa1-0000-4000-8000-000000000003", "Nguyễn Văn Kiên", model.GenderMale, 2,
 		date(1954, 1, 20), nil, "", "Con trưởng, nguyên thợ mộc làng")
 	cuc := f.member("aaaaaaa1-0000-4000-8000-000000000004", "Nguyễn Thị Cúc", model.GenderFemale, 2,
-		date(1956, 9, 3), nil, "/static/avatars/nguyen-thi-cuc.png", "")
+		date(1956, 9, 3), nil, "/static/avatars/avatar-f2.svg", "")
 	hung := f.member("aaaaaaa1-0000-4000-8000-000000000005", "Nguyễn Văn Hùng", model.GenderMale, 2,
 		date(1960, 5, 11), nil, "", "")
 	thao := f.member("aaaaaaa1-0000-4000-8000-000000000006", "Lê Thị Thảo", model.GenderFemale, 2,
@@ -75,7 +75,7 @@ func family1() seedFamily {
 
 	// ---- Generation 3 (7 members: 5 grandchildren + 2 in-laws) ------------
 	binh := f.member(GrandsonID, "Nguyễn Văn Bình", model.GenderMale, 3,
-		date(1978, 6, 18), nil, "/static/avatars/nguyen-van-binh.png", "Cháu đích tôn, kỹ sư phần mềm")
+		date(1978, 6, 18), nil, "/static/avatars/avatar-m2.svg", "Cháu đích tôn, kỹ sư phần mềm")
 	mai := f.member("aaaaaaa1-0000-4000-8000-000000000008", "Nguyễn Thị Mai", model.GenderFemale, 3,
 		date(1980, 12, 25), nil, "", "")
 	nam := f.member("aaaaaaa1-0000-4000-8000-000000000009", "Nguyễn Văn Nam", model.GenderMale, 3,
@@ -93,7 +93,7 @@ func family1() seedFamily {
 	minh := f.member("aaaaaaa1-0000-4000-8000-00000000000e", "Nguyễn Văn Minh", model.GenderMale, 4,
 		date(2005, 2, 14), nil, "", "")
 	nga := f.member("aaaaaaa1-0000-4000-8000-00000000000f", "Nguyễn Thị Nga", model.GenderFemale, 4,
-		date(2007, 7, 30), nil, "/static/avatars/nguyen-thi-nga.png", "")
+		date(2007, 7, 30), nil, "/static/avatars/avatar-f3.svg", "")
 	duc := f.member("aaaaaaa1-0000-4000-8000-000000000010", "Nguyễn Văn Đức", model.GenderMale, 4,
 		date(2010, 9, 9), nil, "", "")
 	trang := f.member("aaaaaaa1-0000-4000-8000-000000000011", "Nguyễn Thị Trang", model.GenderFemale, 4,
@@ -178,7 +178,7 @@ func family2() seedFamily {
 
 	// ---- Generation 3 (7 members: 5 grandchildren + 2 in-laws) -------------
 	ducanh := f.member("bbbbbbb2-1111-4000-8000-000000000007", "Trần Văn Đức Anh", model.GenderMale, 3,
-		date(1982, 6, 6), nil, "/static/avatars/tran-van-duc-anh.png", "")
+		date(1982, 6, 6), nil, "/static/avatars/avatar-m3.svg", "")
 	thuy := f.member("bbbbbbb2-1111-4000-8000-000000000008", "Trần Thị Thúy", model.GenderFemale, 3,
 		date(1984, 1, 29), nil, "", "")
 	quang := f.member("bbbbbbb2-1111-4000-8000-000000000009", "Trần Văn Quang", model.GenderMale, 3,
@@ -251,7 +251,7 @@ func family3() seedFamily {
 
 	// ---- Generation 3 (5 members: 4 grandchildren + 1 in-law) --------------
 	trung := f.member("ccccccc3-2222-4000-8000-000000000006", "Lê Hoàng Trung", model.GenderMale, 3,
-		date(1987, 5, 5), nil, "/static/avatars/le-hoang-trung.png", "")
+		date(1987, 5, 5), nil, "/static/avatars/avatar-m4.svg", "")
 	thao := f.member("ccccccc3-2222-4000-8000-000000000007", "Lê Hoàng Thảo", model.GenderFemale, 3,
 		date(1990, 8, 16), nil, "", "")
 	tu := f.member("ccccccc3-2222-4000-8000-000000000008", "Lê Hoàng Tú", model.GenderMale, 3,

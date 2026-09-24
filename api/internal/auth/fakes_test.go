@@ -153,6 +153,19 @@ func (m *memUsers) LinkMember(_ context.Context, userID, memberID string) error 
 	return nil
 }
 
+// GetByMemberID resolves the user holding a member link (auth.UserStore).
+func (m *memUsers) GetByMemberID(_ context.Context, memberID string) (*model.User, error) {
+	m.core.mu.Lock()
+	defer m.core.mu.Unlock()
+	for _, u := range m.core.users {
+		if u.MemberID != nil && *u.MemberID == memberID {
+			cpy := *u
+			return &cpy, nil
+		}
+	}
+	return nil, nil
+}
+
 func (m *memUsers) ListIdentities(_ context.Context, userID string) ([]model.Identity, error) {
 	m.core.mu.Lock()
 	defer m.core.mu.Unlock()
