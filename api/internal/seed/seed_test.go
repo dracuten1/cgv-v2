@@ -515,19 +515,30 @@ func TestFixture_GenderCanonical(t *testing.T) {
 // the test fails loudly if either side drifts (a new SVG is added → add its
 // basename to fixture.go; a fixture.go URL is renamed → add/rename the SVG).
 func TestFixture_AvatarsInShippedAllowlist(t *testing.T) {
-	// Locate the repo root from the api/ working directory: this test runs
-	// via `go test ./internal/seed/...` so os.Getwd is .../api.
+	// Locate web/public/static/avatars via a bounded upward walk from cwd,
+	// so the test runs whether invoked from repo-root, api/, api/internal/seed, etc.
 	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("không xác định được thư mục làm việc: %v", err)
 	}
-	// Allow either api/ or repo-root cwd (CI may run from the repo root).
-	avatarDir := filepath.Join(cwd, "..", "..", "web", "public", "static", "avatars")
-	if _, err := os.Stat(avatarDir); err != nil {
-		avatarDir = filepath.Join(cwd, "web", "public", "static", "avatars")
+
+	var avatarDir string
+	curr := cwd
+	for i := 0; i < 5; i++ {
+		candidate := filepath.Join(curr, "web", "public", "static", "avatars")
+		if fi, err := os.Stat(candidate); err == nil && fi.IsDir() {
+			avatarDir = candidate
+			break
+		}
+		parent := filepath.Dir(curr)
+		if parent == curr {
+			break
+		}
+		curr = parent
 	}
-	if _, err := os.Stat(avatarDir); err != nil {
-		t.Skipf("không tìm thấy %s (chỉ chạy trong repo layout chuẩn): %v", avatarDir, err)
+
+	if avatarDir == "" {
+		t.Skipf("không tìm thấy web/public/static/avatars sau khi tìm ngược từ %s (chỉ chạy trong repo layout chuẩn)", cwd)
 	}
 
 	entries, err := os.ReadDir(avatarDir)
