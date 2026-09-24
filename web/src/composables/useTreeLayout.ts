@@ -14,7 +14,7 @@
  */
 import { computed, type Ref, type ComputedRef } from 'vue';
 import type { TreeNode, GenerationMeta, Gender } from '@/types/api';
-import { normalizeTreeRoots, type FamilyUnit } from './useTreeLayoutNormalizer';
+import { normalizeTreeRoots } from './useTreeLayoutNormalizer';
 import {
   computeSpouseConnector,
   computeParentChildConnector,
@@ -230,9 +230,11 @@ export function layoutTree(
 
   // Build allNodesMap for quick lookup
   const allNodesMap = new Map<string, TreeNode>();
-  const indexNode = (n: TreeNode) => {
+  const indexNode = (n: TreeNode, visited = new Set<string>()) => {
+    if (visited.has(n.id)) return;
+    visited.add(n.id);
     allNodesMap.set(n.id, n);
-    for (const c of n.children ?? []) indexNode(c);
+    for (const c of n.children ?? []) indexNode(c, visited);
   };
   for (const r of normalized.roots) indexNode(r);
   for (const r of rawRoots) indexNode(r);

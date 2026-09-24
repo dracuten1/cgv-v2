@@ -75,7 +75,8 @@ describe('useTreeConnectors — pure connector geometry (Decision 4C, M6, M9)', 
       expect(edge.type).toBe('parent-child');
 
       // M6 normative rail: parent.y (50) + CARD_HEIGHT (72) + 24 = 146
-      // (Defect would have been parentMidpoint.y + 24 = 86 + 24 = 110, or inside card at 60)
+      // NOTE: 146 is a canary value tracking CARD_HEIGHT drift (146 = rail offset arithmetic: parent.y (50) + CARD_HEIGHT (72) + 24 = 146).
+      // Future changes to CARD_HEIGHT will drift this value explainably.
       const expectedYRail = 50 + CARD_HEIGHT + 24;
       expect(expectedYRail).toBe(146);
 
@@ -154,6 +155,57 @@ describe('useTreeConnectors — pure connector geometry (Decision 4C, M6, M9)', 
 
       const edgeNullChildren = computeParentChildConnector(parent, null, [null, undefined]);
       expect(edgeNullChildren.segments).toHaveLength(0);
+    });
+
+    it('pins M9 partial-suppression: one hidden child among visible siblings drops only to visible children without dangling segments', () => {
+      // Parent with 3 children, child2 is filtered out (null/undefined)
+      const parent = makeNode('P', 200, 50);
+      const parentMidpoint = { x: 288, y: 50 + CARD_HEIGHT / 2 };
+
+      const child1 = makeNode('C1', 50, 218);
+      const child2Hidden = null; // hidden by generation filter
+      const child3 = makeNode('C3', 450, 218);
+
+      const edge = computeParentChildConnector(parent, parentMidpoint, [child1, child2Hidden, child3]);
+
+      expect(edge.type).toBe('parent-child');
+      const expectedYRail = 50 + CARD_HEIGHT + 24;
+
+      // Segments: 1 stem, 1 rail across C1 and C3, 2 drops (to C1 and C3). NO drop to C2. Total = 4 segments.
+      expect(edge.segments).toHaveLength(4);
+
+      // 1. Stem
+      const stem = edge.segments[0];
+      expect(stem.x1).toBe(parentMidpoint.x);
+      expect(stem.y1).toBe(parentMidpoint.y);
+      expect(stem.x2).toBe(parentMidpoint.x);
+      expect(stem.y2).toBe(expectedYRail);
+
+      // 2. Rail: spans ONLY between min visible child center (C1) and max visible child center (C3)
+      const rail = edge.segments[1];
+      expect(rail.x1).toBe(child1.x + CARD_WIDTH / 2); // 138
+      expect(rail.y1).toBe(expectedYRail);
+      expect(rail.x2).toBe(child3.x + CARD_WIDTH / 2); // 538
+      expect(rail.y2).toBe(expectedYRail);
+
+      // 3. Drop to Child 1
+      const drop1 = edge.segments[2];
+      expect(drop1.x1).toBe(child1.x + CARD_WIDTH / 2);
+      expect(drop1.y1).toBe(expectedYRail);
+      expect(drop1.x2).toBe(child1.x + CARD_WIDTH / 2);
+      expect(drop1.y2).toBe(child1.y);
+
+      // 4. Drop to Child 3
+      const drop3 = edge.segments[3];
+      expect(drop3.x1).toBe(child3.x + CARD_WIDTH / 2);
+      expect(drop3.y1).toBe(expectedYRail);
+      expect(drop3.x2).toBe(child3.x + CARD_WIDTH / 2);
+      expect(drop3.y2).toBe(child3.y);
+
+      // Verify no segment targets or touches hidden child C2's center or coordinates
+      for (const seg of edge.segments) {
+        expect(seg.x2 === 250 + CARD_WIDTH / 2 && seg.y2 === 218).toBe(false);
+      }
     });
   });
 });

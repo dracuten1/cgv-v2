@@ -7,6 +7,7 @@ import {
   CARD_HEIGHT,
   X_GAP,
 } from '@/composables/useTreeLayout';
+import { normalizeTreeRoots } from '@/composables/useTreeLayoutNormalizer';
 import type { TreeNode, GenerationMeta } from '@/types/api';
 
 describe('useTreeLayout — pure layout math', () => {
@@ -166,6 +167,7 @@ describe('useTreeLayout — pure layout math', () => {
         full_name: 'Nguyễn Văn An',
         gender: 'male',
         generation_index: 1,
+        is_living: true,
         spouse_ids: ['gp-2'],
         children: [],
       },
@@ -174,6 +176,7 @@ describe('useTreeLayout — pure layout math', () => {
         full_name: 'Trần Thị Mai',
         gender: 'female',
         generation_index: 1,
+        is_living: true,
         spouse_ids: ['gp-1'],
         children: [],
       },
@@ -211,6 +214,7 @@ describe('useTreeLayout — pure layout math', () => {
         full_name: 'Nguyễn Văn An',
         gender: 'male',
         generation_index: 1,
+        is_living: true,
         spouse_ids: ['s1'],
         children: [
           {
@@ -218,6 +222,7 @@ describe('useTreeLayout — pure layout math', () => {
             full_name: 'Nguyễn Văn Bình',
             gender: 'male',
             generation_index: 2,
+            is_living: true,
             spouse_ids: ['inlaw-c1'],
             children: [],
           },
@@ -229,6 +234,7 @@ describe('useTreeLayout — pure layout math', () => {
         full_name: 'Trần Thị Mai',
         gender: 'female',
         generation_index: 1,
+        is_living: true,
         spouse_ids: ['m1'],
         children: [],
       },
@@ -237,6 +243,7 @@ describe('useTreeLayout — pure layout math', () => {
         full_name: 'Lê Thị Cúc',
         gender: 'female',
         generation_index: 2,
+        is_living: true,
         spouse_ids: ['c1'],
         children: [],
       },
@@ -275,6 +282,7 @@ describe('useTreeLayout — pure layout math', () => {
         full_name: 'Lê Văn Ngoại', // Maternal grandfather
         gender: 'male',
         generation_index: 1,
+        is_living: true,
         spouse_ids: ['mgp-m'],
         children: [
           {
@@ -282,6 +290,7 @@ describe('useTreeLayout — pure layout math', () => {
             full_name: 'Lê Thị Mẹ',
             gender: 'female',
             generation_index: 2,
+            is_living: true,
             spouse_ids: ['father'],
             children: [
               {
@@ -289,6 +298,7 @@ describe('useTreeLayout — pure layout math', () => {
                 full_name: 'Nguyễn Văn Tôi',
                 gender: 'male',
                 generation_index: 3,
+                is_living: true,
                 spouse_ids: [],
                 children: [],
               },
@@ -301,6 +311,7 @@ describe('useTreeLayout — pure layout math', () => {
         full_name: 'Phạm Thị Ngoại',
         gender: 'female',
         generation_index: 1,
+        is_living: true,
         spouse_ids: ['mgp-f'],
         children: [],
       },
@@ -309,6 +320,7 @@ describe('useTreeLayout — pure layout math', () => {
         full_name: 'Vũ Văn Nội', // Paternal grandfather (V alphabetically comes after L)
         gender: 'male',
         generation_index: 1,
+        is_living: true,
         spouse_ids: ['pgp-m'],
         children: [
           {
@@ -316,6 +328,7 @@ describe('useTreeLayout — pure layout math', () => {
             full_name: 'Vũ Văn Bố',
             gender: 'male',
             generation_index: 2,
+            is_living: true,
             spouse_ids: ['mother'],
             children: [
               {
@@ -323,6 +336,7 @@ describe('useTreeLayout — pure layout math', () => {
                 full_name: 'Nguyễn Văn Tôi',
                 gender: 'male',
                 generation_index: 3,
+                is_living: true,
                 spouse_ids: [],
                 children: [],
               },
@@ -335,6 +349,7 @@ describe('useTreeLayout — pure layout math', () => {
         full_name: 'Hoàng Thị Nội',
         gender: 'female',
         generation_index: 1,
+        is_living: true,
         spouse_ids: ['pgp-f'],
         children: [],
       },
@@ -386,6 +401,7 @@ describe('useTreeLayout — pure layout math', () => {
         full_name: 'Nguyễn Văn Cha',
         gender: 'male',
         generation_index: 1,
+        is_living: true,
         spouse_ids: [],
         children: [
           {
@@ -393,11 +409,12 @@ describe('useTreeLayout — pure layout math', () => {
             full_name: 'Nguyễn Văn Anh',
             gender: 'male',
             generation_index: 2,
+            is_living: true,
             spouse_ids: [],
             children: [
-              { id: 'gc-1', full_name: 'GC 1', gender: 'male', generation_index: 3, spouse_ids: [], children: [] },
-              { id: 'gc-2', full_name: 'GC 2', gender: 'male', generation_index: 3, spouse_ids: [], children: [] },
-              { id: 'gc-3', full_name: 'GC 3', gender: 'male', generation_index: 3, spouse_ids: [], children: [] },
+              { id: 'gc-1', full_name: 'GC 1', gender: 'male', generation_index: 3, is_living: true, spouse_ids: [], children: [] },
+              { id: 'gc-2', full_name: 'GC 2', gender: 'male', generation_index: 3, is_living: true, spouse_ids: [], children: [] },
+              { id: 'gc-3', full_name: 'GC 3', gender: 'male', generation_index: 3, is_living: true, spouse_ids: [], children: [] },
             ],
           },
           {
@@ -405,9 +422,10 @@ describe('useTreeLayout — pure layout math', () => {
             full_name: 'Nguyễn Văn Em',
             gender: 'male',
             generation_index: 2,
+            is_living: true,
             spouse_ids: [],
             children: [
-              { id: 'gc-4', full_name: 'GC 4', gender: 'male', generation_index: 3, spouse_ids: [], children: [] },
+              { id: 'gc-4', full_name: 'GC 4', gender: 'male', generation_index: 3, is_living: true, spouse_ids: [], children: [] },
             ],
           },
         ],
@@ -420,8 +438,6 @@ describe('useTreeLayout — pure layout math', () => {
       { index: 3, label: 'Đời thứ 3', count: 4 },
     ]);
 
-    const gc1 = layout.nodeById.get('gc-1')!;
-    const gc2 = layout.nodeById.get('gc-2')!;
     const gc3 = layout.nodeById.get('gc-3')!;
     const gc4 = layout.nodeById.get('gc-4')!;
     const child1 = layout.nodeById.get('child-1')!;
@@ -443,6 +459,7 @@ describe('useTreeLayout — pure layout math', () => {
         full_name: 'Nguyễn Văn Cha',
         gender: 'male',
         generation_index: 1,
+        is_living: true,
         spouse_ids: [],
         children: [
           {
@@ -451,6 +468,7 @@ describe('useTreeLayout — pure layout math', () => {
             gender: 'male',
             generation_index: 2,
             birth_date: '1965-06-15',
+            is_living: true,
             spouse_ids: [],
             children: [],
           },
@@ -460,6 +478,7 @@ describe('useTreeLayout — pure layout math', () => {
             gender: 'male',
             generation_index: 2,
             birth_date: '1960-01-10',
+            is_living: true,
             spouse_ids: [],
             children: [],
           },
@@ -480,5 +499,45 @@ describe('useTreeLayout — pure layout math', () => {
 
     // 1960 placed to the left of 1965 (older.x < younger.x)
     expect(olderPos.x).toBeLessThan(youngerPos.x);
+  });
+
+  it('M-G: handles cyclic payloads (A→B→A) without stack overflow in normalization and layout', () => {
+    // Construct cycle A -> B -> A
+    const nodeA: TreeNode = {
+      id: 'cyclic-a',
+      full_name: 'Nguyễn Văn A',
+      gender: 'male',
+      generation_index: 1,
+      is_living: true,
+      spouse_ids: [],
+      children: [],
+    };
+
+    const nodeB: TreeNode = {
+      id: 'cyclic-b',
+      full_name: 'Nguyễn Văn B',
+      gender: 'male',
+      generation_index: 2,
+      is_living: true,
+      spouse_ids: [],
+      children: [nodeA], // cycle pointing back to A
+    };
+
+    nodeA.children = [nodeB];
+
+    // normalizeTreeRoots should not throw RangeError: Maximum call stack size exceeded
+    const normalized = normalizeTreeRoots([nodeA]);
+    expect(normalized.roots.length).toBe(1);
+    expect(normalized.familyUnits.length).toBe(2);
+
+    // layoutTree should also safely layout the cyclic tree
+    const layout = layoutTree([nodeA], [
+      { index: 1, label: 'Đời thứ 1', count: 1 },
+      { index: 2, label: 'Đời thứ 2', count: 1 },
+    ]);
+    expect(layout.nodes.length).toBe(2);
+    const ids = layout.nodes.map((n) => n.id);
+    expect(ids).toContain('cyclic-a');
+    expect(ids).toContain('cyclic-b');
   });
 });

@@ -26,12 +26,21 @@ export interface FamilyUnit {
 
 /**
  * Deep-clones a TreeNode or array of TreeNodes to honor M10 immutability invariant.
+ * M-G guard: visited set prevents cyclic-payload stack overflow before M8 graph guards run.
  */
-function cloneTreeNode(node: TreeNode): TreeNode {
+function cloneTreeNode(node: TreeNode, visited = new Set<string>()): TreeNode {
+  if (visited.has(node.id)) {
+    return {
+      ...node,
+      spouse_ids: [...(node.spouse_ids ?? [])],
+      children: [],
+    };
+  }
+  visited.add(node.id);
   return {
     ...node,
     spouse_ids: [...(node.spouse_ids ?? [])],
-    children: (node.children ?? []).map(cloneTreeNode),
+    children: (node.children ?? []).map((c) => cloneTreeNode(c, visited)),
   };
 }
 
@@ -157,7 +166,8 @@ export function normalizeTreeRoots(
   }
 
   // M10: Never mutate input roots
-  const clonedRoots: TreeNode[] = rawRoots.map(cloneTreeNode);
+  const cloneVisited = new Set<string>();
+  const clonedRoots: TreeNode[] = rawRoots.map((r) => cloneTreeNode(r, cloneVisited));
 
   // Visited set across the entire normalization graph
   const visitedSet = new Set<string>();
