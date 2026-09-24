@@ -150,6 +150,7 @@ When `auth.user.member_id` is `null` (user has not linked their profile to a tre
   3. **Idempotent Self-Link**: If user is already linked to the *same* requested `member_id` $\to$ return `200 OK` (idempotent no-op).
   4. **Claim Conflict**: If requested `member_id` is already claimed by *another* user $\to$ reject with `409 Conflict`.
   5. **Unlinked Claim**: If user's own `member_id` is `NULL` $\to$ successfully link to requested member (`200 OK`).
+  - *Re-binding semantics (Ruling 1 / D4)*: Re-binding to a different unclaimed member is sanctioned (old binding released), and an explicit unlink endpoint (`member_id = null`) remains a FUTURE follow-up.
   - Adding a link action directly on the tree card menu ("Đây là tôi" button on member details or card popover) is included in the tree plan. Full account settings page redesign is deferred to a follow-up.
 
 ### Backend Delta
@@ -215,6 +216,7 @@ When `auth.user.member_id` is `null` (user has not linked their profile to a tre
 
 ### Resolution
 - **Pure Client-Side Normalization**: Do not alter the backend `GET /api/v1/families/:id/tree` JSON contract. Modifying tree serialization risks breaking existing consumers (such as Excel export/import and kinship paths).
+- *FamilyUnit single-spouse limit (M-H)*: `buildUnits` breaks on FIRST spouse (`useTreeLayoutNormalizer.ts:272`) while layout renders ALL spouses independently (`useTreeLayout.ts:295-325`); no spouse-count-sensitive consumer of `FamilyUnit` exists in `web/src`.
 - **Client Graph Normalizer (`tree-graph-normalizer.ts`)**:
   1. Build a local member map across all generations and roots.
   2. For Generation 1 (roots), identify married pairs via `spouse_ids`. Treat the primary lineage member as the primary root and synthesize the spouse as a co-located partner block.

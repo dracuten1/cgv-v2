@@ -7,7 +7,18 @@
 -- Consumers: auth.Service.LinkMember pre-checks (409) and maps the
 -- PostgreSQL SQLSTATE 23505 raised by this index to HTTP 409 Conflict
 -- when two concurrent claims race.
+--
+-- Diagnostic guard (M-B): if legacy data contains duplicate non-null
+-- member_id values, surface a helpful diagnostic notice rather than
+-- an opaque index creation failure.
 
-CREATE UNIQUE INDEX idx_users_member_id_unique
-    ON users (member_id)
-    WHERE member_id IS NOT NULL;
+DO $$
+BEGIN
+    CREATE UNIQUE INDEX idx_users_member_id_unique
+        ON users (member_id)
+        WHERE member_id IS NOT NULL;
+EXCEPTION
+    WHEN unique_violation THEN
+        RAISE EXCEPTION 'migration 005 failed: duplicate non-null member_id values exist in users table; deduplicate users.member_id before re-running migration';
+END $$;
+
