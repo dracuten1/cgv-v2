@@ -3,14 +3,11 @@ package genrepo
 import (
 	"context"
 	"fmt"
-	"regexp"
 
 	"github.com/dracuten1/cgv-v2/api/internal/database"
 	"github.com/dracuten1/cgv-v2/api/internal/model"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-var avatarURLPattern = regexp.MustCompile(`^/static/avatars/[A-Za-z0-9_-]+\.(png|svg|webp|jpg)$`)
 
 // ImportRepository handles bulk import operations and member counting.
 type ImportRepository struct {
@@ -47,10 +44,8 @@ func (r *ImportRepository) ImportStaged(
 ) error {
 	// Defense-in-depth M4 guard on avatar_url
 	for i := range members {
-		if members[i].AvatarURL != nil && *members[i].AvatarURL != "" {
-			if !avatarURLPattern.MatchString(*members[i].AvatarURL) {
-				return fmt.Errorf("không thể thêm thành viên %s: đường dẫn ảnh đại diện không hợp lệ (INV-01): %s", members[i].FullName, *members[i].AvatarURL)
-			}
+		if err := model.ValidateAvatarURL(members[i].AvatarURL); err != nil {
+			return fmt.Errorf("không thể thêm thành viên %s: đường dẫn ảnh đại diện không hợp lệ (INV-01): %s", members[i].FullName, *members[i].AvatarURL)
 		}
 	}
 

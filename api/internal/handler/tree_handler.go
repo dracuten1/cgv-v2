@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -276,23 +275,6 @@ func parseOptionalDate(s *string) (*time.Time, error) {
 	return &t, nil
 }
 
-// avatarURLPattern enforces INV-01 (self-hosted assets only, MUST-FIX M4):
-// avatar_url must be a bundled /static/avatars/ path — external https://
-// URLs are rejected (SSRF / IP-leak guard) with 400.
-var avatarURLPattern = regexp.MustCompile(`^/static/avatars/[A-Za-z0-9_-]+\.(png|svg|webp|jpg)$`)
-
-// validateAvatarURL rejects non-conforming MemberInput.AvatarURL values.
-// An absent or empty value is legal (clears the avatar).
-func validateAvatarURL(avatarURL *string) error {
-	if avatarURL == nil || *avatarURL == "" {
-		return nil
-	}
-	if !avatarURLPattern.MatchString(*avatarURL) {
-		return fmt.Errorf("đường dẫn ảnh đại diện không hợp lệ: chỉ chấp nhận /static/avatars/<tên>.(png|svg|webp|jpg)")
-	}
-	return nil
-}
-
 // CreateMember handles POST /api/v1/members (Auth required)
 func (h *TreeHandler) CreateMember(c *gin.Context) {
 	var input MemberInput
@@ -306,7 +288,7 @@ func (h *TreeHandler) CreateMember(c *gin.Context) {
 		return
 	}
 
-	if err := validateAvatarURL(input.AvatarURL); err != nil {
+	if err := model.ValidateAvatarURL(input.AvatarURL); err != nil {
 		c.JSON(http.StatusBadRequest, model.NewErrorEnvelope(model.CodeValidationError, err.Error()))
 		return
 	}
@@ -446,7 +428,7 @@ func (h *TreeHandler) UpdateMember(c *gin.Context) {
 		return
 	}
 
-	if err := validateAvatarURL(input.AvatarURL); err != nil {
+	if err := model.ValidateAvatarURL(input.AvatarURL); err != nil {
 		c.JSON(http.StatusBadRequest, model.NewErrorEnvelope(model.CodeValidationError, err.Error()))
 		return
 	}
