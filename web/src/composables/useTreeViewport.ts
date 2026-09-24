@@ -95,6 +95,15 @@ export function useTreeViewport(
   }
 
   function onPointerDown(event: PointerEvent): void {
+    // F1 fix (2026-09-24): never call setPointerCapture when the gesture starts
+    // on (or inside) a UI control. setPointerCapture redirects subsequent pointer
+    // events — including the synthesized `click` — to the capturing element, which
+    // makes every in-viewport <button> (compass, zoom-in/out, fit-view) dead.
+    // Guard at the seam: return BEFORE any capture or pan-start so the native
+    // pointerdown → click sequence reaches the button undisturbed.
+    if (event.target instanceof Element && event.target.closest('button')) {
+      return;
+    }
     (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
     const p = clientPoint(event);
     pointers.set(event.pointerId, {
@@ -209,6 +218,11 @@ export function useTreeViewport(
     );
   }
 
+  /** Programmatic pan step (e.g. compass control). */
+  function panBy(dx: number, dy: number): void {
+    setTransform(transform.zoom, transform.tx + dx, transform.ty + dy);
+  }
+
   function setTransform(zoom: number, tx: number, ty: number): void {
     transform.zoom = clamp(zoom, minZoom, maxZoom);
     transform.tx = tx;
@@ -237,6 +251,7 @@ export function useTreeViewport(
     onPointerCancel,
     onWheel,
     zoomBy,
+    panBy,
     setTransform,
     worldViewport,
   };

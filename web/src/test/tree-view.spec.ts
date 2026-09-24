@@ -16,9 +16,22 @@ vi.mock('@/api/me', () => ({
   meApi: { getMe: vi.fn().mockRejectedValue(new Error('anonymous')) },
 }));
 
+vi.mock('@/api/kinship', () => ({
+  kinshipApi: {
+    getFamilyKinshipLabels: vi.fn().mockResolvedValue({
+      family_id: 'f1',
+      from: 'm-self',
+      dialect: 'bac',
+      labels: { 'aaaaaaa1-0000-4000-8000-000000000001': 'Thủy tổ' },
+    }),
+  },
+}));
+
 import { familiesApi } from '@/api/families';
+import { kinshipApi } from '@/api/kinship';
 import { ApiError } from '@/api/client';
 import { useTreeStore } from '@/stores/tree';
+import { useAuthStore } from '@/stores/auth';
 import type { TreeResponse } from '@/types/api';
 
 const mockedListFamilies = vi.mocked(familiesApi.listFamilies);
@@ -152,5 +165,63 @@ describe('TreeView', () => {
     expect(wrapper.find('[data-testid="excel-import-auth-hint"]').text()).toContain(
       'Đăng nhập để nhập Excel'
     );
+  });
+
+  it('shows unlinked user banner when logged-in without member_id and not demo', async () => {
+    const authStore = useAuthStore();
+    authStore.user = {
+      id: 'u1',
+      display_name: 'Người dùng',
+      is_demo: false,
+      member_id: null,
+      created_at: '',
+    };
+    authStore.status = 'authenticated';
+
+    const wrapper = mountTree();
+    await flushPromises();
+
+    const banner = wrapper.find('[data-testid="unlinked-banner"]');
+    expect(banner.exists()).toBe(true);
+    expect(banner.text()).toContain('Liên kết tài khoản của bạn với một thành viên trong cây để xem xưng hô gia đình.');
+  });
+
+  it('hides unlinked user banner for demo users', async () => {
+    const authStore = useAuthStore();
+    authStore.user = {
+      id: 'demo-u',
+      display_name: 'Demo User',
+      is_demo: true,
+      member_id: null,
+      created_at: '',
+    };
+    authStore.status = 'authenticated';
+
+    const wrapper = mountTree();
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="unlinked-banner"]').exists()).toBe(false);
+  });
+
+  it('integrates with kinship labels store when authenticated user has linked member_id', async () => {
+    const authStore = useAuthStore();
+    authStore.user = {
+      id: 'u-linked',
+      display_name: 'Người dùng Đã Liên kết',
+      is_demo: false,
+      member_id: 'm-self',
+      created_at: '',
+    };
+    authStore.status = 'authenticated';
+
+    const treeStore = useTreeStore();
+    expect(treeStore.kinshipLabels).toEqual({});
+
+    mountTree();
+    await flushPromises();
+
+    // fetchTree auto-triggers fetchKinshipLabels when authStore.user?.member_id is present
+    expect(kinshipApi.getFamilyKinshipLabels).toHaveBeenCalledWith('f1', 'm-self', undefined);
+    expect(treeStore.kinshipLabels['aaaaaaa1-0000-4000-8000-000000000001']).toBe('Thủy tổ');
   });
 });

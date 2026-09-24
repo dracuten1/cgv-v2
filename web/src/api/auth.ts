@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { ProvidersResponse, AuthSessionResponse, MessageResponse } from '@/types/api';
+import type { UserProfile, ProvidersResponse, AuthSessionResponse, MessageResponse } from '@/types/api';
 
 export const authApi = {
   getProviders(): Promise<ProvidersResponse> {
@@ -32,5 +32,11 @@ export const authApi = {
 
   logout(): Promise<MessageResponse> {
     return apiClient.post<MessageResponse>('/auth/logout');
+  },
+
+  // Decision 3B (M1): bind the authenticated user to a family-tree member.
+  // Responds with the SAME auth.UserProfile payload as GET /me.
+  linkMember(memberId: string): Promise<UserProfile> {
+    return apiClient.post<UserProfile>('/me/member', { member_id: memberId });
   },
 };

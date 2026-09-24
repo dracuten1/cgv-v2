@@ -21,18 +21,42 @@ vi.mock('@/api/families', () => ({
   },
 }));
 
+vi.mock('@/api/kinship', () => ({
+  kinshipApi: {
+    calculate: vi.fn(),
+    getFamilyKinshipLabels: vi.fn(),
+  },
+}));
+
+vi.mock('@/api/auth', () => ({
+  authApi: {
+    getProviders: vi.fn(),
+    handleCallback: vi.fn(),
+    sendMagicLink: vi.fn(),
+    verifyMagicLink: vi.fn(),
+    startDemo: vi.fn(),
+    logout: vi.fn(),
+    linkMember: vi.fn(),
+  },
+}));
+
 import { membersApi } from '@/api/members';
 import { familiesApi } from '@/api/families';
+import { kinshipApi } from '@/api/kinship';
+import { authApi } from '@/api/auth';
 import { useTreeStore } from '@/stores/tree';
 import { useMemberStore } from '@/stores/member';
+import { useAuthStore } from '@/stores/auth';
 import { ApiError } from '@/api/client';
-import type { TreeResponse, MemberDetailResponse } from '@/types/api';
+import type { TreeResponse, MemberDetailResponse, UserProfile } from '@/types/api';
 
 const mockedGetTree = vi.mocked(familiesApi.getTree);
 const mockedGetMember = vi.mocked(membersApi.getMember);
 const mockedCreate = vi.mocked(membersApi.createMember);
 const mockedUpdate = vi.mocked(membersApi.updateMember);
 const mockedDelete = vi.mocked(membersApi.deleteMember);
+const mockedGetLabels = vi.mocked(kinshipApi.getFamilyKinshipLabels);
+const mockedLinkMember = vi.mocked(authApi.linkMember);
 
 const treePayload = (): TreeResponse => ({
   family_id: 'f1',
@@ -86,6 +110,25 @@ beforeEach(() => {
   });
   mockedUpdate.mockResolvedValue({ message: 'Đã cập nhật' });
   mockedDelete.mockResolvedValue({ message: 'Đã xóa' });
+  mockedGetLabels.mockResolvedValue({
+    family_id: 'f1',
+    from: 'member-9',
+    dialect: 'bac',
+    labels: { 'member-9': 'Tôi', 'root-1': 'Bố' },
+  });
+  mockedLinkMember.mockResolvedValue(linkProfilePayload());
+});
+
+const linkProfilePayload = (): UserProfile => ({
+  User: {
+    id: 'usr-1',
+    display_name: 'Nguyễn Văn Thật',
+    is_demo: false,
+    member_id: 'member-9',
+    created_at: '2026-01-01T00:00:00Z',
+  },
+  Identities: [],
+  Contacts: [],
 });
 
 describe('tree store', () => {
@@ -229,5 +272,76 @@ describe('member store — CRUD wired to membersApi', () => {
     );
     await flushPromises();
     expect(memberStore.error).toBe('Dữ liệu bị xung đột hoặc đã tồn tại.');
+  });
+});
+
+describe('Phase 1 data contract assertions (phase1-plan.md §3 / M5)', () => {
+  it('1. Calling fetchKinshipLabels saves labels to treeStore.kinshipLabels', async () => {
+    const store = useTreeStore();
+    expect(store.kinshipLabels).toEqual({});
+
+    await store.fetchKinshipLabels('f1', 'member-9');
+    expect(mockedGetLabels).toHaveBeenCalledWith('f1', 'member-9', undefined);
+    expect(store.kinshipLabels).toEqual({
+      'member-9': 'Tôi',
+      'root-1': 'Bố',
+    });
+  });
+
+  it('2. Calling treeStore.invalidate() clears cached kinshipLabels', async () => {
+    const store = useTreeStore();
+    await store.fetchTree('f1');
+    await store.fetchKinshipLabels('f1', 'member-9');
+    expect(Object.keys(store.kinshipLabels).length).toBeGreaterThan(0);
+
+    await store.invalidate();
+    // Invalidate refetches the tree; because authStore has no linked user here,
+    // kinshipLabels remains cleanly emptied.
+    expect(store.kinshipLabels).toEqual({});
+  });
+
+  it('2b. reset() clears kinshipLabels (M5)', async () => {
+    const store = useTreeStore();
+    await store.fetchKinshipLabels('f1', 'member-9');
+    expect(Object.keys(store.kinshipLabels).length).toBeGreaterThan(0);
+
+    store.reset();
+    expect(store.kinshipLabels).toEqual({});
+  });
+
+  it('3. authStore.linkSelfToMember sets user.member_id and triggers fetchKinshipLabels', async () => {
+    const treeStore = useTreeStore();
+    await treeStore.fetchTree('f1');
+    mockedGetLabels.mockClear();
+
+    const authStore = useAuthStore();
+    expect(authStore.user).toBeNull();
+
+    await authStore.linkSelfToMember('member-9');
+
+    expect(mockedLinkMember).toHaveBeenCalledWith('member-9');
+    expect(authStore.user?.member_id).toBe('member-9');
+    expect(mockedGetLabels).toHaveBeenCalledTimes(1);
+    expect(mockedGetLabels).toHaveBeenCalledWith('f1', 'member-9', undefined);
+    expect(treeStore.kinshipLabels['member-9']).toBe('Tôi');
+  });
+
+  it('4. fetchTree auto-refetches kinshipLabels when authStore.user has a member_id', async () => {
+    const authStore = useAuthStore();
+    authStore.user = {
+      id: 'usr-1',
+      display_name: 'Nguyễn Văn Thật',
+      is_demo: false,
+      member_id: 'member-9',
+      created_at: '2026-01-01T00:00:00Z',
+    };
+
+    mockedGetLabels.mockClear();
+    const treeStore = useTreeStore();
+    await treeStore.fetchTree('f1');
+
+    expect(mockedGetLabels).toHaveBeenCalledTimes(1);
+    expect(mockedGetLabels).toHaveBeenCalledWith('f1', 'member-9', undefined);
+    expect(treeStore.kinshipLabels['member-9']).toBe('Tôi');
   });
 });

@@ -258,7 +258,7 @@ const member = computed(() => memberStore.currentMember!);
 const initials = computed(() => getInitials(member.value?.full_name || ''));
 const uiGender = computed(() => (member.value ? toUiGender(member.value.gender) : ''));
 const yearsText = computed(() =>
-  member.value ? getYearsText(member.value.birth_date, member.value.death_date) : ''
+  member.value ? getYearsText(member.value.birth_date, member.value.death_date, member.value.is_living) : ''
 );
 const generationLabel = computed(() =>
   member.value ? `Đời thứ ${member.value.generation_index}` : ''

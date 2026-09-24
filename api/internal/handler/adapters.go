@@ -29,6 +29,10 @@ type AuthService interface {
 	StartDemoSession(ctx context.Context) (*auth.AuthResult, error)
 	Logout(ctx context.Context, jti string) error
 	CurrentUser(ctx context.Context, userID string) (*auth.UserProfile, error)
+	// LinkMember binds the authenticated user to a family-tree member
+	// (POST /me/member) enforcing the five M1 rules; returns the refreshed
+	// profile (uniform with CurrentUser).
+	LinkMember(ctx context.Context, userID, memberID string) (*auth.UserProfile, error)
 	StartLinkProvider(w http.ResponseWriter, r *http.Request, userID, provider string) (string, error)
 	UnlinkIdentity(ctx context.Context, userID, identityID string) error
 	VerifyToken(tokenStr string) (*auth.Claims, error)
@@ -73,6 +77,16 @@ type RelationshipRepository interface {
 // KinshipService defines kinship calculation.
 type KinshipService interface {
 	Calculate(ctx context.Context, familyID, fromID, toID string, dialect string) (model.KinshipResult, error)
+	// GetLabels computes kinship terms from one reference member to every
+	// member of the family (Decision 2C batched labels).
+	GetLabels(ctx context.Context, familyID, fromID, dialect string) (map[string]string, error)
+}
+
+// KinshipCacheInvalidator clears cached kinship graphs for a family so that
+// member mutations are reflected by subsequent kinship/label reads without a
+// process restart (MUST-FIX M3/K1). Satisfied by *kinship.Engine.
+type KinshipCacheInvalidator interface {
+	Invalidate(familyID string)
 }
 
 // ExcelService defines Excel export and import operations.

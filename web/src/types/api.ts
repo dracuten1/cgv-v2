@@ -175,6 +175,15 @@ export interface KinshipResult {
   path: string[];
 }
 
+// Batched kinship labels (Decision 2C, GET /api/v1/families/:id/kinship-labels).
+// One flat dictionary of memberID → Vietnamese kinship term relative to `from`.
+export interface KinshipLabelsResponse {
+  family_id: string;
+  from: string;
+  dialect: string;
+  labels: Record<string, string>;
+}
+
 // Feed (api/internal/model/post.go & api/internal/handler/feed_handler.go)
 export interface FeedPost {
   id: string;

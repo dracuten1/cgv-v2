@@ -13,6 +13,9 @@ function fakeElement(rect: { left: number; top: number; width: number; height: n
     getBoundingClientRect: () => rect,
     setPointerCapture: vi.fn(),
     releasePointerCapture: vi.fn(),
+    // F1: viewport/canvas surface — closest('button') returns null so the
+    // button-guard in onPointerDown does NOT short-circuit on canvas drags.
+    closest: vi.fn(() => null),
   } as unknown as HTMLElement;
 }
 
@@ -20,13 +23,15 @@ function fakePointerEvent(
   pointerId: number,
   clientX: number,
   clientY: number,
-  currentTarget: HTMLElement
+  currentTarget: HTMLElement,
+  target?: Element | null
 ): PointerEvent {
   return {
     pointerId,
     clientX,
     clientY,
     currentTarget,
+    target,
     preventDefault: vi.fn(),
   } as unknown as PointerEvent;
 }
@@ -62,12 +67,54 @@ describe('useTreeViewport — gesture math (Arch §7.2)', () => {
     const vp = makeViewport();
     const el = container.value!;
 
-    vp.onPointerDown(fakePointerEvent(1, 400, 300, el));
+    // target = the canvas/viewport surface (closest('button') → null) → guard
+    // is bypassed, setPointerCapture fires, pan state is armed.
+    vp.onPointerDown(fakePointerEvent(1, 400, 300, el, el));
+    expect(el.setPointerCapture).toHaveBeenCalledWith(1);
     vp.onPointerMove(fakePointerEvent(1, 450, 330, el)); // +50, +30
     expect(vp.transform.tx).toBe(50);
     expect(vp.transform.ty).toBe(30);
 
     vp.onPointerUp(fakePointerEvent(1, 450, 330, el));
+    expect(vp.gesturing.value).toBe(false);
+  });
+
+  // F1 (2026-09-24): pointerdown whose target is a <button> (or a descendant
+  // of one) must NOT call setPointerCapture and must NOT start a pan — the
+  // native pointerdown→click sequence must reach the button so @click
+  // handlers on the in-viewport controls (compass, zoom-in/out, fit-view)
+  // actually fire.
+  it('F1: pointerdown on a <button> does NOT capture pointer and does NOT start pan', () => {
+    const vp = makeViewport();
+    const el = container.value!;
+    const btn = document.createElement('button');
+    // event.target === the button itself (e.g. zoom-in / fit-view)
+    const ev = fakePointerEvent(1, 400, 300, el, btn);
+
+    vp.onPointerDown(ev);
+
+    expect(el.setPointerCapture).not.toHaveBeenCalled();
+    expect(vp.gesturing.value).toBe(false);
+
+    // Even if a stray pointermove arrives (e.g. user holds + drags off the
+    // button), the transform must not move because no pan was armed.
+    vp.onPointerMove(fakePointerEvent(1, 500, 400, el, btn));
+    expect(vp.transform.tx).toBe(0);
+    expect(vp.transform.ty).toBe(0);
+  });
+
+  it('F1: pointerdown on a descendant of a <button> is also guarded', () => {
+    const vp = makeViewport();
+    const el = container.value!;
+    const btn = document.createElement('button');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    btn.appendChild(svg);
+    // event.target === the svg, which is inside a <button> (fit-view's icon)
+    const ev = fakePointerEvent(1, 400, 300, el, svg);
+
+    vp.onPointerDown(ev);
+
+    expect(el.setPointerCapture).not.toHaveBeenCalled();
     expect(vp.gesturing.value).toBe(false);
   });
 
@@ -160,6 +207,15 @@ describe('useTreeViewport — gesture math (Arch §7.2)', () => {
 
     expect(onTap).not.toHaveBeenCalled();
     expect(vp.gesturing.value).toBe(false);
+  });
+
+  it('panBy(dx, dy) adjusts transform.tx and transform.ty', () => {
+    const vp = makeViewport();
+    vp.setTransform(1.5, 100, 200);
+    vp.panBy(50, -30);
+    expect(vp.transform.zoom).toBe(1.5);
+    expect(vp.transform.tx).toBe(150);
+    expect(vp.transform.ty).toBe(170);
   });
 
   it('worldViewport() inverts the transform into world coordinates', () => {

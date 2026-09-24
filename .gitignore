@@ -3,3 +3,4 @@
 deploy/.env
 deploy/.env.demo
 .vite/
+.DS_Store

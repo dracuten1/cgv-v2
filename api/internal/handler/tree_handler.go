@@ -22,6 +22,9 @@ type TreeHandler struct {
 	members   MemberRepository
 	relations RelationshipRepository
 	posts     SocialPostRepository
+	// kinshipInv clears the kinship engine cache after member mutations
+	// (MUST-FIX M3/K1). May be nil (tests / degraded wiring).
+	kinshipInv KinshipCacheInvalidator
 }
 
 // NewTreeHandler creates a new TreeHandler.
@@ -31,13 +34,23 @@ func NewTreeHandler(
 	members MemberRepository,
 	relations RelationshipRepository,
 	posts SocialPostRepository,
+	kinshipInv KinshipCacheInvalidator,
 ) *TreeHandler {
 	return &TreeHandler{
-		txMgr:     txMgr,
-		families:  families,
-		members:   members,
-		relations: relations,
-		posts:     posts,
+		txMgr:      txMgr,
+		families:   families,
+		members:    members,
+		relations:  relations,
+		posts:      posts,
+		kinshipInv: kinshipInv,
+	}
+}
+
+// invalidateKinship drops cached kinship graphs for a family (M3/K1) —
+// called AFTER the mutation transaction commits so readers reload fresh.
+func (h *TreeHandler) invalidateKinship(familyID string) {
+	if h.kinshipInv != nil {
+		h.kinshipInv.Invalidate(familyID)
 	}
 }
 
@@ -275,6 +288,11 @@ func (h *TreeHandler) CreateMember(c *gin.Context) {
 		return
 	}
 
+	if err := model.ValidateAvatarURL(input.AvatarURL); err != nil {
+		c.JSON(http.StatusBadRequest, model.NewErrorEnvelope(model.CodeValidationError, err.Error()))
+		return
+	}
+
 	gender, err := parseMemberGender(input.Gender)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.NewErrorEnvelope(model.CodeInvalidGender, err.Error()))
@@ -359,6 +377,9 @@ func (h *TreeHandler) CreateMember(c *gin.Context) {
 		return
 	}
 
+	// M3/K1: member mutation committed → drop cached kinship graphs.
+	h.invalidateKinship(input.FamilyID)
+
 	c.JSON(http.StatusCreated, created)
 }
 
@@ -407,6 +428,11 @@ func (h *TreeHandler) UpdateMember(c *gin.Context) {
 		return
 	}
 
+	if err := model.ValidateAvatarURL(input.AvatarURL); err != nil {
+		c.JSON(http.StatusBadRequest, model.NewErrorEnvelope(model.CodeValidationError, err.Error()))
+		return
+	}
+
 	gender, err := parseMemberGender(input.Gender)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.NewErrorEnvelope(model.CodeInvalidGender, err.Error()))
@@ -436,6 +462,7 @@ func (h *TreeHandler) UpdateMember(c *gin.Context) {
 		genIndex = 1
 	}
 
+	var mutatedFamilyID string
 	err = h.txMgr.WithTx(c.Request.Context(), func(txCtx context.Context) error {
 		exec := database.GetExecutor(txCtx, nil)
 
@@ -443,6 +470,7 @@ func (h *TreeHandler) UpdateMember(c *gin.Context) {
 		if err != nil {
 			return err
 		}
+		mutatedFamilyID = current.FamilyID
 
 		m := &model.Member{
 			ID:              memberID,
@@ -507,6 +535,9 @@ func (h *TreeHandler) UpdateMember(c *gin.Context) {
 		return
 	}
 
+	// M3/K1: member mutation committed → drop cached kinship graphs.
+	h.invalidateKinship(mutatedFamilyID)
+
 	c.JSON(http.StatusOK, gin.H{"message": "Cập nhật thành viên thành công"})
 }
 
@@ -515,6 +546,7 @@ func (h *TreeHandler) UpdateMember(c *gin.Context) {
 func (h *TreeHandler) DeleteMember(c *gin.Context) {
 	memberID := c.Param("id")
 
+	var mutatedFamilyID string
 	err := h.txMgr.WithTx(c.Request.Context(), func(txCtx context.Context) error {
 		exec := database.GetExecutor(txCtx, nil)
 
@@ -523,6 +555,7 @@ func (h *TreeHandler) DeleteMember(c *gin.Context) {
 		if err != nil {
 			return err
 		}
+		mutatedFamilyID = m.FamilyID
 
 		// 2. Fetch current relations to find spouses and children
 		rels, err := h.relations.ListRelations(txCtx, memberID)
@@ -580,6 +613,9 @@ func (h *TreeHandler) DeleteMember(c *gin.Context) {
 		respondError(c, err)
 		return
 	}
+
+	// M3/K1: member mutation committed → drop cached kinship graphs.
+	h.invalidateKinship(mutatedFamilyID)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Xóa thành viên thành công"})
 }

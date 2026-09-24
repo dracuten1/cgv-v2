@@ -71,6 +71,19 @@
           <span class="opacity-60">({{ gen.count }})</span>
         </button>
       </div>
+
+      <!-- Unlinked user info banner/chip (INV-02: line-height >= 1.45) -->
+      <div
+        v-if="showUnlinkedBanner"
+        class="flex items-center gap-2 p-2.5 rounded-lg bg-blue-50/80 border border-blue-200 text-xs text-blue-800"
+        style="line-height: 1.45;"
+        data-testid="unlinked-banner"
+      >
+        <svg class="w-4 h-4 shrink-0 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Liên kết tài khoản của bạn với một thành viên trong cây để xem xưng hô gia đình.</span>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -79,7 +92,7 @@
       class="bg-white rounded-xl border border-slate-200 py-16 flex flex-col items-center justify-center gap-3"
       data-testid="tree-loading"
     >
-      <svg class="animate-spin h-8 w-8 text-[#C85A32]" fill="none" viewBox="0 0 24 24">
+      <svg class="animate-spin h-8 w-8 text-terracotta" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
       </svg>
@@ -166,13 +179,22 @@ const selectedFamily = computed<Family | null>(
 
 const activeFilter = computed(() => store.generationFilter);
 
+// Toolbar prompt only for logged-in && member_id == null && !isDemo users
+const showUnlinkedBanner = computed(() => {
+  return (
+    auth.isAuthenticated &&
+    !auth.user?.member_id &&
+    !auth.isDemo
+  );
+});
+
 function chipClass(genIndex: number | null): string[] {
   const active = activeFilter.value === genIndex;
   return [
     'inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer',
     active
-      ? 'bg-[#C85A32] text-white border-[#C85A32]'
-      : 'bg-white text-slate-600 border-slate-200 hover:border-[#C85A32] hover:text-[#983F1E]',
+      ? 'bg-terracotta text-white border-terracotta'
+      : 'bg-white text-slate-600 border-slate-200 hover:border-terracotta hover:text-terracotta-dark',
   ];
 }
 

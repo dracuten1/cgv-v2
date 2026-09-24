@@ -37,6 +37,14 @@ type TxRunner interface {
 	WithTx(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
+// GraphCacheInvalidator clears cached derived graphs (e.g. the kinship
+// engine's per-(family, version) graph cache) after a member mutation
+// commits — MUST-FIX M3/K1: the Excel import path is a member-mutation path
+// and must invalidate like tree CRUD. May be nil in tests.
+type GraphCacheInvalidator interface {
+	Invalidate(familyID string)
+}
+
 // ImportSummary describes the outcome of an Excel import operation.
 type ImportSummary struct {
 	Created           int      `json:"created"`
@@ -49,14 +57,17 @@ type Service struct {
 	graphLoader ExcelGraphLoader
 	importRepo  ExcelImportRepo
 	txManager   TxRunner
+	// invalidate drops cached derived graphs after a committed import (M3).
+	invalidate GraphCacheInvalidator
 }
 
-// NewService creates a new excel Service.
-func NewService(graphLoader ExcelGraphLoader, importRepo ExcelImportRepo, txManager TxRunner) *Service {
+// NewService creates a new excel Service. invalidate may be nil.
+func NewService(graphLoader ExcelGraphLoader, importRepo ExcelImportRepo, txManager TxRunner, invalidate GraphCacheInvalidator) *Service {
 	return &Service{
 		graphLoader: graphLoader,
 		importRepo:  importRepo,
 		txManager:   txManager,
+		invalidate:  invalidate,
 	}
 }
 
@@ -116,6 +127,12 @@ func (s *Service) ImportFamily(ctx context.Context, familyID string, data []byte
 		})
 		if err != nil {
 			return ImportSummary{Errors: []string{err.Error()}}, fmt.Errorf("không thể lưu dữ liệu nhập phả hệ: %w", err)
+		}
+
+		// M3/K1: the import committed member mutations → drop cached kinship
+		// graphs so label/kinship reads reload the fresh roster.
+		if s.invalidate != nil {
+			s.invalidate.Invalidate(familyID)
 		}
 	}
 

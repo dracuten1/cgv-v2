@@ -2,6 +2,7 @@ package excel
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dracuten1/cgv-v2/api/internal/database"
 	"github.com/dracuten1/cgv-v2/api/internal/model"
 	"github.com/xuri/excelize/v2"
 )
@@ -396,5 +398,227 @@ func TestExcel_500RowsPerformance(t *testing.T) {
 	// Requirement: parses < 1s
 	if duration > time.Second {
 		t.Errorf("parsing 500 rows took %v (> 1s)", duration)
+	}
+}
+
+// ruling 2 / INV-01: Excel import with an external avatar URL (column 10)
+// rejects the row citing the row number and Vietnamese error,
+// while conforming /static/avatars/ paths or clean rows are accepted.
+func TestExcel_AvatarURLValidation_M4(t *testing.T) {
+	f := excelize.NewFile()
+	defer f.Close()
+
+	sheet := "Gia phả"
+	f.SetSheetName("Sheet1", sheet)
+
+	for colIdx, h := range ExportHeaders {
+		cell, _ := excelize.CoordinatesToCellName(colIdx+1, 1)
+		_ = f.SetCellValue(sheet, cell, h)
+	}
+	// Column 10: optional Avatar URL column
+	_ = f.SetCellValue(sheet, "J1", "Ảnh đại diện")
+
+	// Row 2: Clean row with conforming bundled avatar
+	_ = f.SetCellValue(sheet, "A2", "Nguyễn Văn Đẹp")
+	_ = f.SetCellValue(sheet, "B2", "Nam")
+	_ = f.SetCellValue(sheet, "C2", 1)
+	_ = f.SetCellValue(sheet, "H2", "Còn sống")
+	_ = f.SetCellValue(sheet, "J2", "/static/avatars/avatar-m1.svg")
+
+	// Row 3: Bad row with external evil avatar URL
+	_ = f.SetCellValue(sheet, "A3", "Nguyễn Văn Xấu")
+	_ = f.SetCellValue(sheet, "B3", "Nam")
+	_ = f.SetCellValue(sheet, "C3", 1)
+	_ = f.SetCellValue(sheet, "H3", "Còn sống")
+	_ = f.SetCellValue(sheet, "J3", "https://evil.example.com/a.png")
+
+	var buf bytes.Buffer
+	if err := f.Write(&buf); err != nil {
+		t.Fatalf("f.Write error: %v", err)
+	}
+
+	staged, err := Parse(buf.Bytes())
+	if err != nil {
+		t.Fatalf("unexpected Parse error: %v", err)
+	}
+
+	if len(staged.Errors) == 0 {
+		t.Fatalf("kỳ vọng phát hiện lỗi avatar ở Row 3 nhưng không có lỗi")
+	}
+
+	foundRow3AvatarErr := false
+	for _, e := range staged.Errors {
+		if strings.Contains(e, "Dòng 3") && strings.Contains(e, "ảnh đại diện") {
+			foundRow3AvatarErr = true
+			break
+		}
+	}
+	if !foundRow3AvatarErr {
+		t.Fatalf("kỳ vọng thông báo lỗi chứa 'Dòng 3' và 'ảnh đại diện', nhận: %v", staged.Errors)
+	}
+
+	// Now verify a sheet with ONLY clean/valid rows (one with avatar, one without)
+	f2 := excelize.NewFile()
+	defer f2.Close()
+	f2.SetSheetName("Sheet1", sheet)
+
+	for colIdx, h := range ExportHeaders {
+		cell, _ := excelize.CoordinatesToCellName(colIdx+1, 1)
+		_ = f2.SetCellValue(sheet, cell, h)
+	}
+	_ = f2.SetCellValue(sheet, "J1", "Ảnh đại diện")
+
+	_ = f2.SetCellValue(sheet, "A2", "Nguyễn Văn Đẹp")
+	_ = f2.SetCellValue(sheet, "B2", "Nam")
+	_ = f2.SetCellValue(sheet, "C2", 1)
+	_ = f2.SetCellValue(sheet, "H2", "Còn sống")
+	_ = f2.SetCellValue(sheet, "J2", "/static/avatars/avatar-m1.svg")
+
+	_ = f2.SetCellValue(sheet, "A3", "Trần Thị Mai")
+	_ = f2.SetCellValue(sheet, "B3", "Nữ")
+	_ = f2.SetCellValue(sheet, "C3", 1)
+	_ = f2.SetCellValue(sheet, "H3", "Còn sống")
+	_ = f2.SetCellValue(sheet, "J3", "") // empty avatar stays legal
+
+	var buf2 bytes.Buffer
+	if err := f2.Write(&buf2); err != nil {
+		t.Fatalf("f2.Write error: %v", err)
+	}
+
+	staged2, err := Parse(buf2.Bytes())
+	if err != nil {
+		t.Fatalf("unexpected Parse error: %v", err)
+	}
+	if len(staged2.Errors) > 0 {
+		t.Fatalf("sheet hợp lệ không được có lỗi, nhưng nhận: %v", staged2.Errors)
+	}
+	if len(staged2.Members) != 2 {
+		t.Fatalf("kỳ vọng nhập thành công 2 thành viên, nhận %d", len(staged2.Members))
+	}
+	if staged2.Members[0].AvatarURL == nil || *staged2.Members[0].AvatarURL != "/static/avatars/avatar-m1.svg" {
+		t.Errorf("kỳ vọng thành viên 1 có avatar /static/avatars/avatar-m1.svg, nhận %v", staged2.Members[0].AvatarURL)
+	}
+	if staged2.Members[1].AvatarURL != nil {
+		t.Errorf("kỳ vọng thành viên 2 có nil avatar, nhận %v", *staged2.Members[1].AvatarURL)
+	}
+}
+
+// M-E: Unit test pinning Excel post-commit invalidation at the service seam.
+// Invalidation MUST fire after the import tx commits, and MUST NOT fire if tx fails.
+type testInvalidator struct {
+	invalidatedFamilies []string
+}
+
+func (ti *testInvalidator) Invalidate(familyID string) {
+	ti.invalidatedFamilies = append(ti.invalidatedFamilies, familyID)
+}
+
+type testTxRunner struct {
+	failTx bool
+}
+
+func (tr *testTxRunner) WithTx(ctx context.Context, fn func(ctx context.Context) error) error {
+	if tr.failTx {
+		return fmt.Errorf("lỗi mô phỏng transaction")
+	}
+	return fn(ctx)
+}
+
+type testImportRepo struct {
+	failImport bool
+	failBump   bool
+}
+
+func (ir *testImportRepo) ImportStaged(ctx context.Context, dbtx database.DBTX, familyID string, members []model.Member, pc []model.ParentChild, spouses []model.Spouse) error {
+	if ir.failImport {
+		return fmt.Errorf("lỗi import staged")
+	}
+	return nil
+}
+
+func (ir *testImportRepo) BumpVersion(ctx context.Context, dbtx database.DBTX, familyID string) (int64, error) {
+	if ir.failBump {
+		return 0, fmt.Errorf("lỗi bump version")
+	}
+	return 2, nil
+}
+
+func TestExcel_PostCommitInvalidation_Pin(t *testing.T) {
+	// Create valid excel data
+	f := excelize.NewFile()
+	defer f.Close()
+	sheet := "Gia phả"
+	f.SetSheetName("Sheet1", sheet)
+	for colIdx, h := range ExportHeaders {
+		cell, _ := excelize.CoordinatesToCellName(colIdx+1, 1)
+		_ = f.SetCellValue(sheet, cell, h)
+	}
+	_ = f.SetCellValue(sheet, "A2", "Nguyễn Văn An")
+	_ = f.SetCellValue(sheet, "B2", "Nam")
+	_ = f.SetCellValue(sheet, "C2", 1)
+	_ = f.SetCellValue(sheet, "H2", "Còn sống")
+
+	var buf bytes.Buffer
+	_ = f.Write(&buf)
+	data := buf.Bytes()
+
+	familyID := "fam-test-123"
+
+	// Sub-test 1: Successful import triggers Invalidate exactly once AFTER commit
+	inv := &testInvalidator{}
+	txm := &testTxRunner{failTx: false}
+	repo := &testImportRepo{}
+	svc := NewService(nil, repo, txm, inv)
+
+	summary, err := svc.ImportFamily(context.Background(), familyID, data)
+	if err != nil {
+		t.Fatalf("kỳ vọng import thành công, nhận err=%v", err)
+	}
+	if summary.Created != 1 {
+		t.Fatalf("kỳ vọng created = 1, nhận %d", summary.Created)
+	}
+	if len(inv.invalidatedFamilies) != 1 || inv.invalidatedFamilies[0] != familyID {
+		t.Fatalf("kỳ vọng Invalidate được gọi đúng 1 lần cho family %s, nhận: %v", familyID, inv.invalidatedFamilies)
+	}
+
+	// Sub-test 2: Failed transaction does NOT trigger Invalidate
+	inv2 := &testInvalidator{}
+	txm2 := &testTxRunner{failTx: true}
+	svc2 := NewService(nil, repo, txm2, inv2)
+
+	summary2, err2 := svc2.ImportFamily(context.Background(), familyID, data)
+	if err2 == nil {
+		t.Fatalf("kỳ vọng lỗi khi transaction thất bại")
+	}
+	if len(inv2.invalidatedFamilies) != 0 {
+		t.Fatalf("kỳ vọng KHÔNG gọi Invalidate khi transaction lỗi, nhưng đã gọi: %v (summary=%+v)", inv2.invalidatedFamilies, summary2)
+	}
+
+	// Sub-test 3: Validation failure in Parse does NOT trigger Invalidate
+	inv3 := &testInvalidator{}
+	txm3 := &testTxRunner{failTx: false}
+	svc3 := NewService(nil, repo, txm3, inv3)
+
+	badData := []byte("not an excel file")
+	_, err3 := svc3.ImportFamily(context.Background(), familyID, badData)
+	if err3 == nil {
+		t.Fatalf("kỳ vọng lỗi parse khi dữ liệu không phải excel")
+	}
+	if len(inv3.invalidatedFamilies) != 0 {
+		t.Fatalf("kỳ vọng KHÔNG gọi Invalidate khi parse lỗi, nhưng đã gọi: %v", inv3.invalidatedFamilies)
+	}
+
+	// Sub-test 4: Repository ImportStaged failure does NOT trigger Invalidate
+	inv4 := &testInvalidator{}
+	txm4 := &testTxRunner{failTx: false}
+	repo4 := &testImportRepo{failImport: true}
+	svc4 := NewService(nil, repo4, txm4, inv4)
+
+	summary4, err4 := svc4.ImportFamily(context.Background(), familyID, data)
+	if err4 == nil {
+		t.Fatalf("kỳ vọng lỗi khi ImportStaged thất bại")
+	}
+	if len(inv4.invalidatedFamilies) != 0 {
+		t.Fatalf("kỳ vọng KHÔNG gọi Invalidate khi ImportStaged lỗi, nhưng đã gọi: %v (summary=%+v)", inv4.invalidatedFamilies, summary4)
 	}
 }

@@ -126,6 +126,7 @@ func Parse(data []byte) (*StagedImport, error) {
 		spousesStr := getCell(6)
 		livingStr := getCell(7)
 		notesStr := getCell(8)
+		avatarStr := getCell(9)
 
 		if fullName == "" {
 			staged.Errors = append(staged.Errors, fmt.Sprintf("Dòng %d, Cột 'Họ và tên': họ và tên không được để trống", rowNum))
@@ -136,6 +137,15 @@ func Parse(data []byte) (*StagedImport, error) {
 		gender, gErr := model.ParseGenderVN(genderStr)
 		if gErr != nil {
 			staged.Errors = append(staged.Errors, fmt.Sprintf("Dòng %d, Cột 'Giới tính': %s", rowNum, gErr.Error()))
+		}
+
+		// Avatar URL validation via M4 regex (INV-01)
+		var avatarPtr *string
+		if avatarStr != "" {
+			avatarPtr = &avatarStr
+			if err := model.ValidateAvatarURL(avatarPtr); err != nil {
+				staged.Errors = append(staged.Errors, fmt.Sprintf("Dòng %d, Cột 10 (Ảnh đại diện): %s", rowNum, err.Error()))
+			}
 		}
 
 		// Generation index
@@ -215,6 +225,7 @@ func Parse(data []byte) (*StagedImport, error) {
 			BirthDate:       birthDate,
 			DeathDate:       deathDate,
 			IsLiving:        isLiving,
+			AvatarURL:       avatarPtr,
 			Notes:           notesPtr,
 		}
 

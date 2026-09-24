@@ -32,6 +32,8 @@ func (r *ImportRepository) CountMembers(ctx context.Context, familyID string) (i
 
 // ImportStaged inserts members, parent_child relationships, and spouses in a single transaction.
 // Pre-condition: dbtx is an active transaction with appropriate timeout.
+// INV-01 / M4 defense-in-depth: if any member.AvatarURL is invalid (non-bundled path),
+// the insert is rejected with an error.
 func (r *ImportRepository) ImportStaged(
 	ctx context.Context,
 	dbtx database.DBTX,
@@ -40,6 +42,13 @@ func (r *ImportRepository) ImportStaged(
 	pc []model.ParentChild,
 	spouses []model.Spouse,
 ) error {
+	// Defense-in-depth M4 guard on avatar_url
+	for i := range members {
+		if err := model.ValidateAvatarURL(members[i].AvatarURL); err != nil {
+			return fmt.Errorf("không thể thêm thành viên %s: đường dẫn ảnh đại diện không hợp lệ (INV-01): %s", members[i].FullName, *members[i].AvatarURL)
+		}
+	}
+
 	// 1. Insert members
 	memberStmt := `
 		INSERT INTO members (id, family_id, full_name, gender, generation_index,

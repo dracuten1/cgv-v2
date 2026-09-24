@@ -92,8 +92,14 @@ export async function loginViaMock(page: Page, code = 'verified_email:e2e-journe
   }
 
   // Follow the callback inside the page context so the session cookie sticks.
-  const sep = callbackPath.includes('?') ? '&' : '?';
-  await page.goto(`${callbackPath}${sep}code=${encodeURIComponent(code)}`);
+  // The mock AuthURL ALREADY carries `code=verified_email:dev-user@test.vn`
+  // (api/internal/auth/mock_oauth.go:39) and Go's c.Query("code") is
+  // FIRST-WINS — appending a second `code=` would be silently ignored,
+  // collapsing every mock login onto one shared identity. REPLACE the
+  // existing `code` param instead; `state` is left untouched.
+  const cbUrl = new URL(callbackPath, 'http://mock.local'); // base only for parsing
+  cbUrl.searchParams.set('code', code);
+  await page.goto(`${cbUrl.pathname}${cbUrl.search}`);
 
   // The callback 302s to /auth/oauth/callback?oauth_linked=mock whose view
   // refreshes auth state, then auto-redirects to /account. Wait for any

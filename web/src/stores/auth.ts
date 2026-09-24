@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { meApi } from '@/api/me';
 import { authApi } from '@/api/auth';
 import { formatApiError, ApiError } from '@/api/client';
+import { useTreeStore } from '@/stores/tree';
 import type { User, UserIdentity, ContactPoint } from '@/types/api';
 
 export type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'anonymous';
@@ -135,6 +136,28 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * linkSelfToMember (Decision 3B, Phase 1): POST /me/member to bind the
+   * signed-in account to a family-tree member, adopt the returned
+   * auth.UserProfile (uniform with fetchMe), then refresh the tree's
+   * kinship labels relative to the newly linked member.
+   */
+  async function linkSelfToMember(memberId: string): Promise<void> {
+    try {
+      const profile = await authApi.linkMember(memberId);
+      user.value = profile.User;
+      identities.value = profile.Identities || [];
+      contacts.value = profile.Contacts || [];
+
+      const treeStore = useTreeStore();
+      if (treeStore.familyId) {
+        await treeStore.fetchKinshipLabels(treeStore.familyId, memberId);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
   return {
     user,
     identities,
@@ -151,5 +174,6 @@ export const useAuthStore = defineStore('auth', () => {
     unlinkIdentity,
     addContact,
     verifyContact,
+    linkSelfToMember,
   };
 });

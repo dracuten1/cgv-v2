@@ -167,6 +167,33 @@ func (e *Engine) Calculate(g *Graph, fromID, toID string, dialect string) (model
 	}, nil
 }
 
+// CalculateAllFrom resolves kinship terms from one reference member to EVERY
+// member in graph g, returning a map of memberID → Vietnamese kinship term
+// (Decision 2C batched labels). The reference member itself maps to
+// "Bản thân"; members unreachable within the depth cap keep the engine's
+// fallback term ("Không xác định được quan hệ") so the dictionary stays
+// complete over the family roster.
+func (e *Engine) CalculateAllFrom(g *Graph, fromID, dialect string) (map[string]string, error) {
+	dialect = NormalizeDialect(dialect)
+
+	if _, ok := g.Nodes[fromID]; !ok {
+		return nil, fmt.Errorf("%w: %s", ErrMemberNotFound, fromID)
+	}
+
+	labels := make(map[string]string, len(g.Nodes))
+	for nodeID := range g.Nodes {
+		res, err := e.Calculate(g, fromID, nodeID, dialect)
+		if err != nil {
+			return nil, err
+		}
+		if res.Term == "" {
+			continue
+		}
+		labels[nodeID] = res.Term
+	}
+	return labels, nil
+}
+
 func (e *Engine) containsSpouseEdge(g *Graph, path []string) bool {
 	for i := 0; i < len(path)-1; i++ {
 		u := path[i]

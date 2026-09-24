@@ -44,6 +44,14 @@ var (
 	// ErrIdentityNotFound — UnlinkIdentity target identity missing or not
 	// owned by the user (→ 404).
 	ErrIdentityNotFound = errors.New("Không tìm thấy liên kết định danh")
+	// ErrMemberNotFound — POST /me/member target member_id does not exist in
+	// the members table (M1 Rule 2, → 404).
+	ErrMemberNotFound = errors.New("Không tìm thấy thành viên trong gia phả")
+	// ErrMemberAlreadyClaimed — the target member_id is already bound to
+	// another user, either caught by the pre-check or by the
+	// idx_users_member_id_unique partial unique index (pgx 23505 race)
+	// (M1 Rule 4 + concurrent-claim path, → 409 CodeConflict).
+	ErrMemberAlreadyClaimed = errors.New("Thành viên này đã được liên kết với một tài khoản khác")
 
 	// Canonical repository sentinels (declared here, consumer side; the
 	// concrete package aliases these exact values so errors.Is works across
@@ -71,7 +79,17 @@ type UserStore interface {
 	GetByID(ctx context.Context, userID string) (*model.User, error)
 	GetByIDForUpdate(ctx context.Context, userID string) (*model.User, error)
 	Create(ctx context.Context, displayName string, isDemo bool) (*model.User, error)
+	// GetByMemberID resolves the user currently holding the 1:1 member link
+	// (M1 Rule 4 conflict pre-check); nil user with no error when unclaimed.
+	GetByMemberID(ctx context.Context, memberID string) (*model.User, error)
 	LinkMember(ctx context.Context, userID, memberID string) error
+}
+
+// MemberLookup mirrors the minimal member read the POST /me/member flow
+// needs (M1 Rule 2 existence check). Declared consumer-side so internal/auth
+// never imports the genealogy repository package.
+type MemberLookup interface {
+	GetByID(ctx context.Context, memberID string) (*model.Member, error)
 }
 
 // IdentityStore mirrors the repository-side identity port.

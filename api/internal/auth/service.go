@@ -32,6 +32,8 @@ type Service struct {
 	facebook *FacebookProvider
 	mock     *MockProvider
 
+	members MemberLookup
+
 	flows oauthFlows
 }
 
@@ -46,6 +48,9 @@ type ServiceDeps struct {
 	Sessions   SessionStore
 	Locker     ContactLocker
 	Outbox     OutboxEnqueuer
+	// Members backs the POST /me/member existence check (M1 Rule 2).
+	// Optional: flows that never link members may omit it.
+	Members MemberLookup
 }
 
 // NewService assembles the auth Service. The concrete repository types in
@@ -62,6 +67,7 @@ func NewService(cfg *config.Config, tx TxRunner, deps ServiceDeps) *Service {
 		sessions:   deps.Sessions,
 		locker:     deps.Locker,
 		outbox:     deps.Outbox,
+		members:    deps.Members,
 		zalo:       NewZaloProvider(cfg),
 		google:     NewGoogleProvider(cfg),
 		facebook:   NewFacebookProvider(cfg),
@@ -366,6 +372,81 @@ func (s *Service) CurrentUser(ctx context.Context, userID string) (*UserProfile,
 		return nil, fmt.Errorf("không thể liệt kê điểm liên hệ: %w", err)
 	}
 	return &UserProfile{User: *user, Identities: identities, Contacts: contacts}, nil
+}
+
+// LinkMember binds the authenticated user to a family-tree member
+// (POST /api/v1/me/member, Decision 3B, MUST-FIX M1) enforcing the FIVE
+// canonical rules in order:
+//
+//  1. Demo isolation guard — demo accounts are NEVER linkable (→ 403
+//     CodeDemoIsolationViolation, INV-04). Fires before anything else.
+//  2. Missing member — target member_id must exist (→ 404).
+//  3. Idempotent self-link — user already bound to the SAME member (→ 200,
+//     no write).
+//  4. Claim conflict — member already held by ANOTHER user (→ 409
+//     CodeConflict), also enforced by idx_users_member_id_unique (23505)
+//     under concurrency.
+//  5. Unlinked claim — user.member_id is NULL (→ link, 200).
+//
+// Returns the refreshed UserProfile (uniform with CurrentUser / GET /me —
+// no new DTO, D3: the binding is globally 1:1 across users and members).
+func (s *Service) LinkMember(ctx context.Context, userID, memberID string) (*UserProfile, error) {
+	// Rule 1 — demo isolation guard (canonical first check, INV-04).
+	user, err := s.users.GetByID(ctx, userID)
+	if err != nil {
+		if isNotFoundErr(err) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("không thể truy vấn tài khoản: %w", err)
+	}
+	if user.IsDemo {
+		return nil, ErrDemoIsolation
+	}
+
+	// Rule 2 — member must exist.
+	if s.members == nil {
+		return nil, errors.New("cổng tra cứu thành viên chưa được cấu hình")
+	}
+	if _, err := s.members.GetByID(ctx, memberID); err != nil {
+		if isNotFoundErr(err) {
+			return nil, ErrMemberNotFound
+		}
+		return nil, fmt.Errorf("không thể tra cứu thành viên gia phả: %w", err)
+	}
+
+	// Rule 3 — idempotent self-link: same member → no write, 200.
+	if user.MemberID != nil && *user.MemberID == memberID {
+		return s.CurrentUser(ctx, userID)
+	}
+
+	// Rule 4 — conflict pre-check: another user already holds this member.
+	holder, err := s.users.GetByMemberID(ctx, memberID)
+	if err != nil {
+		return nil, fmt.Errorf("không thể kiểm tra liên kết thành viên: %w", err)
+	}
+	if holder != nil && holder.ID != userID {
+		return nil, ErrMemberAlreadyClaimed
+	}
+
+	// Rule 5 — unlinked claim (or re-link from an old member): execute the
+	// write. The partial unique index idx_users_member_id_unique turns a
+	// lost concurrent race into 23505 → ErrMemberAlreadyClaimed (409).
+	// A TOCTOU race where member is deleted before UPDATE turns 23503 →
+	// ErrMemberNotFound (404, M-A).
+	if err := s.users.LinkMember(ctx, userID, memberID); err != nil {
+		if errors.Is(err, ErrMemberAlreadyClaimed) {
+			return nil, ErrMemberAlreadyClaimed
+		}
+		if errors.Is(err, ErrMemberNotFound) {
+			return nil, ErrMemberNotFound
+		}
+		if isNotFoundErr(err) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("không thể liên kết thành viên gia phả: %w", err)
+	}
+
+	return s.CurrentUser(ctx, userID)
 }
 
 // Logout revokes the session keyed by jti (best-effort: an unknown jti is a

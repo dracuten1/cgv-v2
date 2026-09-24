@@ -1,13 +1,26 @@
 /**
- * useTreeLayout — PURE layout + culling math (Cycle 2A / Arch §7.2)
+ * useTreeLayout — PURE layout + culling math (Cycle 2A / Arch §7.2 / Phase 2)
  *
  * All functions here are PURE (no DOM, no canvas, no reactivity) so they are
  * unit-testable in jsdom where `canvas.getContext()` returns null.
  * The composable `useTreeLayout` wraps them in a MEMOIZED `computed` keyed by
  * (roots, generationFilter) so selection/highlight never re-runs layout.
+ *
+ * Phase 2 Integration:
+ * - Integrates useTreeLayoutNormalizer (M7 in-law prune, D1 grandparent ordering, deterministic sorting).
+ * - Implements 2-pass bounding box sibling layout (M10): pass 1 calculates subtree widths,
+ *   pass 2 positions sibling blocks with cursorX advancing by actual subtree bbox without overlap.
+ * - Computes OrthogonalEdge[] via useTreeConnectors (Decision 4C, M6 rail fix, M9 suppression).
  */
 import { computed, type Ref, type ComputedRef } from 'vue';
 import type { TreeNode, GenerationMeta, Gender } from '@/types/api';
+import { normalizeTreeRoots } from './useTreeLayoutNormalizer';
+import { genAccentVar, genSoftVar } from '@/components/tree/card-visual';
+import {
+  computeSpouseConnector,
+  computeParentChildConnector,
+  type OrthogonalEdge,
+} from './useTreeConnectors';
 
 // ---------- Layout constants (world units = px at zoom 1) ----------
 export const CARD_WIDTH = 176;
@@ -68,25 +81,16 @@ export interface TreeLayout {
   nodes: PositionedNode[];
   nodeById: Map<string, PositionedNode>;
   edges: TreeEdge[];
+  orthogonalEdges: OrthogonalEdge[];
   bands: GenerationBand[];
   width: number;
   height: number;
 }
 
-// ---------- helpers ----------
-function genAccentVar(genIndex: number): string {
-  return `--gen-${((genIndex - 1) % 4) + 1}`;
-}
-
-function genSoftVar(genIndex: number): string {
-  return `--gen-${((genIndex - 1) % 4) + 1}-soft`;
-}
-
 // ---------- filter ----------
 /**
  * Filters a tree so only nodes of the selected generation remain.
- * Prunes children whose generation does not match (keeps the selected
- * generation's nodes reachable from whichever ancestor survives pruning).
+ * Prunes children whose generation does not match.
  * null filter = all generations.
  */
 export function filterRootsByGeneration(
@@ -104,10 +108,6 @@ export function filterRootsByGeneration(
       return { ...node, children };
     }
 
-    // Not in the selected generation: keep this node ONLY as a passive
-    // connector when it has surviving selected descendants — but the spec
-    // says filter hides non-selected generations, so drop the node and
-    // bubble surviving children up to root level.
     if (children.length > 0) {
       return null;
     }
@@ -146,74 +146,123 @@ export function collectFilteredNodes(
   return selected;
 }
 
+// ---------- 2-pass Bounding Box Layout (M10) ----------
+interface SubtreeMetrics {
+  nodeWidth: number;
+  childrenWidth: number;
+  totalWidth: number;
+  childMetrics: Map<string, SubtreeMetrics>;
+}
+
+function calculateSubtreeMetrics(
+  node: TreeNode,
+  allNodesMap: Map<string, TreeNode>,
+  placedSpouseIds: Set<string>
+): SubtreeMetrics {
+  // Spouse width: adjacent spouse cards placed next to node
+  let spouseCount = 0;
+  for (const spouseId of node.spouse_ids ?? []) {
+    if (!placedSpouseIds.has(spouseId)) {
+      const spouseNode = allNodesMap.get(spouseId);
+      if (spouseNode) {
+        spouseCount++;
+      }
+    }
+  }
+
+  const nodeWidth = CARD_WIDTH + (spouseCount > 0 ? spouseCount * (CARD_WIDTH + X_GAP / 2) : 0);
+
+  const childMetrics = new Map<string, SubtreeMetrics>();
+  let childrenWidth = 0;
+  const childNodes = node.children ?? [];
+
+  for (let i = 0; i < childNodes.length; i++) {
+    const child = childNodes[i];
+    const m = calculateSubtreeMetrics(child, allNodesMap, placedSpouseIds);
+    childMetrics.set(child.id, m);
+    childrenWidth += m.totalWidth;
+    if (i < childNodes.length - 1) {
+      childrenWidth += X_GAP;
+    }
+  }
+
+  const totalWidth = Math.max(nodeWidth, childrenWidth);
+
+  return {
+    nodeWidth,
+    childrenWidth,
+    totalWidth,
+    childMetrics,
+  };
+}
+
 // ---------- layout ----------
 /**
  * Lays out a forest of TreeNode roots into positioned nodes + connector edges.
  * - Generation rows top-down (row y derived from generation_index).
- * - Siblings ordered by input order (backend sorts by name).
- * - Spouse pairs adjacent (spouse rendered right next to the member).
- * - Multiple root families are placed side by side (disjoint components).
- * - generationFilter != null → ONLY that generation's nodes are laid out
- *   (filter hides non-selected generations); parent-child edges vanish
- *   (parents/children live in other generations), spouse edges survive
- *   when both spouses are in the selected generation.
+ * - Sibling order deterministic (birth_date ASC, fallback full_name).
+ * - Normalizes root couples side-by-side and prunes spliced in-laws.
+ * - 2-pass bounding-box positioning ensures subtrees never overlap.
+ * - Generates both legacy TreeEdge[] and orthogonal OrthogonalEdge[] (with M6 rail fix & M9 visibility guard).
  */
 export function layoutTree(
-  roots: TreeNode[],
+  rawRoots: TreeNode[],
   generations: GenerationMeta[],
-  generationFilter: number | null = null
+  generationFilter: number | null = null,
+  anchorMemberId?: string | null
 ): TreeLayout {
+  // 1. Normalization pass (client-side couple pairing, in-law root prune, D1 grandparent order)
+  const normalized = normalizeTreeRoots(rawRoots, anchorMemberId);
+
   // Filter: selected generation's nodes become a flat forest of disjoint cards
   const effectiveRoots =
     generationFilter != null
-      ? collectFilteredNodes(roots, generationFilter).map((n) => ({ ...n, children: [] }))
-      : roots;
+      ? collectFilteredNodes(normalized.roots, generationFilter).map((n) => ({ ...n, children: [] }))
+      : normalized.roots;
+
+  // Build allNodesMap for quick lookup
+  const allNodesMap = new Map<string, TreeNode>();
+  const indexNode = (n: TreeNode, visited = new Set<string>()) => {
+    if (visited.has(n.id)) return;
+    visited.add(n.id);
+    allNodesMap.set(n.id, n);
+    for (const c of n.children ?? []) indexNode(c, visited);
+  };
+  for (const r of normalized.roots) indexNode(r);
+  for (const r of rawRoots) indexNode(r);
 
   const nodes: PositionedNode[] = [];
   const nodeById = new Map<string, PositionedNode>();
   const edges: TreeEdge[] = [];
-  const placedIds = new Set<string>();
-  let cursorX = ROOT_MARGIN_LEFT;
+  const orthogonalEdges: OrthogonalEdge[] = [];
 
-  const placeNode = (node: TreeNode, x: number): number => {
-    if (placedIds.has(node.id)) return 0; // shared spouse — already placed
+  const placedIds = new Set<string>();
+
+  // Pass 1: Measure subtree bounding boxes
+  const rootMetrics = new Map<string, SubtreeMetrics>();
+  for (const root of effectiveRoots) {
+    const m = calculateSubtreeMetrics(root, allNodesMap, placedIds);
+    rootMetrics.set(root.id, m);
+  }
+
+  // Pass 2: Position nodes using metrics
+  const positionSubtree = (
+    node: TreeNode,
+    startX: number,
+    metrics: SubtreeMetrics
+  ): void => {
+    if (placedIds.has(node.id)) return;
     placedIds.add(node.id);
 
     const y = (node.generation_index - 1) * BAND_HEIGHT + BAND_TOP_MARGIN;
 
-    // 1. Lay out children first (need their total width to center node over them)
-    const childStartX = x;
-    let childrenWidth = 0;
-    const childNodes: TreeNode[] = node.children ?? [];
-    const childXs: number[] = [];
-    for (const child of childNodes) {
-      childXs.push(childStartX + childrenWidth);
-      const w = placeNode(child, childStartX + childrenWidth);
-      childrenWidth += w + X_GAP;
+    // Determine self X offset within this subtree bounding box
+    // Center the (node + spouses) block over the subtree totalWidth
+    const selfBlockWidth = metrics.nodeWidth;
+    let selfX = startX;
+    if (metrics.totalWidth > selfBlockWidth) {
+      selfX = startX + (metrics.totalWidth - selfBlockWidth) / 2;
     }
-    if (childNodes.length > 0) {
-      childrenWidth -= X_GAP; // no trailing gap
-    }
-
-    // 2. Own width + spouse width (spouse sits to the right, adjacent)
-    const spouseNodes: TreeNode[] = [];
-    let totalWidth = CARD_WIDTH;
-    for (const spouseId of node.spouse_ids ?? []) {
-      // Spouses are only rendered when present in the node map (they may live
-      // in another root branch — dedup via placedIds)
-      if (placedIds.has(spouseId)) continue;
-      // We render spouse as a second card directly adjacent; its data comes
-      // from the same tree — find it among any node list provided later via
-      // spouseNodesIndex in finalize step.
-      totalWidth += X_GAP / 2; // tight gap between pair
-      totalWidth += CARD_WIDTH;
-      void spouseNodes;
-    }
-
-    // 3. Position self (and spouse) centered over children block
-    const blockX = childrenWidth > totalWidth
-      ? x + (childrenWidth - totalWidth) / 2
-      : x;
 
     const pos: PositionedNode = {
       id: node.id,
@@ -225,7 +274,7 @@ export function layoutTree(
       is_living: node.is_living,
       avatar_url: node.avatar_url,
       spouse_ids: node.spouse_ids ?? [],
-      x: blockX,
+      x: selfX,
       y,
       width: CARD_WIDTH,
       height: CARD_HEIGHT,
@@ -233,45 +282,78 @@ export function layoutTree(
     nodes.push(pos);
     nodeById.set(node.id, pos);
 
-    // advance past self+spouses for sibling placement
-    let advanceX = blockX + totalWidth;
-    if (childrenWidth > totalWidth) {
-      advanceX = x + childrenWidth + X_GAP;
+    // Position adjacent spouses
+    let currentSpouseX = selfX + CARD_WIDTH + X_GAP / 2;
+    const positionedSpouseNodes: PositionedNode[] = [];
+
+    for (const spouseId of node.spouse_ids ?? []) {
+      if (placedIds.has(spouseId)) {
+        const existing = nodeById.get(spouseId);
+        if (existing) positionedSpouseNodes.push(existing);
+        continue;
+      }
+
+      const spouseNode = allNodesMap.get(spouseId);
+      if (spouseNode) {
+        placedIds.add(spouseId);
+        const spousePos: PositionedNode = {
+          id: spouseNode.id,
+          full_name: spouseNode.full_name,
+          gender: spouseNode.gender,
+          generation_index: spouseNode.generation_index ?? node.generation_index,
+          birth_date: spouseNode.birth_date ?? null,
+          death_date: spouseNode.death_date ?? null,
+          is_living: spouseNode.is_living,
+          avatar_url: spouseNode.avatar_url,
+          spouse_ids: spouseNode.spouse_ids ?? [node.id],
+          x: currentSpouseX,
+          y,
+          width: CARD_WIDTH,
+          height: CARD_HEIGHT,
+        };
+        nodes.push(spousePos);
+        nodeById.set(spouseNode.id, spousePos);
+        positionedSpouseNodes.push(spousePos);
+        currentSpouseX += CARD_WIDTH + X_GAP / 2;
+      }
     }
 
-    // 4. Edges to children
-    for (let i = 0; i < childNodes.length; i++) {
-      const childPos = nodeById.get(childNodes[i].id);
-      if (!childPos) continue;
-      edges.push({
-        id: `pc-${node.id}-${childNodes[i].id}`,
-        type: 'parent-child',
-        fromX: pos.x + CARD_WIDTH / 2,
-        fromY: pos.y + CARD_HEIGHT,
-        toX: childPos.x + CARD_WIDTH / 2,
-        toY: childPos.y,
-      });
+    // Position children subtrees
+    const childNodes = node.children ?? [];
+    let childCursorX = startX;
+    if (metrics.totalWidth > metrics.childrenWidth && metrics.childrenWidth > 0) {
+      childCursorX = startX + (metrics.totalWidth - metrics.childrenWidth) / 2;
     }
 
-    return Math.max(advanceX - x, CARD_WIDTH);
+    for (const child of childNodes) {
+      const childMetric = metrics.childMetrics.get(child.id);
+      if (childMetric) {
+        positionSubtree(child, childCursorX, childMetric);
+        childCursorX += childMetric.totalWidth + X_GAP;
+      }
+    }
   };
 
-  // Layout each root component side by side.
+  let cursorX = ROOT_MARGIN_LEFT;
   for (const root of effectiveRoots) {
-    const w = placeNode(root, cursorX);
-    cursorX += w + X_GAP;
+    const m = rootMetrics.get(root.id)!;
+    positionSubtree(root, cursorX, m);
+    cursorX += m.totalWidth + X_GAP;
   }
 
-  // Second pass: spouse link edges (both directions deduped by pair id)
+  // Generate Edges
+  // 1. Spouse Edges (both legacy TreeEdge and OrthogonalEdge)
   const seenSpouse = new Set<string>();
   for (const node of nodes) {
     for (const spouseId of node.spouse_ids) {
       const pairKey = [node.id, spouseId].sort().join('~');
       if (seenSpouse.has(pairKey)) continue;
       seenSpouse.add(pairKey);
+
       const spousePos = nodeById.get(spouseId);
+      // M9: both endpoints visible
       if (!spousePos) continue;
-      // Ensure deterministic left→right orientation for the link
+
       const [a, b] = node.x <= spousePos.x ? [node, spousePos] : [spousePos, node];
       edges.push({
         id: `sp-${pairKey}`,
@@ -281,6 +363,68 @@ export function layoutTree(
         toX: b.x,
         toY: b.y + CARD_HEIGHT / 2,
       });
+
+      const orthoSpouse = computeSpouseConnector(a, b);
+      if (orthoSpouse.segments.length > 0) {
+        orthogonalEdges.push(orthoSpouse);
+      }
+    }
+  }
+
+  // 2. Parent-Child Edges
+  // Find all parent nodes in nodes that have children
+  const seenParentChildren = new Set<string>();
+  for (const node of nodes) {
+    const rawNode = allNodesMap.get(node.id);
+    const childNodes = rawNode?.children ?? [];
+    if (childNodes.length === 0) continue;
+
+    // Find positioned children (M9: only visible children count)
+    const positionedChildren: PositionedNode[] = [];
+    for (const c of childNodes) {
+      const cPos = nodeById.get(c.id);
+      if (cPos) {
+        positionedChildren.push(cPos);
+        // Legacy TreeEdge
+        edges.push({
+          id: `pc-${node.id}-${c.id}`,
+          type: 'parent-child',
+          fromX: node.x + CARD_WIDTH / 2,
+          fromY: node.y + CARD_HEIGHT,
+          toX: cPos.x + CARD_WIDTH / 2,
+          toY: cPos.y,
+        });
+      }
+    }
+
+    if (positionedChildren.length === 0) continue;
+
+    // Check if this parent has a spouse with whom children are shared
+    let parentMidpoint: { x: number; y: number } | null = null;
+    let spousePos: PositionedNode | undefined;
+    for (const sId of node.spouse_ids) {
+      spousePos = nodeById.get(sId);
+      if (spousePos) break;
+    }
+
+    if (spousePos) {
+      const [left, right] = node.x <= spousePos.x ? [node, spousePos] : [spousePos, node];
+      parentMidpoint = {
+        x: (left.x + left.width + right.x) / 2,
+        y: left.y + left.height / 2,
+      };
+    }
+
+    const coupleKey = spousePos
+      ? [node.id, spousePos.id].sort().join('~')
+      : node.id;
+
+    if (!seenParentChildren.has(coupleKey)) {
+      seenParentChildren.add(coupleKey);
+      const orthoPc = computeParentChildConnector(node, parentMidpoint, positionedChildren);
+      if (orthoPc.segments.length > 0) {
+        orthogonalEdges.push(orthoPc);
+      }
     }
   }
 
@@ -313,6 +457,7 @@ export function layoutTree(
     nodes,
     nodeById,
     edges,
+    orthogonalEdges,
     bands,
     width: maxX + ROOT_MARGIN_LEFT,
     height: maxY + Y_GAP,
@@ -409,13 +554,15 @@ export function fitToViewport(
 
 // ---------- composable (memoized) ----------
 /**
- * MEMOIZED layout: the computed re-runs ONLY when roots or generationFilter
- * change. Selection (a separate ref in the store) never invalidates it.
+ * MEMOIZED layout: the computed re-runs ONLY when roots, generationFilter, or anchorMemberId change.
  */
 export function useTreeLayout(
   roots: Ref<TreeNode[]>,
   generations: Ref<GenerationMeta[]>,
-  generationFilter: Ref<number | null>
+  generationFilter: Ref<number | null>,
+  anchorMemberId?: Ref<string | null | undefined>
 ): ComputedRef<TreeLayout> {
-  return computed(() => layoutTree(roots.value, generations.value, generationFilter.value));
+  return computed(() =>
+    layoutTree(roots.value, generations.value, generationFilter.value, anchorMemberId?.value)
+  );
 }

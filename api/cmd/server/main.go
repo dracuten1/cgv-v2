@@ -18,6 +18,7 @@ import (
 	"github.com/dracuten1/cgv-v2/api/internal/feed"
 	"github.com/dracuten1/cgv-v2/api/internal/handler"
 	"github.com/dracuten1/cgv-v2/api/internal/kinship"
+	"github.com/dracuten1/cgv-v2/api/internal/model"
 	"github.com/dracuten1/cgv-v2/api/internal/push"
 	authrepo "github.com/dracuten1/cgv-v2/api/internal/repository/auth"
 	genrepo "github.com/dracuten1/cgv-v2/api/internal/repository/genealogy"
@@ -137,15 +138,16 @@ func main() {
 		Sessions:   sessionRepo,
 		Locker:     locker,
 		Outbox:     authOutbox,
+		Members:    memberLookupAdapter{repo: memberRepo},
 	})
 
-	kinshipSvc := kinship.NewService(memberRepo)
+	kinshipSvc := kinship.NewService(memberRepo, familyRepo)
 
 	excelImportAdapter := &handler.ExcelImportAdapter{
 		ImportRepo: importRepo,
 		FamilyRepo: familyRepo,
 	}
-	excelSvc := excel.NewService(memberRepo, excelImportAdapter, txManager)
+	excelSvc := excel.NewService(memberRepo, excelImportAdapter, txManager, kinshipSvc.Engine())
 
 	feedPostAdapter := &handler.FeedPostAdapter{
 		Repo: socialPostRepo,
@@ -206,6 +208,7 @@ func main() {
 		MemberRepo:     memberRepo,
 		RelationRepo:   relationRepo,
 		KinshipSvc:     kinshipSvc,
+		KinshipInv:     kinshipSvc.Engine(),
 		ExcelSvc:       excelSvc,
 		FeedSvc:        feedSvc,
 		FeedNamer:      authorNamer,
@@ -259,4 +262,21 @@ func main() {
 	}
 
 	logger.Info("Hệ thống CGP v2 API đã dừng hoàn tất. Tạm biệt!")
+}
+
+// memberLookupAdapter adapts genrepo.MemberRepository to the auth.MemberLookup
+// port: the concrete repo returns the MemberWithFamily projection, the auth
+// domain programs against the bare model.Member (consumer-side port, M1
+// Rule 2 member existence check for POST /me/member).
+type memberLookupAdapter struct {
+	repo *genrepo.MemberRepository
+}
+
+// GetByID satisfies auth.MemberLookup.
+func (a memberLookupAdapter) GetByID(ctx context.Context, memberID string) (*model.Member, error) {
+	mwf, err := a.repo.GetByID(ctx, memberID)
+	if err != nil {
+		return nil, err
+	}
+	return &mwf.Member, nil
 }

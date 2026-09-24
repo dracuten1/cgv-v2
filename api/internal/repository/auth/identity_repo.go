@@ -170,6 +170,16 @@ func scanIdentityRow(row interface{ Scan(dest ...any) error }) (model.Identity, 
 	return i, nil
 }
 
+// isPgForeignKeyViolation reports whether err carries the pgx 23503
+// foreign_key_violation code (directly or wrapped).
+func isPgForeignKeyViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "23503"
+	}
+	return false
+}
+
 // isPgUniqueViolation reports whether err carries the pgx 23505
 // unique_violation code (directly or wrapped).
 func isPgUniqueViolation(err error) bool {

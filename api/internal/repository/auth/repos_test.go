@@ -337,3 +337,70 @@ func TestIdentityRepo_ListByUser_ProjectionShape(t *testing.T) {
 func normalizeSQL(sql string) string {
 	return strings.Join(strings.Fields(strings.ToLower(sql)), " ")
 }
+
+// TestUserRepo_LinkMember_Maps23505 proves the concurrent double-claim race
+// contract: a pgx SQLSTATE 23505 raised by idx_users_member_id_unique during
+// LinkMember maps to ErrMemberAlreadyClaimed (→ 409 CodeConflict at the
+// handler seam), while other SQLSTATEs stay wrapped business errors (M1).
+func TestUserRepo_LinkMember_Maps23505(t *testing.T) {
+	fe := newFakeExec()
+	fe.scriptedTag = pgconn.NewCommandTag("UPDATE 1")
+	fe.scriptedErr = &pgconn.PgError{Code: "23505", Message: "duplicate key value violates unique constraint \"idx_users_member_id_unique\""}
+	repo := authrepo.NewUserRepositoryOnExec(fe)
+
+	err := repo.LinkMember(context.Background(), "u-1", "m-1")
+	if err == nil {
+		t.Fatal("expected error for 23505 race")
+	}
+	if !errors.Is(err, authrepo.ErrMemberAlreadyClaimed) {
+		t.Fatalf("expected ErrMemberAlreadyClaimed, got %v", err)
+	}
+	if !errors.Is(err, auth.ErrMemberAlreadyClaimed) {
+		t.Fatal("repo sentinel must alias auth.ErrMemberAlreadyClaimed")
+	}
+	if !strings.Contains(normalizeSQL(fe.lastSQL), "update users set member_id") {
+		t.Fatalf("expected LinkMember UPDATE, got %q", fe.lastSQL)
+	}
+
+	// M-A: A 23503 SQLSTATE (foreign key violation, member deleted in TOCTOU race)
+	// must map to ErrMemberNotFound (→ 404 at the handler seam), NOT a claim conflict.
+	fe.scriptedErr = &pgconn.PgError{Code: "23503", Message: "foreign key violation"}
+	err = repo.LinkMember(context.Background(), "u-1", "m-missing")
+	if err == nil {
+		t.Fatal("expected error for 23503 FK race")
+	}
+	if errors.Is(err, authrepo.ErrMemberAlreadyClaimed) {
+		t.Fatalf("23503 must NOT map to ErrMemberAlreadyClaimed, got %v", err)
+	}
+	if !errors.Is(err, authrepo.ErrMemberNotFound) {
+		t.Fatalf("expected ErrMemberNotFound for 23503, got %v", err)
+	}
+	if !errors.Is(err, auth.ErrMemberNotFound) {
+		t.Fatal("repo sentinel must alias auth.ErrMemberNotFound")
+	}
+}
+
+// TestUserRepo_GetByMemberID_UnclaimedIsNilNil proves the M1 Rule 4
+// pre-check seam: an unclaimed member resolves to (nil, nil), not an error.
+func TestUserRepo_GetByMemberID_UnclaimedIsNilNil(t *testing.T) {
+	fe := newFakeExec()
+	fe.scriptedRow = func([]any) ([]any, error) { return nil, pgx.ErrNoRows }
+	repo := authrepo.NewUserRepositoryOnExec(fe)
+
+	u, err := repo.GetByMemberID(context.Background(), "m-unclaimed")
+	if err != nil {
+		t.Fatalf("unclaimed member must not error, got %v", err)
+	}
+	if u != nil {
+		t.Fatalf("unclaimed member must resolve to nil user, got %+v", u)
+	}
+
+	// Claimed: row comes back.
+	fe.scriptedRow = func(args []any) ([]any, error) {
+		return []any{"u-2", "Người Hai", false, (*string)(nil), time.Now()}, nil
+	}
+	u, err = repo.GetByMemberID(context.Background(), "m-claimed")
+	if err != nil || u == nil || u.ID != "u-2" {
+		t.Fatalf("expected holder user u-2, got %+v (err=%v)", u, err)
+	}
+}
