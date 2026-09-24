@@ -15,6 +15,7 @@
 import { computed, type Ref, type ComputedRef } from 'vue';
 import type { TreeNode, GenerationMeta, Gender } from '@/types/api';
 import { normalizeTreeRoots } from './useTreeLayoutNormalizer';
+import { genAccentVar, genSoftVar } from '@/components/tree/card-visual';
 import {
   computeSpouseConnector,
   computeParentChildConnector,
@@ -84,15 +85,6 @@ export interface TreeLayout {
   bands: GenerationBand[];
   width: number;
   height: number;
-}
-
-// ---------- helpers ----------
-function genAccentVar(genIndex: number): string {
-  return `--gen-${((genIndex - 1) % 4) + 1}`;
-}
-
-function genSoftVar(genIndex: number): string {
-  return `--gen-${((genIndex - 1) % 4) + 1}-soft`;
 }
 
 // ---------- filter ----------
