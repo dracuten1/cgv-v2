@@ -3,6 +3,7 @@
     ref="viewportEl"
     class="tree-viewport relative overflow-hidden rounded-xl bg-white border border-slate-200 select-none"
     style="touch-action: none; height: calc(100dvh - 4rem - 5rem - env(safe-area-inset-bottom, 0px)); min-height: 480px;"
+    :data-view-centered="centeredTarget"
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
@@ -163,6 +164,7 @@ const culled = computed(() =>
 
 /** Has initial positioning (auto-center or fitView) executed? */
 const hasInitialCentered = ref(false);
+const centeredTarget = ref<string | null>(null);
 
 function fitView(): void {
   const rect = viewportEl.value?.getBoundingClientRect();
@@ -170,6 +172,7 @@ function fitView(): void {
   const height = rect?.height || 600;
   const { zoom, tx, ty } = fitToViewport(layout.value, { width, height });
   setTransform(zoom, tx, ty);
+  centeredTarget.value = 'fit';
 }
 
 /**
@@ -202,6 +205,7 @@ function focusNode(nodeId: string): boolean {
 function autoCenterInitial(): void {
   const selfId = authStore.user?.member_id;
   if (selfId && focusNode(selfId)) {
+    centeredTarget.value = 'self';
     return;
   }
   fitView();

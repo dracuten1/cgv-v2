@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import TreeVisualizer from '@/components/tree/TreeVisualizer.vue';
@@ -51,10 +51,8 @@ describe('TreeVisualizer.vue — Phase 3 Auto-Centering & Compass', () => {
       id: 'u1',
       display_name: 'Nguyễn Văn Bình',
       is_demo: false,
-      is_admin: false,
       member_id: 'm2',
       created_at: '',
-      updated_at: '',
     };
     authStore.status = 'authenticated';
 
@@ -81,10 +79,8 @@ describe('TreeVisualizer.vue — Phase 3 Auto-Centering & Compass', () => {
       id: 'u1',
       display_name: 'Nguyễn Văn An',
       is_demo: false,
-      is_admin: false,
       member_id: 'm1',
       created_at: '',
-      updated_at: '',
     };
     authStore.status = 'authenticated';
 

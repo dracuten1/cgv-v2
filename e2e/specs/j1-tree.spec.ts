@@ -97,4 +97,79 @@ test.describe('Journey 1 — Cây gia phả (Tree visualizer)', () => {
       await expect(liveHeading).toBeVisible();
     }
   });
+
+  /**
+   * Executable "Tôi" Identity & Kinship Journey (Task 4.2 / Leader Ruling K4 & M13):
+   * 1. Mock (non-demo) login via helper.
+   * 2. Bind authenticated user to seed member Nguyễn Văn Bình (Generation 3: bbbbbbb2-0000-4000-8000-000000000002).
+   * 3. Reload /tree.
+   * 4. Assert "Tôi" badge rendered on self card with text "Tôi".
+   * 5. Assert self card button has highlight ring "ring-tree-self-ring".
+   * 6. Assert auto-centering fired to focus viewport on "Tôi" node (data-view-centered="self").
+   * 7. Assert Compass navigation control visible and functional (clicking North moves canvas transform).
+   * 8. Assert Kinship badges appear on related ancestor nodes (e.g. "Bố" / "Nội").
+   */
+  test('authenticates non-demo user, binds to Gen-3 member, verifies "Tôi" identity, auto-centering, compass, and kinship badges', async ({ page, request }) => {
+    // 1. Mock non-demo login with verified email
+    await loginViaMock(page, 'verified_email:j1-identity-test@cgp.test');
+
+    // 2. Link authenticated user to Gen-3 grandson Nguyễn Văn Bình
+    // GrandsonID: bbbbbbb2-0000-4000-8000-000000000002 (Family 1, Gen 3)
+    const BINH_ID = 'bbbbbbb2-0000-4000-8000-000000000002';
+    const linkResp = await page.request.post('/api/v1/me/member', {
+      data: { member_id: BINH_ID },
+    });
+    expect(linkResp.ok()).toBeTruthy();
+    const linkedProfile = await linkResp.json();
+    expect(linkedProfile.member_id).toBe(BINH_ID);
+
+    // 3. Reload /tree to pick up the newly linked member and fetch kinship labels
+    await page.goto('/tree');
+    await expect(page.locator('[data-testid="tree-loading"]')).toHaveCount(0);
+
+    // 4. Assert "Tôi" badge ([data-testid="self-badge"]) rendered with text "Tôi"
+    const selfBadge = page.locator('[data-testid="self-badge"]');
+    await expect(selfBadge).toBeVisible();
+    await expect(selfBadge).toHaveText('Tôi');
+
+    // 5. Assert "Tôi" card displays the blue ring highlight (ring-tree-self-ring)
+    const selfCardBtn = page.getByRole('button', { name: /Nguyễn Văn Bình, Đời thứ 3/i });
+    await expect(selfCardBtn).toBeVisible();
+    const cardClass = await selfCardBtn.getAttribute('class');
+    expect(cardClass).toContain('ring-tree-self-ring');
+
+    // 6. Assert auto-centering fired to focus viewport around "Tôi" card
+    const viewport = page.locator('.tree-viewport');
+    await expect(viewport).toHaveAttribute('data-view-centered', 'self');
+
+    // 7. Verify bottom-right Compass control is visible and functional
+    const compass = page.locator('[data-testid="tree-compass"]');
+    await expect(compass).toBeVisible();
+
+    const world = page.locator('[data-testid="tree-world"]');
+    const initialTransform = await world.getAttribute('style');
+
+    // Click compass-north to pan
+    const compassNorth = page.locator('[data-testid="compass-north"]');
+    await expect(compassNorth).toBeVisible();
+    await compassNorth.click();
+
+    // Verify canvas world transform changed after panning
+    const pannedTransform = await world.getAttribute('style');
+    expect(pannedTransform).not.toEqual(initialTransform);
+
+    // 8. Verify kinship badges ([data-testid="kinship-badge"]) appear on ancestor nodes
+    // Relative to Bình (Gen 3):
+    // - Patriarch An (Gen 1) is "Ông nội" (badge text "Nội")
+    // - Father Kiên (Gen 2) is "Bố" (badge text "Bố")
+    const kinshipBadges = page.locator('[data-testid="kinship-badge"]');
+    await expect(kinshipBadges.first()).toBeVisible();
+
+    const badgeTexts = await kinshipBadges.allTextContents();
+    // Expect at least "Nội" or "Bố" among visible ancestor kinship badges
+    const hasExpectedAncestorBadge = badgeTexts.some((text) =>
+      text.includes('Nội') || text.includes('Bố') || text.includes('Mẹ')
+    );
+    expect(hasExpectedAncestorBadge).toBe(true);
+  });
 });

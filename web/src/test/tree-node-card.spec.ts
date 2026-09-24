@@ -154,10 +154,8 @@ describe('TreeNodeCard', () => {
       id: 'user-1',
       display_name: 'Người dùng',
       is_demo: false,
-      is_admin: false,
       member_id: 'member-1',
       created_at: '',
-      updated_at: '',
     };
     authStore.status = 'authenticated';
 
@@ -174,10 +172,8 @@ describe('TreeNodeCard', () => {
       id: 'user-1',
       display_name: 'Người dùng',
       is_demo: false,
-      is_admin: false,
       member_id: 'member-self',
       created_at: '',
-      updated_at: '',
     };
     authStore.status = 'authenticated';
 
@@ -199,10 +195,8 @@ describe('TreeNodeCard', () => {
       id: 'user-1',
       display_name: 'Người dùng',
       is_demo: false,
-      is_admin: false,
       member_id: null,
       created_at: '',
-      updated_at: '',
     };
     authStore.status = 'authenticated';
     const linkSelfSpy = vi.spyOn(authStore, 'linkSelfToMember').mockResolvedValue();
@@ -227,10 +221,8 @@ describe('TreeNodeCard', () => {
       id: 'demo-user',
       display_name: 'Tài khoản demo',
       is_demo: true,
-      is_admin: false,
       member_id: null,
       created_at: '',
-      updated_at: '',
     };
     authStore.status = 'authenticated';
 
