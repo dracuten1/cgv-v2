@@ -33,19 +33,23 @@ describe('NotFoundView.vue (mockup 03 / spec §6.3)', () => {
     expect(wrapper.text()).toContain('Không tìm thấy trang');
   });
 
-  it('offers primary path back to the tree and ghost path to the feed', () => {
+  it('offers primary path back to the tree and finder path to kinship search', () => {
     const wrapper = mount(NotFoundView, {
       global: { stubs: { RouterLink: stubRouterLink } },
     });
 
     const home = wrapper.find('[data-testid="not-found-home"]');
-    const feed = wrapper.find('[data-testid="not-found-feed"]');
+    const kinship = wrapper.find('[data-testid="not-found-kinship"]');
     expect(home.exists()).toBe(true);
     expect(home.attributes('href')).toBe('/tree');
     expect(home.text()).toContain('Về cây gia phả');
-    expect(feed.exists()).toBe(true);
-    expect(feed.attributes('href')).toBe('/feed');
-    expect(feed.text()).toContain('Xem bảng tin');
+    // Second CTA targets the kinship people-finder (route verified in router/index.ts)
+    expect(kinship.exists()).toBe(true);
+    expect(kinship.attributes('href')).toBe('/kinship');
+    expect(kinship.text()).toContain('Tìm người trong họ');
+    // The gen-pastel dot cluster is decorative only — no links/buttons inside
+    const dots = wrapper.find('div[aria-hidden="true"].bg-gen-1, span.bg-gen-1');
+    expect(dots.exists()).toBe(true);
   });
 
   it('renders heritage ghost decorations and a back-link affordance', () => {

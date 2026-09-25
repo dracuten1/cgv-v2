@@ -50,12 +50,12 @@
         <AppButton
           variant="ghost"
           size="lg"
-          to="/feed"
-          data-testid="not-found-feed"
+          to="/kinship"
+          data-testid="not-found-kinship"
         >
           <span class="flex items-center justify-center gap-2">
-            <span>Xem bảng tin</span>
-            <IconArrowRight class="w-4 h-4" />
+            <IconMagnifyingGlass class="w-4 h-4" />
+            <span>Tìm người trong họ</span>
           </span>
         </AppButton>
       </div>
@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import AppButton from '@/components/ui/AppButton.vue';
-import { IconArrowLeft, IconArrowRight, IconExclamationCircle } from '@/components/icons';
+import { IconArrowLeft, IconMagnifyingGlass, IconExclamationCircle } from '@/components/icons';
 
 const router = useRouter();
 </script>
