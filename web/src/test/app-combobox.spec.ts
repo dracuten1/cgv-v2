@@ -76,6 +76,42 @@ describe('AppCombobox.vue', () => {
     expect(wrapper.emitted('select')?.[0]).toEqual([sampleMembers[1]]);
   });
 
+  it('shows a warm search-empty state when filtering yields no matches', async () => {
+    const wrapper = mount(AppCombobox, {
+      props: {
+        options: sampleMembers,
+        emptyText: 'Không tìm thấy thành viên phù hợp',
+      },
+    });
+
+    const input = wrapper.find('input[role="combobox"]');
+    await input.trigger('focus');
+    await input.setValue('Zzz Không Tồn Tại');
+
+    expect(wrapper.findAll('li[role="option"]').length).toBe(0);
+    const empty = wrapper.find('[data-testid="combobox-empty"]');
+    expect(empty.exists()).toBe(true);
+    expect(empty.text()).toContain('Không tìm thấy thành viên phù hợp');
+    // Warm Heritage touch: cream-muted icon disc above the message
+    expect(empty.find('.bg-cream-muted').exists()).toBe(true);
+  });
+
+  it('dropdown option buttons carry focus-visible rings (INV-06)', async () => {
+    const wrapper = mount(AppCombobox, {
+      props: { options: sampleMembers },
+    });
+
+    await wrapper.find('input[role="combobox"]').trigger('focus');
+
+    const optionButtons = wrapper.findAll('li[role="option"] button');
+    expect(optionButtons.length).toBe(3);
+    for (const btn of optionButtons) {
+      expect(btn.classes()).toContain('focus-visible:ring-2');
+      expect(btn.classes()).toContain('focus-visible:ring-terracotta');
+      expect(btn.classes()).toContain('focus-visible:ring-offset-1');
+    }
+  });
+
   it('clears selection when clear button is clicked', async () => {
     const wrapper = mount(AppCombobox, {
       props: {

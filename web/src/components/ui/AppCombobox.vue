@@ -88,9 +88,16 @@
     >
       <li
         v-if="filteredOptions.length === 0"
-        class="p-3 text-xs text-slate-400 text-center"
+        class="px-3 py-6 text-center"
+        data-testid="combobox-empty"
       >
-        {{ emptyText }}
+        <div
+          class="mx-auto w-8 h-8 rounded-full bg-cream-muted text-slate-400 flex items-center justify-center mb-2"
+          aria-hidden="true"
+        >
+          <IconMagnifyingGlass class="w-4 h-4" />
+        </div>
+        <p class="text-xs text-slate-500 leading-relaxed">{{ emptyText }}</p>
       </li>
       <li
         v-for="(member, idx) in filteredOptions"
@@ -106,7 +113,7 @@
           type="button"
           tabindex="-1"
           :class="[
-            'w-full text-left px-3 py-2.5 text-xs flex items-center justify-between cursor-pointer transition-colors',
+            'w-full text-left px-3 py-2.5 text-xs flex items-center justify-between cursor-pointer transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-1',
             idx === activeIndex ? 'bg-slate-100 text-slate-900' : 'hover:bg-slate-50 text-slate-800',
           ]"
         >

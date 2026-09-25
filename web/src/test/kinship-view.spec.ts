@@ -153,6 +153,55 @@ describe('KinshipView (mockup 04 / spec §6.4 — AppCombobox pickers)', () => {
     expect(store.toMemberId).toBe(seedMembers[0].id);
   });
 
+  it('shows the initial prompt before both people are selected and hides it once both are chosen', async () => {
+    const wrapper = await mountView();
+    const store = useKinshipStore();
+
+    const prompt = wrapper.find('[data-testid="kinship-initial-prompt"]');
+    expect(prompt.exists()).toBe(true);
+    expect(prompt.text()).toContain('Chọn hai người để tính quan hệ');
+    // Warm Heritage surface (spec §4): cream-muted panel + terracotta icon disc
+    expect(prompt.classes()).toContain('bg-cream-muted/60');
+    expect(prompt.classes()).toContain('border-dashed');
+
+    store.fromMemberId = seedMembers[0].id;
+    store.toMemberId = seedMembers[1].id;
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="kinship-initial-prompt"]').exists()).toBe(false);
+  });
+
+  it('renders the unrelated-result state when the engine returns the fallback term', async () => {
+    const wrapper = await mountView();
+    const store = useKinshipStore();
+    store.fromMemberId = seedMembers[0].id;
+    store.toMemberId = seedMembers[1].id;
+    await flushPromises();
+
+    vi.spyOn(store, 'calculateKinship').mockImplementation(async () => {
+      store.result = {
+        term: 'Không xác định được quan hệ',
+        line: '',
+        generation_distance: 0,
+        distance_label: '',
+        is_blood: false,
+        dialect: 'bac',
+        path: [],
+      };
+      return store.result;
+    });
+
+    await wrapper.find('[data-testid="calculate-btn"]').trigger('click');
+    await flushPromises();
+
+    const unrelated = wrapper.find('[data-testid="kinship-unrelated"]');
+    expect(unrelated.exists()).toBe(true);
+    expect(unrelated.text()).toContain('Không tìm thấy quan hệ họ hàng');
+    // Warm banner surface, never a cold slate/red error
+    expect(unrelated.classes()).toContain('bg-terracotta-soft');
+    expect(wrapper.find('[data-testid="kinship-result-container"]').exists()).toBe(false);
+  });
+
   it('reset button clears both selections', async () => {
     const wrapper = await mountView();
     const store = useKinshipStore();

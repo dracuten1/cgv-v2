@@ -131,8 +131,48 @@
       </div>
     </div>
 
+    <!-- Initial prompt: guidance before both people are chosen -->
+    <div
+      v-if="!bothSelected && !kinshipStore.result"
+      class="bg-cream-muted/60 rounded-xl border border-dashed border-slate-300 p-6 flex items-start gap-4"
+      data-testid="kinship-initial-prompt"
+    >
+      <div class="w-10 h-10 rounded-full bg-terracotta-soft text-terracotta flex items-center justify-center shrink-0">
+        <IconSparkles class="w-5 h-5" />
+      </div>
+      <div class="text-left">
+        <h2 class="text-base font-semibold font-display text-slate-800" style="line-height: 1.45">
+          Chọn hai người để tính quan hệ
+        </h2>
+        <p class="text-sm text-slate-500 mt-1 leading-relaxed">
+          Chọn người gọi và người được gọi ở hai ô phía trên, rồi bấm “Tính quan hệ” để xem danh xưng
+          chuẩn theo từng chi họ.
+        </p>
+      </div>
+    </div>
+
+    <!-- Unrelated result: engine returns the fallback term when no relation is in the graph -->
+    <div
+      v-else-if="kinshipStore.result && isUnrelated"
+      class="bg-terracotta-soft rounded-xl border border-terracotta-border p-6 flex items-start gap-4"
+      data-testid="kinship-unrelated"
+    >
+      <div class="w-10 h-10 rounded-full bg-white text-terracotta flex items-center justify-center shrink-0 shadow-xs">
+        <IconExclamationCircle class="w-5 h-5" />
+      </div>
+      <div class="text-left">
+        <h2 class="text-base font-semibold font-display text-slate-800" style="line-height: 1.45">
+          Không tìm thấy quan hệ họ hàng
+        </h2>
+        <p class="text-sm text-slate-600 mt-1 leading-relaxed">
+          Hai người này không có quan hệ trong phạm vi tra cứu hoặc thuộc hai nhánh khác nhau của gia
+          tộc. Hãy thử đổi chiều hoặc chọn lại hai người.
+        </p>
+      </div>
+    </div>
+
     <!-- Result Display Panel -->
-    <div v-if="kinshipStore.result" data-testid="kinship-result-container">
+    <div v-else-if="kinshipStore.result" data-testid="kinship-result-container">
       <KinshipResult
         :result="kinshipStore.result"
         :member-map="memberMap"
@@ -152,11 +192,22 @@ import AppCombobox from '@/components/ui/AppCombobox.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import KinshipResult from '@/components/kinship/KinshipResult.vue';
-import { IconChevronLeft, IconChevronRight, IconSparkles } from '@/components/icons';
+import { IconChevronLeft, IconChevronRight, IconSparkles, IconExclamationCircle } from '@/components/icons';
 import type { Member } from '@/types/api';
 
 const kinshipStore = useKinshipStore();
 const toast = useToast();
+
+// Backend engine fallback term when the two members share no relation within
+// the lookup depth (api/internal/kinship/engine.go returns it as a result,
+// not an error) — drives the dedicated "unrelated" state panel.
+const UNRELATED_TERM = 'Không xác định được quan hệ';
+
+const bothSelected = computed(
+  () => Boolean(kinshipStore.fromMemberId) && Boolean(kinshipStore.toMemberId)
+);
+
+const isUnrelated = computed(() => kinshipStore.result?.term === UNRELATED_TERM);
 
 const members = ref<Member[]>([]);
 const loadingMembers = ref(false);
