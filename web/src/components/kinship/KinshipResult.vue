@@ -2,12 +2,15 @@
   <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-6">
     <!-- Main Result Header -->
     <div class="text-center py-4 border-b border-slate-100">
-      <div class="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2">
+      <div class="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2" style="line-height: 1.45">
         Xưng hô gia tộc
       </div>
-      <div class="text-3xl sm:text-4xl font-bold font-display text-[#C85A32]">
+      <div class="text-4xl sm:text-[2.75rem] font-bold font-display text-terracotta" style="line-height: 1.45">
         <span data-testid="kinship-term" class="kinship-term-quoted">{{ result.term }}</span>
       </div>
+      <p v-if="grammarContext" class="mt-2 text-sm text-slate-500">
+        {{ fromLabel }} <span class="text-slate-400">gọi</span> {{ toLabel }}
+      </p>
     </div>
 
     <!-- Metadata Badges -->
@@ -26,49 +29,80 @@
       </AppChip>
     </div>
 
-    <!-- Path vertical step list with numbered generation headings (INV-05 / F4) -->
+    <!-- Path timeline with rich avatars and generation coding (spec §6.4 / mockup 04) -->
     <div v-if="stepItems.length > 0" class="pt-4 border-t border-slate-100">
       <h3 class="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
-        <svg class="w-4 h-4 text-[#C85A32]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-        </svg>
+        <IconArrowRight class="w-4 h-4 text-terracotta" />
         <span>Đường dẫn quan hệ qua các đời</span>
       </h3>
 
-      <div class="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+      <div
+        class="relative pl-8 space-y-5 before:absolute before:left-[19px] before:top-6 before:bottom-6 before:w-0.5 before:bg-slate-200"
+      >
         <div
           v-for="(step, idx) in stepItems"
           :key="step.id || idx"
           class="relative group"
           :data-testid="`kinship-step-${idx}`"
         >
-          <!-- Timeline dot -->
+          <!-- Timeline avatar node with sequence index badge -->
           <div
-            :class="[
-              'absolute -left-6 top-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px] font-bold transition-colors',
-              idx === 0
-                ? 'bg-[#F9EAE1] border-[#C85A32] text-[#C85A32]'
-                : idx === stepItems.length - 1
-                ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
-                : 'bg-white border-slate-300 text-slate-500',
-            ]"
+            class="absolute -left-8 top-0 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-xs"
+            :class="step.isEndpoint ? 'border-2 border-emerald-500' : 'border-2'"
+            :style="step.isEndpoint ? {} : { borderColor: `var(${genAccentVar(step.generation)})` }"
           >
-            {{ idx + 1 }}
+            <AppAvatar
+              :src="step.avatarUrl"
+              :name="step.name"
+              :generation="step.generation"
+              size="w-9"
+            />
+            <span
+              :class="[
+                'absolute -top-1 -left-1 w-4 h-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center border border-white',
+                step.isEndpoint ? 'bg-emerald-500' : '',
+              ]"
+              :style="step.isEndpoint ? { lineHeight: '1.45' } : { backgroundColor: `var(${genAccentVar(step.generation)})`, lineHeight: '1.45' }"
+            >
+              {{ idx + 1 }}
+            </span>
           </div>
 
-          <!-- Step Content -->
-          <div class="bg-slate-50 rounded-lg p-3 border border-slate-200/80 group-hover:border-slate-300 transition-colors">
+          <!-- Step Content Card -->
+          <div
+            :class="[
+              'rounded-lg p-3 border transition-colors',
+              step.isEndpoint
+                ? 'bg-white border-emerald-300 shadow-xs'
+                : 'bg-cream-muted border-slate-200/80 hover:border-slate-300',
+            ]"
+          >
             <div class="flex items-center justify-between gap-2 mb-1">
-              <span class="text-xs font-semibold text-[#B24E2A] uppercase tracking-wide">
+              <span
+                :class="[
+                  'text-xs font-semibold uppercase tracking-wide',
+                  step.isEndpoint ? 'text-emerald-700' : 'text-terracotta-dark',
+                ]"
+                style="line-height: 1.45"
+              >
                 {{ step.heading }}
               </span>
-              <span v-if="step.genderLabel" class="text-xs text-slate-500">
+              <span
+                v-if="step.genderLabel"
+                :class="[
+                  'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border',
+                  step.genderBadgeClass,
+                ]"
+                style="line-height: 1.45"
+              >
                 {{ step.genderLabel }}
               </span>
             </div>
-            <div class="text-sm font-medium text-slate-800">
+
+            <div class="text-sm font-medium font-display text-slate-800" style="line-height: 1.45">
               {{ step.name }}
             </div>
+
             <div v-if="step.subtitle" class="text-xs text-slate-500 mt-0.5">
               {{ step.subtitle }}
             </div>
@@ -83,15 +117,22 @@
 import { computed } from 'vue';
 import type { KinshipResult, Member } from '@/types/api';
 import AppChip from '@/components/ui/AppChip.vue';
+import AppAvatar from '@/components/ui/AppAvatar.vue';
+import { IconArrowRight } from '@/components/icons';
 import { toUiGender } from '@/api/gender';
+import { genAccentVar } from '@/components/tree/card-visual';
 
 interface Props {
   result: KinshipResult;
   memberMap?: Record<string, Member>;
+  fromName?: string;
+  toName?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   memberMap: () => ({}),
+  fromName: '',
+  toName: '',
 });
 
 const dialectLabel = computed(() => {
@@ -102,16 +143,42 @@ const dialectLabel = computed(() => {
       return 'Phương ngữ: Miền Nam';
     case 'bac':
     default:
-      return 'Phương ngữ: Miền Bắc';
+      return 'Phương ngữ: Miền Bắc (Chuẩn)';
   }
+});
+
+const fromLabel = computed(() => {
+  if (props.fromName) return props.fromName;
+  const path = props.result.path || [];
+  if (path.length > 0 && props.memberMap[path[0]]) {
+    return props.memberMap[path[0]].full_name;
+  }
+  return '';
+});
+
+const toLabel = computed(() => {
+  if (props.toName) return props.toName;
+  const path = props.result.path || [];
+  if (path.length > 0 && props.memberMap[path[path.length - 1]]) {
+    return props.memberMap[path[path.length - 1]].full_name;
+  }
+  return '';
+});
+
+const grammarContext = computed(() => {
+  return Boolean(fromLabel.value && toLabel.value);
 });
 
 interface StepItem {
   id: string;
   name: string;
   heading: string;
+  generation: number;
   genderLabel?: string;
+  genderBadgeClass?: string;
   subtitle?: string;
+  avatarUrl?: string | null;
+  isEndpoint: boolean;
 }
 
 const stepItems = computed<StepItem[]>(() => {
@@ -121,11 +188,17 @@ const stepItems = computed<StepItem[]>(() => {
   return path.map((memberId, idx) => {
     const member = props.memberMap?.[memberId];
     const name = member?.full_name || `Thành viên (${memberId.substring(0, 8)})`;
-    const heading = member?.generation_index
-      ? `Đời thứ ${member.generation_index}`
-      : `Đời thứ ${idx + 1}`;
+    const gen = member?.generation_index || idx + 1;
+    const heading = `Đời thứ ${gen}`;
 
+    const genderRaw = member?.gender ? String(member.gender).toLowerCase() : '';
     const genderLabel = member?.gender ? toUiGender(member.gender) : undefined;
+    const genderBadgeClass =
+      genderRaw === 'male' || genderRaw === 'nam'
+        ? 'bg-sky-50 text-sky-700 border-sky-200'
+        : genderRaw === 'female' || genderRaw === 'nữ' || genderRaw === 'nu'
+        ? 'bg-rose-50 text-rose-700 border-rose-200'
+        : 'bg-slate-50 text-slate-600 border-slate-200';
 
     let subtitle: string | undefined;
     if (idx === 0) {
@@ -138,8 +211,12 @@ const stepItems = computed<StepItem[]>(() => {
       id: memberId,
       name,
       heading,
+      generation: gen,
       genderLabel,
+      genderBadgeClass,
       subtitle,
+      avatarUrl: member?.avatar_url,
+      isEndpoint: idx === path.length - 1 && path.length > 1,
     };
   });
 });
