@@ -142,4 +142,100 @@ describe('AccountView.vue', () => {
     expect(demoBadge.text()).toBe('Phiên demo');
     expect(wrapper.text()).not.toContain('Thêm phương thức đăng nhập');
   });
+
+  it('replaces emoji glyphs with the shared icon set (spec §5)', () => {
+    const wrapper = mount(AccountView, {
+      global: {
+        plugins: [
+          createTestingPinia({
+            initialState: {
+              auth: {
+                user: { id: 'u1', display_name: 'Nguyễn Văn An', is_demo: false },
+                identities: [
+                  {
+                    id: 'id-email',
+                    user_id: 'u1',
+                    provider: 'email',
+                    provider_subject: 'an@example.com',
+                    linked_at: new Date().toISOString(),
+                    last_login_at: new Date().toISOString(),
+                  },
+                  {
+                    id: 'id-demo',
+                    user_id: 'u1',
+                    provider: 'demo',
+                    provider_subject: 'demo',
+                    linked_at: new Date().toISOString(),
+                    last_login_at: new Date().toISOString(),
+                  },
+                ],
+                contacts: [
+                  {
+                    id: 'c-mail',
+                    user_id: 'u1',
+                    kind: 'email',
+                    value: 'an@example.com',
+                    verified: true,
+                    created_at: new Date().toISOString(),
+                  },
+                  {
+                    id: 'c-phone',
+                    user_id: 'u1',
+                    kind: 'phone',
+                    value: '0912345678',
+                    verified: false,
+                    created_at: new Date().toISOString(),
+                  },
+                ],
+              },
+            },
+          }),
+        ],
+      },
+    });
+
+    // No emoji glyphs anywhere in the rendered page
+    const html = wrapper.html();
+    expect(html).not.toContain('✉️');
+    expect(html).not.toContain('📞');
+    expect(html).not.toContain('⚡');
+    expect(html).not.toContain('🔑');
+
+    // Email/demo identity cards render IconEnvelope / IconSparkles components
+    const emailIdentity = wrapper.find('[data-testid="identity-card-id-email"]');
+    expect(emailIdentity.findComponent({ name: 'IconEnvelope' }).exists()).toBe(true);
+    const demoIdentity = wrapper.find('[data-testid="identity-card-id-demo"]');
+    expect(demoIdentity.findComponent({ name: 'IconSparkles' }).exists()).toBe(true);
+
+    // Contact rows render IconEnvelope (email) / IconPhone (phone)
+    const mailRow = wrapper.find('[data-testid="contact-row-c-mail"]');
+    expect(mailRow.findComponent({ name: 'IconEnvelope' }).exists()).toBe(true);
+    const phoneRow = wrapper.find('[data-testid="contact-row-c-phone"]');
+    expect(phoneRow.findComponent({ name: 'IconPhone' }).exists()).toBe(true);
+  });
+
+  it('user profile card renders the shared AppAvatar', () => {
+    const wrapper = mount(AccountView, {
+      global: {
+        plugins: [
+          createTestingPinia({
+            initialState: {
+              auth: {
+                user: { id: 'u1', display_name: 'Nguyễn Văn An', is_demo: false },
+                identities: [],
+                contacts: [],
+              },
+            },
+          }),
+        ],
+      },
+    });
+
+    const avatar = wrapper.find('[data-testid="user-avatar"]');
+    expect(avatar.exists()).toBe(true);
+    const avatarComponent = wrapper.findComponent({ name: 'AppAvatar' });
+    expect(avatarComponent.exists()).toBe(true);
+    expect(avatarComponent.props('size')).toBe('w-14');
+    expect(avatarComponent.props('name')).toBe('Nguyễn Văn An');
+  });
 });

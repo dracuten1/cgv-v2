@@ -20,8 +20,8 @@
       :disabled="store.loading"
       data-testid="notification-toggle"
       :class="[
-        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C85A32]',
-        store.isSubscribed ? 'bg-[#C85A32]' : 'bg-slate-300',
+        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta',
+        store.isSubscribed ? 'bg-terracotta' : 'bg-slate-300',
         store.loading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
       ]"
       @click="onToggle"

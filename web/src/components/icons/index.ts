@@ -30,3 +30,4 @@ export { default as IconAdjustmentsHorizontal } from './IconAdjustmentsHorizonta
 export { default as IconMapPin } from './IconMapPin.vue';
 export { default as IconCalendarDays } from './IconCalendarDays.vue';
 export { default as IconHeart } from './IconHeart.vue';
+export { default as IconPhone } from './IconPhone.vue';
