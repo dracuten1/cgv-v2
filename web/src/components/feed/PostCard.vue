@@ -1,12 +1,7 @@
 <template>
   <article class="bg-white rounded-xl shadow-xs border border-slate-200 p-5">
     <header class="flex items-start space-x-3">
-      <div
-        class="w-10 h-10 rounded-full bg-[#F9EAE1] text-[#B24E2A] flex items-center justify-center font-semibold text-sm shrink-0 select-none"
-        aria-hidden="true"
-      >
-        {{ initials }}
-      </div>
+      <AppAvatar :name="post.author_display_name" size="w-10" />
       <div class="min-w-0 flex-1">
         <p class="text-sm font-semibold text-slate-800 truncate" data-testid="post-author">
           {{ post.author_display_name }}
@@ -32,6 +27,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import ImageGrid from './ImageGrid.vue';
+import AppAvatar from '@/components/ui/AppAvatar.vue';
 import type { FeedPostItem } from '@/types/api';
 
 interface Props {
@@ -39,16 +35,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-
-const initials = computed(() => {
-  const name = props.post.author_display_name?.trim() || '';
-  if (!name) return '?';
-  // Vietnamese names are "Họ Tên đệm + Tên": initials come from first + last word
-  const words = name.split(/\s+/).filter(Boolean);
-  const first = words[0]?.charAt(0) ?? '';
-  const last = words.length > 1 ? words[words.length - 1]?.charAt(0) ?? '' : '';
-  return (first + last).toUpperCase();
-});
 
 const formattedDate = computed(() => {
   const date = new Date(props.post.created_at);

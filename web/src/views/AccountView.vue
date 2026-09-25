@@ -14,7 +14,7 @@
       <AppButton
         variant="outline"
         size="sm"
-        class="self-start sm:self-auto text-slate-600 border-slate-300 hover:bg-slate-50"
+        class="self-start sm:self-auto"
         data-testid="logout-btn"
         @click="handleLogout"
       >
@@ -143,7 +143,6 @@
             :key="prov.id"
             variant="outline"
             size="sm"
-            class="border-slate-300 text-slate-700 hover:bg-slate-50"
             @click="startLinking(prov.id)"
           >
             <span class="flex items-center gap-2">
@@ -171,7 +170,7 @@
         <div
           v-for="contact in authStore.contacts"
           :key="contact.id"
-          class="p-3.5 flex items-center justify-between gap-3 bg-white hover:bg-slate-50/60 transition-colors"
+          class="p-3.5 flex items-center justify-between gap-3 bg-white hover:bg-cream-muted/60 transition-colors"
           :data-testid="`contact-row-${contact.id}`"
         >
           <div class="flex items-center gap-3">

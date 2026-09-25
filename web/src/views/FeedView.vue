@@ -121,15 +121,15 @@
     <div v-if="feedStore.loading && !feedStore.posts.length" class="space-y-3" data-testid="feed-loading">
       <div v-for="n in 3" :key="n" class="bg-white rounded-xl border border-slate-200 p-5 animate-pulse">
         <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-full bg-slate-200"></div>
+          <div class="w-10 h-10 rounded-full bg-cream-muted"></div>
           <div class="flex-1 space-y-2">
-            <div class="h-3 bg-slate-200 rounded w-1/3"></div>
-            <div class="h-2 bg-slate-100 rounded w-1/4"></div>
+            <div class="h-3 bg-cream-muted rounded w-1/3"></div>
+            <div class="h-2 bg-cream-muted rounded w-1/4"></div>
           </div>
         </div>
         <div class="mt-4 space-y-2">
-          <div class="h-3 bg-slate-100 rounded w-full"></div>
-          <div class="h-3 bg-slate-100 rounded w-2/3"></div>
+          <div class="h-3 bg-cream-muted rounded w-full"></div>
+          <div class="h-3 bg-cream-muted rounded w-2/3"></div>
         </div>
       </div>
       <p class="text-center text-sm text-slate-500">Đang tải bài viết…</p>
