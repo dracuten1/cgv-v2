@@ -12,6 +12,7 @@
         :placeholder="placeholder"
         :disabled="disabled"
         :required="required"
+        :maxlength="maxlength"
         :class="[
           'block w-full transition-colors',
           variantClasses,
@@ -43,6 +44,8 @@ interface Props {
   required?: boolean;
   id?: string;
   fullWidth?: boolean;
+  /** Max characters (client mirror of the backend rune budget). */
+  maxlength?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -57,6 +60,7 @@ const props = withDefaults(defineProps<Props>(), {
   required: false,
   id: '',
   fullWidth: true,
+  maxlength: undefined,
 });
 
 const emit = defineEmits<{

@@ -55,4 +55,21 @@ describe('AppTextarea.vue', () => {
 
     expect(wrapper.text()).toContain('Nội dung bắt buộc');
   });
+
+  it('binds maxlength onto the inner textarea when provided', () => {
+    const wrapper = mount(AppTextarea, {
+      props: {
+        maxlength: 5000,
+      },
+    });
+
+    // maxlength must land on the <textarea> itself, not the wrapper div
+    expect(wrapper.find('textarea').attributes('maxlength')).toBe('5000');
+  });
+
+  it('omits maxlength attribute when the prop is not set', () => {
+    const wrapper = mount(AppTextarea, { props: {} });
+
+    expect(wrapper.find('textarea').attributes('maxlength')).toBeUndefined();
+  });
 });

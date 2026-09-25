@@ -28,6 +28,7 @@
       v-if="authStore.isAuthenticated"
       class="bg-white rounded-xl shadow-xs border border-slate-200 p-4 mb-6"
       data-testid="composer-form"
+      :aria-busy="posting ? 'true' : undefined"
       @submit.prevent="submitPost"
     >
       <!-- Avatar + borderless textarea row -->
@@ -37,6 +38,7 @@
           v-model="content"
           variant="borderless"
           :rows="3"
+          :maxlength="MAX_CONTENT_RUNES"
           placeholder="Chia sẻ câu chuyện với gia đình…"
         />
       </div>
@@ -88,15 +90,27 @@
         </span>
       </div>
 
-      <!-- Footer: helper + submit -->
+      <!-- Footer: helper + char budget + submit -->
       <div class="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-slate-100">
         <p class="text-xs text-slate-400">Bài viết hiển thị cho cả gia đình</p>
-        <AppButton type="submit" :loading="posting" :disabled="!canSubmit">
-          <span class="flex items-center gap-2">
-            <IconPaperAirplane class="w-4 h-4" />
-            <span>Đăng bài</span>
+        <div class="flex items-center gap-3">
+          <span
+            data-testid="composer-char-counter"
+            :class="[
+              'text-xs leading-relaxed tabular-nums',
+              overLimit ? 'text-red-600 font-medium' : 'text-slate-400',
+            ]"
+            aria-live="polite"
+          >
+            {{ runeCount }}/{{ MAX_CONTENT_RUNES }}
           </span>
-        </AppButton>
+          <AppButton type="submit" :loading="posting" :disabled="!canSubmit || posting">
+            <span class="flex items-center gap-2">
+              <IconPaperAirplane class="w-4 h-4" />
+              <span>{{ posting ? 'Đang đăng…' : 'Đăng bài' }}</span>
+            </span>
+          </AppButton>
+        </div>
       </div>
     </form>
 
@@ -205,11 +219,21 @@ const imageUrl = ref('');
 const images = ref<string[]>([]);
 const posting = ref(false);
 
+// Client mirror of the backend rune budget: api/internal/feed/service.go
+// MaxContentRunes = 5000 (rune-counted, so Vietnamese diacritics count as
+// one character each — same as JS code-point iteration).
+const MAX_CONTENT_RUNES = 5000;
+
+const runeCount = computed(() => [...content.value].length);
+const overLimit = computed(() => runeCount.value > MAX_CONTENT_RUNES);
+
 const familyOptions = computed<SelectOption[]>(() =>
   families.value.map((f) => ({ value: f.id, label: f.name }))
 );
 
-const canSubmit = computed(() => content.value.trim().length > 0);
+const canSubmit = computed(
+  () => content.value.trim().length > 0 && !overLimit.value && !posting.value
+);
 
 onMounted(async () => {
   // Resolve auth state silently (cached when the router guard already did it)
