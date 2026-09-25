@@ -47,6 +47,9 @@ describe('OAuthCallbackView.vue', () => {
     await flushPromises();
 
     expect(wrapper.find('[data-testid="oauth-error"]').exists()).toBe(true);
+    // Thin wrapper renders the shared AuthInterstitial error state (no retry on oauth contract)
+    expect(wrapper.find('[data-testid="status-disc-error"]').exists()).toBe(true);
+    expect(wrapper.text()).not.toContain('Thử lại');
     expect(wrapper.find('[data-testid="oauth-message"]').text()).toBe(
       'Tài khoản mạng xã hội này đã được liên kết với tài khoản khác.'
     );
@@ -93,6 +96,8 @@ describe('OAuthCallbackView.vue', () => {
     await flushPromises();
 
     expect(wrapper.find('[data-testid="oauth-success"]').exists()).toBe(true);
+    // Thin wrapper renders the shared AuthInterstitial success state
+    expect(wrapper.find('[data-testid="status-disc-success"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="oauth-message"]').text()).toContain('Google');
     expect(wrapper.find('[data-testid="oauth-message"]').text()).toBe(
       'Đã liên kết thành công tài khoản Google với Cây Gia Phả.'
