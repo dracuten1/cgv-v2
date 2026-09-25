@@ -5,10 +5,11 @@
       <span v-if="required" class="text-red-500">*</span>
     </label>
 
-    <!-- Selected State Chip View -->
+    <!-- Selected State Chip View: gen-stripe card (spec §4.2 / §6.4) -->
     <div
       v-if="selectedMember"
-      class="flex items-center justify-between p-2 rounded-lg border border-slate-200 bg-slate-50 text-xs shadow-xs"
+      class="flex items-center justify-between p-2 rounded-lg border border-slate-200 bg-white text-xs shadow-xs"
+      :style="selectedMember.generation_index ? { borderLeftWidth: '4px', borderLeftColor: `var(${genAccentVar(selectedMember.generation_index)})` } : {}"
       data-testid="combobox-selected-chip"
     >
       <div class="flex items-center space-x-2 min-w-0">
@@ -23,7 +24,8 @@
         </span>
         <span
           v-if="selectedMember.generation_index"
-          class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-normal bg-terracotta-soft text-terracotta-dark border border-terracotta-border shrink-0"
+          class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0"
+          :style="genBadgeStyle(selectedMember.generation_index)"
         >
           Đời {{ selectedMember.generation_index }}
         </span>
@@ -96,44 +98,51 @@
         role="option"
         :id="`${listboxId}-option-${idx}`"
         :aria-selected="idx === activeIndex"
-        :class="[
-          'w-full text-left px-3 py-2.5 text-xs flex items-center justify-between cursor-pointer transition-colors',
-          idx === activeIndex ? 'bg-slate-100 text-slate-900' : 'hover:bg-slate-50 text-slate-800',
-        ]"
+        class="p-0"
         @mouseenter="activeIndex = idx"
         @click="selectMember(member)"
       >
-        <div class="flex items-center space-x-2.5 min-w-0">
-          <AppAvatar
-            :src="member.avatar_url"
-            :name="member.full_name"
-            :generation="member.generation_index"
-            size="w-9"
-          />
-          <div class="truncate">
-            <span class="font-display font-semibold text-slate-900 block truncate">
-              {{ member.full_name }}
+        <button
+          type="button"
+          tabindex="-1"
+          :class="[
+            'w-full text-left px-3 py-2.5 text-xs flex items-center justify-between cursor-pointer transition-colors',
+            idx === activeIndex ? 'bg-slate-100 text-slate-900' : 'hover:bg-slate-50 text-slate-800',
+          ]"
+        >
+          <div class="flex items-center space-x-2.5 min-w-0">
+            <AppAvatar
+              :src="member.avatar_url"
+              :name="member.full_name"
+              :generation="member.generation_index"
+              size="w-9"
+            />
+            <div class="truncate">
+              <span class="font-display font-semibold text-slate-900 block truncate">
+                {{ member.full_name }}
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-1.5 shrink-0 ml-2">
+            <span
+              v-if="member.generation_index"
+              class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0"
+              :style="genBadgeStyle(member.generation_index)"
+            >
+              Đời {{ member.generation_index }}
+            </span>
+            <span
+              v-if="member.gender"
+              :class="[
+                'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-normal',
+                genderBadgeClass(member.gender),
+              ]"
+            >
+              {{ genderLabel(member.gender) }}
             </span>
           </div>
-        </div>
-
-        <div class="flex items-center space-x-1.5 shrink-0 ml-2">
-          <span
-            v-if="member.generation_index"
-            class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-normal bg-slate-100 text-slate-600 border border-slate-200"
-          >
-            Đời {{ member.generation_index }}
-          </span>
-          <span
-            v-if="member.gender"
-            :class="[
-              'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-normal',
-              genderBadgeClass(member.gender),
-            ]"
-          >
-            {{ genderLabel(member.gender) }}
-          </span>
-        </div>
+        </button>
       </li>
     </ul>
   </div>
@@ -143,6 +152,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import AppAvatar from './AppAvatar.vue';
 import { IconMagnifyingGlass, IconXMark } from '@/components/icons';
+import { genAccentVar, genSoftVar } from '@/components/tree/card-visual';
 
 export interface ComboboxMember {
   id: string;
@@ -264,8 +274,19 @@ const onKeyDown = (event: KeyboardEvent) => {
   }
 };
 
-const genderBadgeClass = (gender?: string | null) => {
-  const g = (gender || '').toLowerCase();
+// Gen-tinted "Đời N" micro-badge (mockup 04): bg gen-N-soft + text gen-N, INV-02 line-height floor
+const genBadgeStyle = (generation?: number): Record<string, string> => {
+  if (!generation || generation <= 0) {
+    return { backgroundColor: 'var(--color-terracotta-soft)', color: 'var(--color-terracotta-dark)', lineHeight: '1.45' };
+  }
+  return {
+    backgroundColor: `var(${genSoftVar(generation)})`,
+    color: `var(${genAccentVar(generation)})`,
+    lineHeight: '1.45',
+  };
+};
+
+const genderBadgeClass = (gender?: string | null) => {  const g = (gender || '').toLowerCase();
   if (g === 'male' || g === 'nam') {
     return 'bg-sky-50 text-sky-700 border border-sky-200';
   }
