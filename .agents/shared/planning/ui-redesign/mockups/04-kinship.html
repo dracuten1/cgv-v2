@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>CGP v2 — Tính quan hệ họ hàng (thiết kế lại) · Mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="./mockup-fonts.css"/>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: {
+    cream:'#FDFBF7', 'cream-card':'#FFFFFF', 'cream-muted':'#F5EFE6',
+    terracotta:{DEFAULT:'#C85A32',hover:'#B24E2A',dark:'#983F1E',soft:'#F9EAE1',border:'#F4D0C2'},
+    'gen-1':'#E07A5F','gen-1-soft':'#FBECE8','gen-2':'#81B29A','gen-2-soft':'#EDF5F1',
+    'gen-3':'#6B9080','gen-3-soft':'#EAF0EE','gen-4':'#D4A373','gen-4-soft':'#FAF3EB'
+  },
+  fontFamily:{ display:['Fraunces','Georgia','serif'], body:['"Be Vietnam Pro"','system-ui','sans-serif'] }
+}}}
+</script>
+<style>
+  body{font-family:'Be Vietnam Pro',system-ui,sans-serif;line-height:1.6;background:#ECE7DE;color:#1E293B;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4,h5,h6{font-family:Fraunces,Georgia,serif;line-height:1.45}
+  .frame-label{display:inline-flex;align-items:center;gap:.5rem;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#78716c;background:#ffffffcc;border:1px solid #e7e0d5;border-radius:9999px;padding:.25rem .75rem}
+</style>
+</head>
+<body class="p-6 sm:p-10 space-y-10">
+
+<div class="max-w-[1180px] mx-auto">
+  <p class="frame-label">CGP v2 · Mockup 04 — /kinship</p>
+  <h1 class="mt-3 text-2xl font-bold text-stone-800">Tính quan hệ — people-picker có avatar + kết quả giàu hình ảnh</h1>
+  <p class="mt-1 text-sm text-stone-600 max-w-2xl">Combobox mới: hàng chọn người có <strong>avatar + huy hiệu đời (màu gen) + huy hiệu giới tính</strong>; trạng thái đã chọn = thẻ stripe màu đời có nút xóa. Kết quả: term hero Fraunces + timeline đường đi gắn avatar từng người.</p>
+</div>
+
+<!-- ═══════════════ DESKTOP ═══════════════ -->
+<div class="max-w-[1180px] mx-auto">
+  <p class="frame-label mb-3">🖥 Desktop ≥ 768px — picker 1 đang mở, picker 2 đã chọn, có kết quả</p>
+  <div class="rounded-xl overflow-hidden shadow-xl border border-stone-300 bg-cream">
+    <div class="bg-stone-100 border-b border-stone-200 px-4 h-9 flex items-center gap-2">
+      <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+      <span class="ml-3 text-xs text-stone-500 bg-white border border-stone-200 rounded-full px-3 py-0.5">localhost:3456/kinship</span>
+    </div>
+
+    <!-- App header -->
+    <header class="bg-white border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <a href="#" class="flex items-center gap-2 text-slate-900 font-display font-bold text-xl">
+          <span class="w-8 h-8 rounded-lg bg-terracotta text-white flex items-center justify-center font-serif text-lg">Phả</span>
+          <span>Cây Gia Phả</span>
+        </a>
+        <nav class="flex items-center gap-1" aria-label="Điều hướng chính">
+          <a href="#" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-cream-muted transition-colors">Gia phả</a>
+          <a href="#" class="px-3 py-2 rounded-lg text-sm font-medium bg-terracotta-soft text-terracotta-dark font-semibold">Quan hệ</a>
+          <a href="#" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-cream-muted transition-colors">Bảng tin</a>
+          <a href="#" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-cream-muted transition-colors">Tài khoản</a>
+        </nav>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 bg-cream-muted border border-slate-200 px-3 py-1.5 rounded-full text-xs">
+            <span class="w-5 h-5 rounded-full overflow-hidden border border-slate-200">
+              <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#f4f8fb"/><circle cx="32" cy="25" r="11" fill="#7d9cb8"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#7d9cb8"/></svg>
+            </span>
+            <span class="font-medium text-slate-800">Nguyễn Văn Bình</span>
+            <span class="bg-amber-100 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider" style="line-height:1.45;">Demo</span>
+          </div>
+          <button type="button" class="text-xs text-slate-500 hover:text-red-600 font-medium transition-colors">Đăng xuất</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+      <!-- Page header -->
+      <div class="text-center sm:text-left pb-4 border-b border-slate-200">
+        <h1 class="text-2xl sm:text-3xl font-bold font-display text-slate-800">Tính quan hệ họ hàng</h1>
+        <p class="text-slate-500 text-sm mt-1">Xác định danh xưng xưng hô gia tộc chính xác theo chuẩn văn hóa Việt Nam</p>
+      </div>
+
+      <!-- Quick-demo chip -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs text-slate-500 font-medium">Lối tắt thử nghiệm:</span>
+        <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-terracotta-soft text-terracotta-dark border border-terracotta-border hover:bg-[#F3D5C6] transition-colors">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
+          Thử nhanh: Cụ cố / Chắt (Nguyễn Văn An → Nguyễn Văn Bình)
+        </button>
+      </div>
+
+      <!-- Calculator form card -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-6">
+        <div class="relative grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Swap button (desktop, centered) -->
+          <button type="button" aria-label="Đổi vị trí hai người" class="hidden md:flex absolute left-1/2 top-9 -translate-x-1/2 z-20 w-8 h-8 items-center justify-center rounded-full bg-white border border-slate-300 text-slate-500 shadow-sm hover:text-terracotta hover:border-terracotta focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
+          </button>
+
+          <!-- ══ Picker 1: OPEN state ══ -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-slate-700">Người thứ nhất (Người gọi / Bắt đầu) <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <!-- Trigger -->
+              <div class="flex items-center gap-2 rounded-lg border border-terracotta bg-white pl-3 pr-2 py-2 shadow-xs transition-colors" role="combobox" aria-expanded="true">
+                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                <input value="nguyễn văn" class="w-full bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none" placeholder="Tìm theo tên…"/>
+                <span class="text-[10px] text-slate-400 tabular-nums shrink-0" style="line-height:1.45;">3/24</span>
+              </div>
+              <!-- Dropdown with avatars -->
+              <div class="absolute z-30 mt-1.5 w-full bg-white rounded-lg border border-slate-200 shadow-lg max-h-64 overflow-y-auto p-1.5 space-y-0.5">
+                <!-- highlighted row -->
+                <button type="button" class="w-full text-left p-2 rounded-lg bg-cream-muted flex items-center gap-2.5 transition-colors">
+                  <span class="w-9 h-9 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                    <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#e9f0f6"/><circle cx="32" cy="25" r="11" fill="#4e6d8c"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#4e6d8c"/></svg>
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block text-sm font-semibold text-slate-800 font-display truncate" style="line-height:1.45;">Nguyễn Văn An</span>
+                    <span class="block text-xs text-slate-400">1948 · Gốc phả hệ</span>
+                  </span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gen-1-soft text-gen-1 border border-gen-1/30 shrink-0" style="line-height:1.45;">Đời 1</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-200 shrink-0" style="line-height:1.45;">Nam</span>
+                  <svg class="w-4 h-4 text-terracotta shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                </button>
+                <button type="button" class="w-full text-left p-2 rounded-lg hover:bg-cream-muted flex items-center gap-2.5 transition-colors">
+                  <span class="w-9 h-9 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                    <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#eef3f8"/><circle cx="32" cy="25" r="11" fill="#5b7a99"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#5b7a99"/></svg>
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block text-sm font-semibold text-slate-800 font-display truncate" style="line-height:1.45;">Nguyễn Văn Cường</span>
+                    <span class="block text-xs text-slate-400">1972 · Con trai ông An</span>
+                  </span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gen-2-soft text-gen-2 border border-gen-2/30 shrink-0" style="line-height:1.45;">Đời 2</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-200 shrink-0" style="line-height:1.45;">Nam</span>
+                </button>
+                <button type="button" class="w-full text-left p-2 rounded-lg hover:bg-cream-muted flex items-center gap-2.5 transition-colors">
+                  <span class="w-9 h-9 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                    <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#f4f8fb"/><circle cx="32" cy="25" r="11" fill="#7d9cb8"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#7d9cb8"/></svg>
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block text-sm font-semibold text-slate-800 font-display truncate" style="line-height:1.45;">Nguyễn Văn Bình</span>
+                    <span class="block text-xs text-slate-400">1998 · Cháu nội ông An</span>
+                  </span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gen-3-soft text-gen-3 border border-gen-3/30 shrink-0" style="line-height:1.45;">Đời 3</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-200 shrink-0" style="line-height:1.45;">Nam</span>
+                </button>
+                <!-- initials-fallback row (no photo) -->
+                <button type="button" class="w-full text-left p-2 rounded-lg hover:bg-cream-muted flex items-center gap-2.5 transition-colors">
+                  <span class="w-9 h-9 rounded-full flex items-center justify-center font-display font-semibold text-xs uppercase shrink-0" style="background-color:#FAF3EB;color:#D4A373;">AK</span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block text-sm font-semibold text-slate-800 font-display truncate" style="line-height:1.45;">Nguyễn An Khang</span>
+                    <span class="block text-xs text-slate-400">2024 · Chắt nội ông An</span>
+                  </span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gen-4-soft text-gen-4 border border-gen-4/30 shrink-0" style="line-height:1.45;">Đời 4</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-200 shrink-0" style="line-height:1.45;">Nam</span>
+                </button>
+                <!-- footer hint of dropdown -->
+                <div class="pt-1.5 mt-0.5 border-t border-slate-100 px-2 pb-0.5 flex items-center justify-between">
+                  <span class="text-[10px] text-slate-400" style="line-height:1.45;">↑↓ di chuyển · ↵ chọn · esc đóng</span>
+                  <span class="text-[10px] text-slate-400" style="line-height:1.45;">Hiển thị tối đa 15 kết quả</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══ Picker 2: SELECTED state ══ -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-slate-700">Người thứ hai (Người được gọi / Cần tính) <span class="text-red-500">*</span></label>
+            <!-- Selected chip: gen-stripe card w/ avatar -->
+            <div class="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white p-2.5 shadow-xs" style="border-left-width:4px; border-left-color:#6B9080;">
+              <span class="w-10 h-10 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#f4f8fb"/><circle cx="32" cy="25" r="11" fill="#7d9cb8"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#7d9cb8"/></svg>
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-slate-800 font-display truncate" style="line-height:1.45;">Nguyễn Văn Bình</p>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gen-3-soft text-gen-3 border border-gen-3/30" style="line-height:1.45;">Đời 3</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-200" style="line-height:1.45;">Nam</span>
+                  <span class="text-[10px] text-slate-400 font-mono" style="line-height:1.45;">1998</span>
+                </div>
+              </div>
+              <button type="button" aria-label="Bỏ chọn Nguyễn Văn Bình" class="w-7 h-7 flex items-center justify-center rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors shrink-0">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <button type="button" class="text-xs text-terracotta hover:text-terracotta-hover hover:underline font-medium">Đổi người khác</button>
+          </div>
+        </div>
+
+        <!-- Dialect + actions row -->
+        <div class="flex flex-col sm:flex-row sm:items-end gap-4 pt-2">
+          <div class="max-w-xs flex-1">
+            <label class="block text-sm font-medium text-slate-700 mb-1">Phương ngữ xưng hô</label>
+            <div class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 hover:border-slate-400 transition-colors">
+              <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.855.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span class="text-sm text-slate-800 flex-1">Miền Bắc (Chuẩn)</span>
+              <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 sm:pb-0.5">
+            <button type="button" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-terracotta text-white shadow-sm hover:bg-terracotta-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6 6.75h12v12H6V6.75z" opacity="0"/><path stroke-linecap="round" stroke-linejoin="round" d="M4.875 12h.008v.008h-.008V12zM6 15h.008v.008H6V15z" opacity="0"/></svg>
+              Tính quan hệ
+            </button>
+            <button type="button" class="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-cream-muted hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors">Chọn lại</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ RESULT ══ -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-6">
+        <!-- Term hero -->
+        <div class="text-center py-4 border-b border-slate-100">
+          <div class="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2" style="line-height:1.45;">Xưng hô gia tộc</div>
+          <div class="text-4xl sm:text-[2.75rem] font-bold font-display text-terracotta" style="line-height:1.45;">“cháu nội”</div>
+          <p class="mt-2 text-sm text-slate-500">Nguyễn Văn An <span class="text-slate-400">gọi</span> Nguyễn Văn Bình</p>
+        </div>
+
+        <!-- Metadata chips -->
+        <div class="flex flex-wrap items-center justify-center gap-2">
+          <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium bg-terracotta-soft text-terracotta-dark border-terracotta-border">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>
+            Đường trực hệ
+          </span>
+          <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium bg-white text-slate-600 border-slate-300">Cách 2 đời</span>
+          <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium bg-emerald-50 text-emerald-700 border-emerald-200">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+            Huyết thống
+          </span>
+          <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium bg-white text-slate-600 border-slate-300">Miền Bắc (Chuẩn)</span>
+        </div>
+
+        <!-- Path timeline with avatars -->
+        <div class="pt-4 border-t border-slate-100">
+          <h3 class="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4 text-terracotta" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+            Đường dẫn quan hệ qua các đời
+          </h3>
+
+          <div class="relative pl-8 space-y-5 before:absolute before:left-[19px] before:top-6 before:bottom-6 before:w-0.5 before:bg-slate-200">
+            <!-- Step 1 -->
+            <div class="relative">
+              <div class="absolute -left-8 top-0 w-10 h-10 rounded-full bg-white border-2 border-gen-1 shadow-xs flex items-center justify-center" style="line-height:1.45;">
+                <svg viewBox="0 0 64 64" class="w-full h-full rounded-full"><circle cx="32" cy="32" r="32" fill="#e9f0f6"/><circle cx="32" cy="25" r="11" fill="#4e6d8c"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#4e6d8c"/></svg>
+                <span class="absolute -top-1 -left-1 w-4 h-4 rounded-full bg-gen-1 text-white text-[9px] font-bold flex items-center justify-center border border-white" style="line-height:1.45;">1</span>
+              </div>
+              <div class="bg-cream-muted rounded-lg p-3 border border-slate-200/80 hover:border-slate-300 transition-colors">
+                <div class="flex items-center justify-between gap-2 mb-0.5">
+                  <span class="text-xs font-semibold text-terracotta-dark uppercase tracking-wide" style="line-height:1.45;">Đời thứ 1</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-200" style="line-height:1.45;">Nam</span>
+                </div>
+                <div class="text-sm font-medium font-display text-slate-800" style="line-height:1.45;">Nguyễn Văn An</div>
+                <div class="text-xs text-slate-500 mt-0.5">Điểm bắt đầu · 1948</div>
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="relative">
+              <div class="absolute -left-8 top-0 w-10 h-10 rounded-full bg-white border-2 border-gen-2 shadow-xs flex items-center justify-center" style="line-height:1.45;">
+                <svg viewBox="0 0 64 64" class="w-full h-full rounded-full"><circle cx="32" cy="32" r="32" fill="#eef3f8"/><circle cx="32" cy="25" r="11" fill="#5b7a99"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#5b7a99"/></svg>
+                <span class="absolute -top-1 -left-1 w-4 h-4 rounded-full bg-gen-2 text-white text-[9px] font-bold flex items-center justify-center border border-white" style="line-height:1.45;">2</span>
+              </div>
+              <div class="bg-cream-muted rounded-lg p-3 border border-slate-200/80 hover:border-slate-300 transition-colors">
+                <div class="flex items-center justify-between gap-2 mb-0.5">
+                  <span class="text-xs font-semibold text-terracotta-dark uppercase tracking-wide" style="line-height:1.45;">Đời thứ 2</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-200" style="line-height:1.45;">Nam</span>
+                </div>
+                <div class="text-sm font-medium font-display text-slate-800" style="line-height:1.45;">Nguyễn Văn Cường</div>
+                <div class="text-xs text-slate-500 mt-0.5">Con trai · 1972</div>
+              </div>
+            </div>
+
+            <!-- Step 3 (endpoint) -->
+            <div class="relative">
+              <div class="absolute -left-8 top-0 w-10 h-10 rounded-full bg-white border-2 border-emerald-500 shadow-xs flex items-center justify-center" style="line-height:1.45;">
+                <svg viewBox="0 0 64 64" class="w-full h-full rounded-full"><circle cx="32" cy="32" r="32" fill="#f4f8fb"/><circle cx="32" cy="25" r="11" fill="#7d9cb8"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#7d9cb8"/></svg>
+                <span class="absolute -top-1 -left-1 w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center justify-center border border-white" style="line-height:1.45;">3</span>
+              </div>
+              <div class="bg-white rounded-lg p-3 border border-emerald-300 shadow-xs">
+                <div class="flex items-center justify-between gap-2 mb-0.5">
+                  <span class="text-xs font-semibold text-emerald-700 uppercase tracking-wide" style="line-height:1.45;">Đời thứ 3</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200" style="line-height:1.45;">Đối tượng xưng hô</span>
+                </div>
+                <div class="text-sm font-medium font-display text-slate-800" style="line-height:1.45;">Nguyễn Văn Bình</div>
+                <div class="text-xs text-slate-500 mt-0.5">Cháu nội · 1998</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <div class="h-6"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ MOBILE + NOTES ═══════════════ -->
+<div class="max-w-[1180px] mx-auto grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-8 items-start">
+  <div>
+    <p class="frame-label mb-3">📱 Mobile &lt; 768px — picker 2 đang mở</p>
+    <div class="mx-auto w-[390px] rounded-[2.5rem] border-[10px] border-stone-800 bg-cream shadow-2xl overflow-hidden relative">
+      <div class="h-7 bg-stone-800 flex items-center justify-center"><span class="w-24 h-4 rounded-full bg-stone-900"></span></div>
+      <div class="relative min-h-[820px] pb-20 overflow-hidden">
+        <!-- mini header (mobile hides desktop header; show brand row) -->
+        <div class="bg-white border-b border-slate-200 px-4 h-12 flex items-center justify-between">
+          <a href="#" class="flex items-center gap-2 text-slate-900 font-display font-bold">
+            <span class="w-7 h-7 rounded-lg bg-terracotta text-white flex items-center justify-center font-serif text-base">Phả</span>
+            <span class="text-base">Cây Gia Phả</span>
+          </a>
+          <div class="flex items-center gap-1.5">
+            <span class="w-6 h-6 rounded-full overflow-hidden border border-slate-200">
+              <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#f4f8fb"/><circle cx="32" cy="25" r="11" fill="#7d9cb8"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#7d9cb8"/></svg>
+            </span>
+            <span class="bg-amber-100 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider" style="line-height:1.45;">Demo</span>
+          </div>
+        </div>
+
+        <div class="p-4 space-y-4">
+          <div class="pb-3 border-b border-slate-200">
+            <h1 class="text-xl font-bold font-display text-slate-800">Tính quan hệ họ hàng</h1>
+            <p class="text-slate-500 text-xs mt-0.5">Danh xưng xưng hô theo chuẩn văn hóa Việt Nam</p>
+          </div>
+
+          <!-- picker 1: selected -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-medium text-slate-700">Người thứ nhất (Người gọi) <span class="text-red-500">*</span></label>
+            <div class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white p-2 shadow-xs" style="border-left-width:4px; border-left-color:#4E6D8C;">
+              <span class="w-9 h-9 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#e9f0f6"/><circle cx="32" cy="25" r="11" fill="#4e6d8c"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#4e6d8c"/></svg>
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-slate-800 font-display truncate" style="line-height:1.45;">Nguyễn Văn An</p>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gen-1-soft text-gen-1 border border-gen-1/30" style="line-height:1.45;">Đời 1</span>
+                  <span class="text-[10px] text-slate-400 font-mono" style="line-height:1.45;">1948</span>
+                </div>
+              </div>
+              <button type="button" aria-label="Bỏ chọn" class="w-7 h-7 flex items-center justify-center rounded-full text-slate-400 hover:text-red-600 transition-colors shrink-0">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- swap hint (stacked) -->
+          <div class="flex items-center gap-2 text-[10px] text-slate-400" style="line-height:1.45;">
+            <span class="w-6 h-px bg-slate-300"></span>
+            <svg class="w-3.5 h-3.5 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
+            người gọi ↓ người được gọi
+            <span class="w-6 h-px bg-slate-300"></span>
+          </div>
+
+          <!-- picker 2: OPEN -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-medium text-slate-700">Người thứ hai (Người được gọi) <span class="text-red-500">*</span></label>
+            <div class="flex items-center gap-2 rounded-lg border border-terracotta bg-white pl-3 pr-2 py-2 shadow-xs">
+              <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+              <input value="bình" class="w-full bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none" placeholder="Tìm theo tên…"/>
+            </div>
+            <!-- dropdown -->
+            <div class="bg-white rounded-lg border border-slate-200 shadow-lg max-h-56 overflow-y-auto p-1.5 space-y-0.5">
+              <button type="button" class="w-full text-left p-2 rounded-lg bg-cream-muted flex items-center gap-2.5 transition-colors">
+                <span class="w-9 h-9 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                  <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#f4f8fb"/><circle cx="32" cy="25" r="11" fill="#7d9cb8"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#7d9cb8"/></svg>
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-sm font-semibold text-slate-800 font-display truncate" style="line-height:1.45;">Nguyễn Văn Bình</span>
+                  <span class="block text-xs text-slate-400">1998 · Cháu nội ông An</span>
+                </span>
+                <svg class="w-4 h-4 text-terracotta shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+              </button>
+              <button type="button" class="w-full text-left p-2 rounded-lg hover:bg-cream-muted flex items-center gap-2.5 transition-colors">
+                <span class="w-9 h-9 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                  <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#fcf6f2"/><circle cx="32" cy="25" r="11" fill="#c99584"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#c99584"/></svg>
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-sm font-semibold text-slate-800 font-display truncate" style="line-height:1.45;">Nguyễn Minh Châu</span>
+                  <span class="block text-xs text-slate-400">2001 · Cháu nội ông An</span>
+                </span>
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200 shrink-0" style="line-height:1.45;">Nữ</span>
+              </button>
+              <button type="button" class="w-full text-left p-2 rounded-lg hover:bg-cream-muted flex items-center gap-2.5 transition-colors">
+                <span class="w-9 h-9 rounded-full flex items-center justify-center font-display font-semibold text-xs uppercase shrink-0" style="background-color:#FAF3EB;color:#D4A373;">AK</span>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-sm font-semibold text-slate-800 font-display truncate" style="line-height:1.45;">Nguyễn An Khang</span>
+                  <span class="block text-xs text-slate-400">2024 · Chắt nội ông An</span>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <button type="button" class="w-full inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg bg-terracotta text-white shadow-sm hover:bg-terracotta-hover transition-colors">Tính quan hệ</button>
+
+          <!-- compact result -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3">
+            <div class="text-center">
+              <div class="text-[10px] uppercase tracking-wider font-semibold text-slate-400 mb-1" style="line-height:1.45;">Xưng hô gia tộc</div>
+              <div class="text-3xl font-bold font-display text-terracotta" style="line-height:1.45;">“cháu nội”</div>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-1.5">
+              <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-medium bg-terracotta-soft text-terracotta-dark border-terracotta-border" style="line-height:1.45;">Đường trực hệ</span>
+              <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-medium bg-white text-slate-600 border-slate-300" style="line-height:1.45;">Cách 2 đời</span>
+              <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-700 border-emerald-200" style="line-height:1.45;">Huyết thống</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom nav -->
+        <nav class="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200" aria-label="Điều hướng di động" style="padding-bottom:6px;">
+          <div class="grid grid-cols-4 h-16">
+            <a href="#" class="flex flex-col items-center justify-center text-xs font-medium text-slate-500 hover:text-slate-900">
+              <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m0-16a4 4 0 00-4 4v2m4-6a4 4 0 014 4v2m-8 6h8m-8 0a3 3 0 100 6h8a3 3 0 100-6"/></svg>
+              <span>Gia phả</span>
+            </a>
+            <a href="#" class="flex flex-col items-center justify-center text-xs font-medium text-terracotta">
+              <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              <span>Quan hệ</span>
+            </a>
+            <a href="#" class="flex flex-col items-center justify-center text-xs font-medium text-slate-500 hover:text-slate-900">
+              <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 002.25 2.25h-15A2.25 2.25 0 014.5 18V6.375c0-.621.504-1.125 1.125-1.125h9.75c.621 0 1.125.504 1.125 1.125v1.875c0 .621-.504 1.125-1.125 1.125z"/></svg>
+              <span>Bảng tin</span>
+            </a>
+            <a href="#" class="flex flex-col items-center justify-center text-xs font-medium text-slate-500 hover:text-slate-900">
+              <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span>Tài khoản</span>
+            </a>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-stone-200 shadow-sm p-6 max-w-xl">
+    <h2 class="text-lg font-display font-semibold text-stone-800 mb-3">Ghi chú thiết kế — Kinship</h2>
+    <ul class="space-y-2.5 text-sm text-stone-700 list-disc pl-5">
+      <li><strong>Hàng chọn người mới:</strong> avatar (ảnh thật, fallback = initials tint màu đời) + tên <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">font-display font-semibold</code> + dòng phụ (năm sinh · quan hệ với gốc) + 2 huy hiệu: <strong>“Đời N”</strong> (nền gen-N-soft, chữ gen-N) và giới tính (sky/rose). Người dùng nhận ra người bằng MẶT trước khi đọc tên — đúng nhiệm vụ của picker gia phả.</li>
+      <li><strong>Trạng thái đã chọn:</strong> thay chip text xám bằng thẻ có <strong>stripe 4px màu đời</strong> (công thức thẻ cây) + avatar + nút xóa tròn (hover đỏ nhẹ). Link “Đổi người khác” mở lại dropdown.</li>
+      <li><strong>Trigger combobox:</strong> kính lúp prefix, viền focus terracotta, bộ đếm kết quả “3/24”, footer gợi ý bàn phím (↑↓ ↵ esc) — nâng cấp từ dropdown focus-tự-mở hiện tại; dropdown giữ <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">max-h-64 overflow-y-auto</code> + tối đa 15 hàng.</li>
+      <li><strong>Nút đổi chiều</strong> giữa 2 picker (desktop) — tiện cho “B gọi A” sau khi tính “A gọi B”.</li>
+      <li><strong>Kết quả:</strong> term hero giữ nguyên (“cháu nội” Fraunces terracotta + ngoặc kép INV-05) + thêm dòng ngữ pháp “A gọi B”; timeline thay dot số bằng <strong>avatar ring màu đời + số thứ tự nhỏ</strong>, bước cuối ring emerald + badge “Đối tượng xưng hô”; thẻ bước nền <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">bg-cream-muted</code> (ấm hơn slate-50).</li>
+      <li><strong>A11y:</strong> role="combobox" + aria-expanded trên trigger, aria-label cho nút xóa/swap; mọi huy hiệu chữ 10px đều <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">line-height:1.45</code> inline (INV-02).</li>
+    </ul>
+  </div>
+</div>
+
+<p class="max-w-[1180px] mx-auto text-center text-[11px] text-stone-400 pb-2">CGP v2 mockup · Fraunces + Be Vietnam Pro tự nhúng base64 (không CDN font) · Tailwind CDN chỉ dùng cho mockup</p>
+</body>
+</html>

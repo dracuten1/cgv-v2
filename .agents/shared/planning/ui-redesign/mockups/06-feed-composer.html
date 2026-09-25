@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>CGP v2 — Bảng tin &amp; composer (thiết kế lại) · Mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="./mockup-fonts.css"/>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: {
+    cream:'#FDFBF7', 'cream-card':'#FFFFFF', 'cream-muted':'#F5EFE6',
+    terracotta:{DEFAULT:'#C85A32',hover:'#B24E2A',dark:'#983F1E',soft:'#F9EAE1',border:'#F4D0C2'},
+    'gen-1':'#E07A5F','gen-1-soft':'#FBECE8','gen-2':'#81B29A','gen-2-soft':'#EDF5F1',
+    'gen-3':'#6B9080','gen-3-soft':'#EAF0EE','gen-4':'#D4A373','gen-4-soft':'#FAF3EB'
+  },
+  fontFamily:{ display:['Fraunces','Georgia','serif'], body:['"Be Vietnam Pro"','system-ui','sans-serif'] }
+}}}
+</script>
+<style>
+  body{font-family:'Be Vietnam Pro',system-ui,sans-serif;line-height:1.6;background:#ECE7DE;color:#1E293B;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4,h5,h6{font-family:Fraunces,Georgia,serif;line-height:1.45}
+  .frame-label{display:inline-flex;align-items:center;gap:.5rem;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#78716c;background:#ffffffcc;border:1px solid #e7e0d5;border-radius:9999px;padding:.25rem .75rem}
+</style>
+</head>
+<body class="p-6 sm:p-10 space-y-10">
+
+<div class="max-w-[1180px] mx-auto">
+  <p class="frame-label">CGP v2 · Mockup 06 — /feed composer</p>
+  <h1 class="mt-3 text-2xl font-bold text-stone-800">Bảng tin — composer đúng “kit” + trạng thái khách</h1>
+  <p class="mt-1 text-sm text-stone-600 max-w-2xl">Textarea không viền mở đầu bằng avatar; ô dán URL ảnh có icon link + nút Thêm ảnh; chip ảnh kèm preview thumbnail; footer có helper text + nút Đăng bài. Khách chưa đăng nhập thấy banner ấm (terracotta-soft).</p>
+</div>
+
+<!-- ═══════════════ DESKTOP ═══════════════ -->
+<div class="max-w-[1180px] mx-auto">
+  <p class="frame-label mb-3">🖥 Desktop ≥ 768px — đang soạn bài (có 1 ảnh trong hàng chờ)</p>
+  <div class="rounded-xl overflow-hidden shadow-xl border border-stone-300 bg-cream">
+    <div class="bg-stone-100 border-b border-stone-200 px-4 h-9 flex items-center gap-2">
+      <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+      <span class="ml-3 text-xs text-stone-500 bg-white border border-stone-200 rounded-full px-3 py-0.5">localhost:3456/feed</span>
+    </div>
+
+    <header class="bg-white border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <a href="#" class="flex items-center gap-2 text-slate-900 font-display font-bold text-xl">
+          <span class="w-8 h-8 rounded-lg bg-terracotta text-white flex items-center justify-center font-serif text-lg">Phả</span>
+          <span>Cây Gia Phả</span>
+        </a>
+        <nav class="flex items-center gap-1" aria-label="Điều hướng chính">
+          <a href="#" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-cream-muted transition-colors">Gia phả</a>
+          <a href="#" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-cream-muted transition-colors">Quan hệ</a>
+          <a href="#" class="px-3 py-2 rounded-lg text-sm font-medium bg-terracotta-soft text-terracotta-dark font-semibold">Bảng tin</a>
+          <a href="#" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-cream-muted transition-colors">Tài khoản</a>
+        </nav>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 bg-cream-muted border border-slate-200 px-3 py-1.5 rounded-full text-xs">
+            <span class="w-5 h-5 rounded-full overflow-hidden border border-slate-200">
+              <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#f4f8fb"/><circle cx="32" cy="25" r="11" fill="#7d9cb8"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#7d9cb8"/></svg>
+            </span>
+            <span class="font-medium text-slate-800">Nguyễn Văn Bình</span>
+            <span class="bg-amber-100 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider" style="line-height:1.45;">Demo</span>
+          </div>
+          <button type="button" class="text-xs text-slate-500 hover:text-red-600 font-medium transition-colors">Đăng xuất</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto p-6 space-y-6">
+      <!-- Page header -->
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-bold font-display text-slate-800">Bảng tin dòng họ</h1>
+          <p class="text-sm text-slate-500 mt-1">Những câu chuyện mới nhất của gia đình.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-48">
+            <div class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm hover:border-slate-400 transition-colors">
+              <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"/></svg>
+              <span class="text-slate-800 flex-1 truncate">Dòng họ Nguyễn</span>
+              <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+            </div>
+          </div>
+          <button type="button" class="relative w-9 h-9 flex items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 hover:text-terracotta hover:border-terracotta focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors" aria-label="Nhận thông báo">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+            <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-terracotta"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ══ COMPOSER ══ -->
+      <form class="bg-white rounded-xl shadow-xs border border-slate-200 p-4" onsubmit="return false">
+        <div class="flex items-start gap-3">
+          <span class="w-10 h-10 rounded-full overflow-hidden border border-slate-200 shrink-0">
+            <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#f4f8fb"/><circle cx="32" cy="25" r="11" fill="#7d9cb8"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#7d9cb8"/></svg>
+          </span>
+          <textarea rows="3" class="w-full bg-transparent border-0 resize-none px-0 py-1.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-0 leading-relaxed">Sáng nay cả nhà mình cùng đi thăm mộ cụ nội — lăng đã được trùng tu đẹp lắm. Cháu nào chưa đi thì rủ nhau cuối tuần này nhé!</textarea>
+        </div>
+
+        <!-- Image URL row -->
+        <div class="mt-3 flex items-center gap-2">
+          <div class="flex-1 flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-cream-muted/60 px-3 py-1.5 hover:border-slate-400 transition-colors">
+            <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
+            <input type="url" placeholder="Dán URL ảnh (https://…)" class="w-full bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none"/>
+          </div>
+          <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-cream-muted hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+            Thêm ảnh
+          </button>
+        </div>
+
+        <!-- Queued image chips -->
+        <div class="flex flex-wrap gap-2 mt-3">
+          <span class="inline-flex items-center gap-2 pl-1 pr-2.5 py-1 text-xs rounded-full bg-cream-muted text-slate-700 border border-slate-200 max-w-full">
+            <span class="w-6 h-6 rounded-full overflow-hidden border border-slate-200 shrink-0 bg-gen-2-soft flex items-center justify-center text-gen-2">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z"/></svg>
+            </span>
+            <span class="truncate max-w-[180px]" title="https://photos.cgp.vn/lang-cu-noi-2026.jpg">lang-cu-noi-2026.jpg</span>
+            <button type="button" aria-label="Xóa ảnh 1" class="w-4 h-4 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 transition-colors">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </span>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-slate-100">
+          <p class="text-xs text-slate-400">Bài viết hiển thị cho cả gia đình · tối đa 4 ảnh/bài</p>
+          <div class="flex items-center gap-2.5">
+            <span class="text-[10px] text-slate-400 tabular-nums" style="line-height:1.45;">128/500</span>
+            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-terracotta text-white shadow-sm hover:bg-terracotta-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
+              Đăng bài
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Anonymous variant -->
+      <div class="pt-2">
+        <p class="frame-label mb-2">Biến thể: khách chưa đăng nhập</p>
+        <div class="bg-terracotta-soft rounded-xl border border-terracotta-border p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <p class="text-sm text-terracotta-dark flex items-center gap-2">
+            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+            Đăng nhập để đăng bài viết cho dòng họ.
+          </p>
+          <button type="button" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-terracotta text-white shadow-sm hover:bg-terracotta-hover transition-colors">Đăng nhập</button>
+        </div>
+      </div>
+
+      <!-- Post in feed -->
+      <div class="pt-2">
+        <p class="frame-label mb-2">Bài đã đăng (PostCard giữ nguyên idiom)</p>
+        <article class="bg-white rounded-xl shadow-xs border border-slate-200 p-5">
+          <header class="flex items-start gap-3">
+            <span class="w-10 h-10 rounded-full overflow-hidden border border-slate-200 shrink-0">
+              <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#e9f0f6"/><circle cx="32" cy="25" r="11" fill="#4e6d8c"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#4e6d8c"/></svg>
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-slate-800 truncate" style="line-height:1.45;">Nguyễn Văn An</p>
+              <time class="text-xs text-slate-500">20 thg 9, 2026 07:45</time>
+            </div>
+          </header>
+          <p class="mt-3 text-sm text-slate-700 whitespace-pre-wrap break-words leading-relaxed">Nhắc cả nhà: giỗ cụ nội ngày 12 tháng 10 âm lịch năm nay tổ chức tại nhà长辈 — ai phụ lo mâm cúng thì nhắn con Bình đăng ký giúp.</p>
+          <div class="mt-3 grid grid-cols-2 gap-1.5">
+            <div class="aspect-[4/3] rounded-lg border border-slate-200 bg-gen-1-soft flex flex-col items-center justify-center gap-1 text-gen-1">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+              <span class="text-[10px] font-medium" style="line-height:1.45;">ảnh 1</span>
+            </div>
+            <div class="aspect-[4/3] rounded-lg border border-slate-200 bg-gen-3-soft flex flex-col items-center justify-center gap-1 text-gen-3">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+              <span class="text-[10px] font-medium" style="line-height:1.45;">ảnh 2</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </main>
+    <div class="h-6"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ MOBILE + NOTES ═══════════════ -->
+<div class="max-w-[1180px] mx-auto grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-8 items-start">
+  <div>
+    <p class="frame-label mb-3">📱 Mobile &lt; 768px</p>
+    <div class="mx-auto w-[390px] rounded-[2.5rem] border-[10px] border-stone-800 bg-cream shadow-2xl overflow-hidden relative">
+      <div class="h-7 bg-stone-800 flex items-center justify-center"><span class="w-24 h-4 rounded-full bg-stone-900"></span></div>
+      <div class="relative min-h-[720px] pb-20 overflow-hidden">
+        <div class="bg-white border-b border-slate-200 px-4 h-12 flex items-center justify-between">
+          <a href="#" class="flex items-center gap-2 text-slate-900 font-display font-bold">
+            <span class="w-7 h-7 rounded-lg bg-terracotta text-white flex items-center justify-center font-serif text-base">Phả</span>
+            <span class="text-base">Cây Gia Phả</span>
+          </a>
+          <button type="button" class="relative w-8 h-8 flex items-center justify-center rounded-lg text-slate-500" aria-label="Nhận thông báo">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+            <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-terracotta"></span>
+          </button>
+        </div>
+
+        <div class="p-4 space-y-4">
+          <div>
+            <h1 class="text-xl font-bold font-display text-slate-800">Bảng tin dòng họ</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Những câu chuyện mới nhất của gia đình.</p>
+          </div>
+
+          <!-- composer -->
+          <form class="bg-white rounded-xl shadow-xs border border-slate-200 p-3.5" onsubmit="return false">
+            <div class="flex items-start gap-2.5">
+              <span class="w-9 h-9 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#f4f8fb"/><circle cx="32" cy="25" r="11" fill="#7d9cb8"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#7d9cb8"/></svg>
+              </span>
+              <textarea rows="3" class="w-full bg-transparent border-0 resize-none px-0 py-1 text-sm text-slate-800 placeholder-slate-400 focus:outline-none leading-relaxed" placeholder="Chia sẻ câu chuyện với gia đình…"></textarea>
+            </div>
+            <div class="mt-2.5 flex items-center gap-2">
+              <div class="flex-1 flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-cream-muted/60 px-2.5 py-1.5">
+                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
+                <input type="url" placeholder="Dán URL ảnh…" class="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none"/>
+              </div>
+              <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-cream-muted transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m0 0l6.75-6.75M12 19.5l-6.75-6.75"/></svg>
+                Thêm
+              </button>
+            </div>
+            <div class="flex items-center justify-between gap-2 mt-2.5 pt-2.5 border-t border-slate-100">
+              <p class="text-[10px] text-slate-400" style="line-height:1.45;">Tối đa 4 ảnh/bài</p>
+              <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-terracotta text-white shadow-sm hover:bg-terracotta-hover transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
+                Đăng bài
+              </button>
+            </div>
+          </form>
+
+          <!-- one post -->
+          <article class="bg-white rounded-xl shadow-xs border border-slate-200 p-4">
+            <header class="flex items-start gap-2.5">
+              <span class="w-9 h-9 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                <svg viewBox="0 0 64 64" class="w-full h-full"><circle cx="32" cy="32" r="32" fill="#e9f0f6"/><circle cx="32" cy="25" r="11" fill="#4e6d8c"/><path d="M12 58c0-11.5 9-19 20-19s20 7.5 20 19v6H12z" fill="#4e6d8c"/></svg>
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-slate-800 truncate" style="line-height:1.45;">Nguyễn Văn An</p>
+                <time class="text-xs text-slate-500">20 thg 9, 2026 07:45</time>
+              </div>
+            </header>
+            <p class="mt-2.5 text-sm text-slate-700 whitespace-pre-wrap break-words leading-relaxed">Nhắc cả nhà: giỗ cụ nội ngày 12 tháng 10 âm lịch năm nay tổ chức tại nhà trưởng họ.</p>
+          </article>
+        </div>
+
+        <!-- Bottom nav -->
+        <nav class="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200" aria-label="Điều hướng di động" style="padding-bottom:6px;">
+          <div class="grid grid-cols-4 h-16">
+            <a href="#" class="flex flex-col items-center justify-center text-xs font-medium text-slate-500 hover:text-slate-900">
+              <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m0-16a4 4 0 00-4 4v2m4-6a4 4 0 014 4v2m-8 6h8m-8 0a3 3 0 100 6h8a3 3 0 100-6"/></svg>
+              <span>Gia phả</span>
+            </a>
+            <a href="#" class="flex flex-col items-center justify-center text-xs font-medium text-slate-500 hover:text-slate-900">
+              <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              <span>Quan hệ</span>
+            </a>
+            <a href="#" class="flex flex-col items-center justify-center text-xs font-medium text-terracotta">
+              <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 002.25 2.25h-15A2.25 2.25 0 014.5 18V6.375c0-.621.504-1.125 1.125-1.125h9.75c.621 0 1.125.504 1.125 1.125v1.875c0 .621-.504 1.125-1.125 1.125z"/></svg>
+              <span>Bảng tin</span>
+            </a>
+            <a href="#" class="flex flex-col items-center justify-center text-xs font-medium text-slate-500 hover:text-slate-900">
+              <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span>Tài khoản</span>
+            </a>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-stone-200 shadow-sm p-6 max-w-xl">
+    <h2 class="text-lg font-display font-semibold text-stone-800 mb-3">Ghi chú thiết kế — Feed composer</h2>
+    <ul class="space-y-2.5 text-sm text-stone-700 list-disc pl-5">
+      <li><strong>Khởi đầu bằng con người:</strong> avatar 40px (36px mobile) + textarea <strong>không viền</strong> <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">bg-transparent border-0 focus:ring-0 resize-none</code> — cảm giác “nói chuyện với gia đình”, viền thẻ bao ngoài thay viền input (idiom composer chuẩn, bớt “form”).</li>
+      <li><strong>Ô URL ảnh = ghost field:</strong> viền đứt + nền <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">bg-cream-muted/60</code> + icon link — tín hiệu “khả dụng nhưng phụ kiện”, khác cấp với nội dung chính. Nút “Thêm ảnh” thu thành “Thêm” ở mobile.</li>
+      <li><strong>Chip ảnh có thumbnail:</strong> ô tròn nhỏ màu gen-soft + icon ảnh + tên file rút gọn (full URL ở title) + nút x nhỏ — thay chip URL text dài hiện tại.</li>
+      <li><strong>Footer soạn:</strong> helper text (“hiển thị cho cả gia đình · tối đa 4 ảnh”) + bộ đếm ký tự 128/500 + nút Đăng bài kèm icon paper-airplane. Disabled state: nút mờ + không icon bay.</li>
+      <li><strong>Khách chưa đăng nhập:</strong> banner ấm terracotta-soft + icon khóa + CTA terracotta (không đổi hành vi, chỉ đổi lớp màu từ slate lạnh sang ấm).</li>
+      <li><strong>Feed PostCard giữ nguyên idiom</strong> — chỉ nâng cấp: avatar tác giả là ảnh thật/fallback, placeholder ảnh màu gen-soft trong mockup (bản thật là ảnh URL). Feed composer + member-detail posts tab giờ dùng cùng một ngôn ngữ.</li>
+    </ul>
+  </div>
+</div>
+
+<p class="max-w-[1180px] mx-auto text-center text-[11px] text-stone-400 pb-2">CGP v2 mockup · Fraunces + Be Vietnam Pro tự nhúng base64 (không CDN font) · Tailwind CDN chỉ dùng cho mockup</p>
+</body>
+</html>
+
