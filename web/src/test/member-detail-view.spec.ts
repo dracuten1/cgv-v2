@@ -150,6 +150,19 @@ describe('MemberDetailView', () => {
     expect(tabs.text()).toContain('Bảng tin');
   });
 
+  it('tab buttons carry focus-visible terracotta rings (INV-06)', async () => {
+    const wrapper = await mountDetail();
+    await flushPromises();
+
+    const tabButtons = wrapper.findAll('[data-testid="member-tabs"] button[role="tab"]');
+    expect(tabButtons.length).toBe(3);
+    for (const tab of tabButtons) {
+      expect(tab.classes()).toContain('focus-visible:ring-2');
+      expect(tab.classes()).toContain('focus-visible:ring-terracotta');
+      expect(tab.classes()).toContain('focus-visible:ring-inset');
+    }
+  });
+
   it('Tổng quan tab shows vital dates, living status, notes, family name', async () => {
     const wrapper = await mountDetail();
     await flushPromises();

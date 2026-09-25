@@ -85,7 +85,7 @@
             role="tab"
             :aria-selected="activeTab === tab.key"
             :class="[
-              'px-4 py-3 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-px',
+              'px-4 py-3 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-px rounded-t-md focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-inset',
               activeTab === tab.key
                 ? 'border-terracotta text-terracotta-dark'
                 : 'border-transparent text-slate-500 hover:text-slate-800',
