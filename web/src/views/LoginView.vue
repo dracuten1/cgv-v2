@@ -21,11 +21,11 @@
     </div>
 
     <!-- Login card -->
-    <div class="relative w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
+    <div class="relative w-full max-w-md bg-white rounded-xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
       <!-- Brand lockup -->
       <div class="text-center mb-8">
         <div
-          class="mx-auto w-14 h-14 rounded-2xl bg-terracotta text-white flex items-center justify-center font-display font-bold text-2xl shadow-md shadow-terracotta/20 mb-4"
+          class="mx-auto w-14 h-14 rounded-lg bg-terracotta text-white flex items-center justify-center font-display font-bold text-2xl shadow-md shadow-terracotta/20 mb-4"
           aria-hidden="true"
         >
           Phả

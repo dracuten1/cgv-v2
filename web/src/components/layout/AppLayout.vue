@@ -6,7 +6,7 @@
         <!-- Logo & Brand -->
         <div class="flex items-center space-x-3">
           <router-link to="/tree" class="flex items-center space-x-2 text-slate-900 font-display font-bold text-xl">
-            <span class="w-8 h-8 rounded-lg bg-terracotta text-white flex items-center justify-center font-serif text-lg">
+            <span class="w-8 h-8 rounded-lg bg-terracotta text-white flex items-center justify-center font-display text-lg">
               Phả
             </span>
             <span>Cây Gia Phả</span>

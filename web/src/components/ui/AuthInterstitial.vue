@@ -1,10 +1,10 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-cream p-4 sm:p-6 font-sans">
+  <div class="min-h-screen flex items-center justify-center bg-cream p-4 sm:p-6">
     <div class="w-full max-w-md bg-white rounded-xl shadow-xs border border-slate-200 p-6 sm:p-8 text-center">
       <!-- Brand Lockup -->
       <div class="mb-6 flex flex-col items-center">
         <div class="flex items-center space-x-2 text-slate-900 font-display font-bold text-xl mb-1">
-          <span class="w-8 h-8 rounded-lg bg-terracotta text-white flex items-center justify-center font-serif text-lg">
+          <span class="w-8 h-8 rounded-lg bg-terracotta text-white flex items-center justify-center font-display text-lg">
             Phả
           </span>
           <span>Cây Gia Phả</span>
