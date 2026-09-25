@@ -6,7 +6,7 @@
         <!-- Logo & Brand -->
         <div class="flex items-center space-x-3">
           <router-link to="/tree" class="flex items-center space-x-2 text-slate-900 font-display font-bold text-xl">
-            <span class="w-8 h-8 rounded-lg bg-[#C85A32] text-white flex items-center justify-center font-serif text-lg">
+            <span class="w-8 h-8 rounded-lg bg-terracotta text-white flex items-center justify-center font-serif text-lg">
               Phả
             </span>
             <span>Cây Gia Phả</span>
@@ -18,28 +18,28 @@
           <router-link
             to="/tree"
             class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-            :class="isActive('/tree') ? 'bg-[#F9EAE1] text-[#983F1E] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+            :class="isActive('/tree') ? 'bg-terracotta-soft text-terracotta-dark font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
           >
             Gia phả
           </router-link>
           <router-link
             to="/kinship"
             class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-            :class="isActive('/kinship') ? 'bg-[#F9EAE1] text-[#983F1E] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+            :class="isActive('/kinship') ? 'bg-terracotta-soft text-terracotta-dark font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
           >
             Quan hệ
           </router-link>
           <router-link
             to="/feed"
             class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-            :class="isActive('/feed') ? 'bg-[#F9EAE1] text-[#983F1E] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+            :class="isActive('/feed') ? 'bg-terracotta-soft text-terracotta-dark font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
           >
             Bảng tin
           </router-link>
           <router-link
             to="/account"
             class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-            :class="isActive('/account') ? 'bg-[#F9EAE1] text-[#983F1E] font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+            :class="isActive('/account') ? 'bg-terracotta-soft text-terracotta-dark font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
           >
             Tài khoản
           </router-link>
@@ -68,7 +68,7 @@
           <template v-else>
             <router-link
               to="/login"
-              class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#C85A32] text-white hover:bg-[#B24E2A] transition-colors"
+              class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-terracotta text-white hover:bg-terracotta-hover transition-colors"
             >
               Đăng nhập
             </router-link>
@@ -95,7 +95,7 @@
         <router-link
           to="/tree"
           class="flex flex-col items-center justify-center text-xs font-medium transition-colors"
-          :class="isActive('/tree') ? 'text-[#C85A32]' : 'text-slate-500 hover:text-slate-900'"
+          :class="isActive('/tree') ? 'text-terracotta' : 'text-slate-500 hover:text-slate-900'"
         >
           <!-- Tree SVG Icon -->
           <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,7 +108,7 @@
         <router-link
           to="/kinship"
           class="flex flex-col items-center justify-center text-xs font-medium transition-colors"
-          :class="isActive('/kinship') ? 'text-[#C85A32]' : 'text-slate-500 hover:text-slate-900'"
+          :class="isActive('/kinship') ? 'text-terracotta' : 'text-slate-500 hover:text-slate-900'"
         >
           <!-- Kinship SVG Icon -->
           <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -121,7 +121,7 @@
         <router-link
           to="/feed"
           class="flex flex-col items-center justify-center text-xs font-medium transition-colors"
-          :class="isActive('/feed') ? 'text-[#C85A32]' : 'text-slate-500 hover:text-slate-900'"
+          :class="isActive('/feed') ? 'text-terracotta' : 'text-slate-500 hover:text-slate-900'"
         >
           <!-- Feed SVG Icon -->
           <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -134,7 +134,7 @@
         <router-link
           to="/account"
           class="flex flex-col items-center justify-center text-xs font-medium transition-colors"
-          :class="isActive('/account') ? 'text-[#C85A32]' : 'text-slate-500 hover:text-slate-900'"
+          :class="isActive('/account') ? 'text-terracotta' : 'text-slate-500 hover:text-slate-900'"
         >
           <!-- Account SVG Icon -->
           <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -77,7 +77,7 @@ const variantClasses = computed(() => {
       return 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500';
     case 'primary':
     default:
-      return 'bg-[#C85A32] text-white hover:bg-[#B24E2A] focus:ring-[#C85A32] shadow-sm';
+      return 'bg-terracotta text-white hover:bg-terracotta-hover focus:ring-terracotta shadow-sm';
   }
 });
 </script>

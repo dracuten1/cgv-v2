@@ -30,7 +30,7 @@ const sizeClasses = computed(() => {
 const variantClasses = computed(() => {
   switch (props.variant) {
     case 'primary':
-      return 'bg-[#F9EAE1] text-[#983F1E] border border-[#F4D0C2]';
+      return 'bg-terracotta-soft text-terracotta-dark border border-terracotta-border';
     case 'success':
       return 'bg-emerald-50 text-emerald-800 border border-emerald-200';
     case 'warning':
@@ -38,13 +38,13 @@ const variantClasses = computed(() => {
     case 'info':
       return 'bg-sky-50 text-sky-800 border border-sky-200';
     case 'gen1':
-      return 'bg-[#FBECE8] text-[#B24E2A] border border-[#F4D0C2]';
+      return 'bg-gen-1-soft text-terracotta-hover border border-terracotta-border';
     case 'gen2':
-      return 'bg-[#EDF5F1] text-[#2C6E49] border border-[#C5DFD3]';
+      return 'bg-gen-2-soft text-emerald-800 border border-emerald-200';
     case 'gen3':
-      return 'bg-[#EAF0EE] text-[#3D5A50] border border-[#BFD5CE]';
+      return 'bg-gen-3-soft text-teal-800 border border-teal-200';
     case 'gen4':
-      return 'bg-[#FAF3EB] text-[#8C5D30] border border-[#E9D5BF]';
+      return 'bg-gen-4-soft text-amber-800 border border-amber-200';
     case 'default':
     default:
       return 'bg-slate-100 text-slate-700 border border-slate-200';

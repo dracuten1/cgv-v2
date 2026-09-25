@@ -66,7 +66,7 @@
           <button
             v-if="toast.action"
             type="button"
-            class="px-2.5 py-1 text-xs font-semibold rounded bg-[#C85A32] text-white hover:bg-[#B24E2A] transition-colors"
+            class="px-2.5 py-1 text-xs font-semibold rounded bg-terracotta text-white hover:bg-terracotta-hover transition-colors"
             @click="handleAction(toast)"
           >
             {{ toast.action.label }}
