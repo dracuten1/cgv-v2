@@ -127,6 +127,14 @@ describe('MemberDetailView', () => {
     await flushPromises();
 
     expect(mockedGetMember).toHaveBeenCalledWith('member-9');
+    // Hero card uses the shared AppAvatar (w-14, gen-tinted initials fallback)
+    const heroAvatar = wrapper.find('[data-testid="member-hero-avatar"]');
+    expect(heroAvatar.exists()).toBe(true);
+    const avatarComponent = wrapper.findComponent({ name: 'AppAvatar' });
+    expect(avatarComponent.exists()).toBe(true);
+    expect(avatarComponent.props('size')).toBe('w-14');
+    expect(avatarComponent.props('generation')).toBe(1);
+
     expect(wrapper.find('[data-testid="member-name"]').text()).toBe('Nguyễn Văn An');
     expect(wrapper.find('[data-testid="member-generation-badge"]').text()).toBe('Đời thứ 1');
     expect(wrapper.find('[data-testid="member-living-status"]').text()).toBe('Đã mất');
@@ -168,6 +176,22 @@ describe('MemberDetailView', () => {
     );
   });
 
+  it('relation cards are gen-stripe cards with AppAvatar, gen label and gender micro-badge', async () => {
+    const wrapper = await mountDetail();
+    await flushPromises();
+    await wrapper.find('[data-testid="tab-relations"]').trigger('click');
+
+    const childCard = wrapper.find('[data-testid="relation-child-1"]');
+    // 4px gen-stripe left border driven by generation_index=2
+    expect(childCard.attributes('style')).toContain('border-left-width: 4px');
+    expect(childCard.attributes('style')).toContain('border-left-color: var(--gen-2)');
+    // Avatar inside the card
+    expect(childCard.findComponent({ name: 'AppAvatar' }).exists()).toBe(true);
+    // Gen label + gender micro-badge
+    expect(childCard.text()).toContain('Đời thứ 2');
+    expect(childCard.text()).toContain('Nam');
+  });
+
   it('Bảng tin tab shows the member posts timeline', async () => {
     const wrapper = await mountDetail();
     await flushPromises();
@@ -175,6 +199,19 @@ describe('MemberDetailView', () => {
 
     const panel = wrapper.find('[data-testid="tab-panel-posts"]');
     expect(panel.text()).toContain('Lễ giỗ tổ năm nay tổ chức trang trọng.');
+  });
+
+  it('posts tab reuses the PostCard idiom (author attribution + timestamp)', async () => {
+    const wrapper = await mountDetail();
+    await flushPromises();
+    await wrapper.find('[data-testid="tab-posts"]').trigger('click');
+
+    const panel = wrapper.find('[data-testid="tab-panel-posts"]');
+    const articles = panel.findAll('article');
+    expect(articles.length).toBe(1);
+    // PostCard contract: author line + datetime element
+    expect(articles[0].find('[data-testid="post-author"]').text()).toBe('Nguyễn Văn An');
+    expect(articles[0].find('time').exists()).toBe(true);
   });
 
   it('anonymous users see "Đăng nhập để chỉnh sửa" instead of edit/delete', async () => {

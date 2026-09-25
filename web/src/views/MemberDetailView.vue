@@ -6,7 +6,7 @@
       class="bg-white rounded-xl border border-slate-200 py-16 flex flex-col items-center gap-3"
       data-testid="member-loading"
     >
-      <svg class="animate-spin h-8 w-8 text-[#C85A32]" fill="none" viewBox="0 0 24 24">
+      <svg class="animate-spin h-8 w-8 text-terracotta" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
       </svg>
@@ -25,19 +25,17 @@
     </EmptyState>
 
     <template v-else>
-      <!-- Header -->
+      <!-- Header / Hero card (mockup 05) -->
       <div class="bg-white rounded-xl shadow-xs border border-slate-200 p-5">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div class="flex items-center gap-4 min-w-0">
-            <div
-              class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center font-display font-bold text-lg uppercase"
-              :style="{
-                backgroundColor: `var(${genSoftVar(member.generation_index)}, #F9EAE1)`,
-                color: `var(${genAccentVar(member.generation_index)}, #983F1E)`,
-              }"
-            >
-              {{ initials }}
-            </div>
+            <AppAvatar
+              :src="member.avatar_url"
+              :name="member.full_name"
+              :generation="member.generation_index"
+              size="w-14"
+              data-testid="member-hero-avatar"
+            />
             <div class="min-w-0">
               <h1 class="text-2xl font-bold font-display text-slate-800 truncate" data-testid="member-name">
                 {{ member.full_name }}
@@ -59,17 +57,13 @@
             <template v-if="auth.isAuthenticated">
               <AppButton variant="outline" size="sm" data-testid="member-edit" @click="editOpen = true">
                 <span class="flex items-center gap-1.5">
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
+                  <IconPencilSquare class="w-4 h-4" />
                   Sửa
                 </span>
               </AppButton>
               <AppButton variant="danger" size="sm" data-testid="member-delete" @click="deleteConfirmOpen = true">
                 <span class="flex items-center gap-1.5">
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  <IconTrash class="w-4 h-4" />
                   Xóa
                 </span>
               </AppButton>
@@ -93,7 +87,7 @@
             :class="[
               'px-4 py-3 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-px',
               activeTab === tab.key
-                ? 'border-[#C85A32] text-[#983F1E]'
+                ? 'border-terracotta text-terracotta-dark'
                 : 'border-transparent text-slate-500 hover:text-slate-800',
             ]"
             :data-testid="`tab-${tab.key}`"
@@ -134,7 +128,7 @@
             </dl>
           </div>
 
-          <!-- Tab: Quan hệ -->
+          <!-- Tab: Quan hệ — gen-stripe relation cards (mockup 05) -->
           <div v-else-if="activeTab === 'relations'" class="space-y-6" data-testid="tab-panel-relations">
             <div v-for="group in relationGroups" :key="group.title">
               <h3 class="text-sm font-semibold text-slate-700 mb-2">{{ group.title }}</h3>
@@ -146,40 +140,48 @@
                   v-for="rel in group.members"
                   :key="rel.id"
                   :to="`/members/${encodeURIComponent(rel.id)}`"
-                  class="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white p-2.5 hover:border-[#C85A32] hover:shadow-xs transition-all"
+                  class="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white p-2.5 hover:border-terracotta hover:shadow-xs transition-all"
+                  :style="rel.generation_index ? { borderLeftWidth: '4px', borderLeftColor: `var(${genAccentVar(rel.generation_index)})` } : {}"
                   :data-testid="`relation-${rel.id}`"
                 >
-                  <span
-                    class="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold uppercase font-display"
-                    :style="{
-                      backgroundColor: `var(${genSoftVar(rel.generation_index)}, #F9EAE1)`,
-                      color: `var(${genAccentVar(rel.generation_index)}, #983F1E)`,
-                    }"
-                  >
-                    {{ initialsOf(rel.full_name) }}
-                  </span>
+                  <AppAvatar
+                    :src="rel.avatar_url"
+                    :name="rel.full_name"
+                    :generation="rel.generation_index"
+                    size="w-9"
+                  />
                   <span class="min-w-0">
-                    <span class="block text-sm font-medium text-slate-800 truncate">{{ rel.full_name }}</span>
-                    <span class="block text-xs text-slate-400">{{ generationLabelOf(rel.generation_index) }}</span>
+                    <span class="block text-sm font-medium font-display text-slate-800 truncate" style="line-height: 1.45">
+                      {{ rel.full_name }}
+                    </span>
+                    <span class="flex items-center gap-1.5 mt-0.5">
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-slate-600 border border-slate-200 bg-white" style="line-height: 1.45">
+                        {{ generationLabelOf(rel.generation_index) }}
+                      </span>
+                      <span
+                        :class="[
+                          'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border',
+                          genderBadgeClass(rel.gender),
+                        ]"
+                        style="line-height: 1.45"
+                      >
+                        {{ toUiGender(rel.gender) }}
+                      </span>
+                    </span>
                   </span>
                 </router-link>
               </div>
             </div>
           </div>
 
-          <!-- Tab: Bảng tin -->
+          <!-- Tab: Bảng tin — reuses PostCard idiom (mockup 05) -->
           <div v-else data-testid="tab-panel-posts">
             <div v-if="posts.length === 0" class="text-sm text-slate-400 italic">
               Chưa có bài viết nào.
             </div>
             <ol v-else class="space-y-4">
-              <li
-                v-for="post in posts"
-                :key="post.id"
-                class="rounded-lg border border-slate-200 p-4"
-              >
-                <p class="text-sm text-slate-800 whitespace-pre-line">{{ post.content }}</p>
-                <p class="mt-2 text-xs text-slate-400">{{ formatDateTime(post.created_at) }}</p>
+              <li v-for="post in memberPosts" :key="post.id">
+                <PostCard :post="post" />
               </li>
             </ol>
           </div>
@@ -226,15 +228,18 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AppButton from '@/components/ui/AppButton.vue';
 import AppChip from '@/components/ui/AppChip.vue';
+import AppAvatar from '@/components/ui/AppAvatar.vue';
 import AppDialog from '@/components/ui/AppDialog.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import PostCard from '@/components/feed/PostCard.vue';
 import MemberEditDialog from '@/components/member/MemberEditDialog.vue';
+import { IconPencilSquare, IconTrash } from '@/components/icons';
 import { useMemberStore } from '@/stores/member';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
 import { toUiGender } from '@/api/gender';
-import { getInitials, getYearsText, genAccentVar, genSoftVar } from '@/components/tree/card-visual';
-import type { Member } from '@/types/api';
+import { getYearsText, genAccentVar } from '@/components/tree/card-visual';
+import type { FeedPostItem, Gender, Member } from '@/types/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -255,7 +260,6 @@ const tabs = [
 const memberId = computed(() => String(route.params.id || ''));
 const member = computed(() => memberStore.currentMember!);
 
-const initials = computed(() => getInitials(member.value?.full_name || ''));
 const uiGender = computed(() => (member.value ? toUiGender(member.value.gender) : ''));
 const yearsText = computed(() =>
   member.value ? getYearsText(member.value.birth_date, member.value.death_date, member.value.is_living) : ''
@@ -270,6 +274,19 @@ const chipVariant = computed(() => {
 });
 
 const posts = computed(() => member.value?.posts || []);
+
+// Posts tab renders the member's own posts via the shared PostCard idiom —
+// FeedPost lacks author_display_name, but here the author IS the member.
+const memberPosts = computed<FeedPostItem[]>(() =>
+  posts.value.map((p) => ({ ...p, author_display_name: member.value.full_name }))
+);
+
+function genderBadgeClass(gender: Gender): string {
+  const g = String(gender || '').toLowerCase();
+  if (g === 'male' || g === 'nam') return 'bg-sky-50 text-sky-700 border-sky-200';
+  if (g === 'female' || g === 'nữ' || g === 'nu') return 'bg-rose-50 text-rose-700 border-rose-200';
+  return 'bg-slate-50 text-slate-600 border-slate-200';
+}
 
 interface RelationGroup {
   title: string;
@@ -287,10 +304,6 @@ const relationGroups = computed<RelationGroup[]>(() => {
   ];
 });
 
-function initialsOf(name: string): string {
-  return getInitials(name);
-}
-
 function generationLabelOf(genIndex: number): string {
   return `Đời thứ ${genIndex}`;
 }
@@ -300,12 +313,6 @@ function formatDate(iso?: string | null): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   if (!m) return iso;
   return `${m[3]}/${m[2]}/${m[1]}`;
-}
-
-function formatDateTime(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString('vi-VN');
 }
 
 async function onDelete(): Promise<void> {
