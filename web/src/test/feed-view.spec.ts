@@ -84,6 +84,8 @@ describe('FeedView', () => {
     expect(wrapper.text()).toContain('Đăng nhập để đăng bài viết.');
     expect(wrapper.find('[data-testid="login-cta"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="composer-form"]').exists()).toBe(false);
+    // Warm banner per §4.10 (terracotta-soft, never cold slate)
+    expect(wrapper.find('[data-testid="anonymous-hint"]').classes()).toContain('bg-terracotta-soft');
   });
 
   it('renders the composer for authenticated users', async () => {
@@ -99,11 +101,21 @@ describe('FeedView', () => {
 
     const form = wrapper.find('[data-testid="composer-form"]');
     expect(form.exists()).toBe(true);
+    // Uses AppAvatar w-10 for composer author
+    const avatar = form.findComponent({ name: 'AppAvatar' });
+    expect(avatar.exists()).toBe(true);
+    expect(avatar.props('size')).toBe('w-10');
+
+    // Uses AppTextarea borderless
+    const textarea = form.findComponent({ name: 'AppTextarea' });
+    expect(textarea.exists()).toBe(true);
+    expect(textarea.props('variant')).toBe('borderless');
     expect(form.find('textarea').attributes('placeholder')).toBe(
       'Chia sẻ câu chuyện với gia đình…'
     );
     expect(form.text()).toContain('Thêm ảnh');
     expect(form.text()).toContain('Đăng bài');
+    expect(form.text()).toContain('Bài viết hiển thị cho cả gia đình');
   });
 
   it('renders PostCards with author, vi-VN date and image grids (1 vs 3 images)', async () => {
