@@ -1,21 +1,83 @@
 <template>
-  <div class="p-12 max-w-md mx-auto text-center">
-    <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
-      <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    </div>
-    <h1 class="text-2xl font-bold font-display text-slate-800 mb-2">Không tìm thấy trang</h1>
-    <p class="text-slate-500 mb-6">Đường dẫn bạn yêu cầu không tồn tại hoặc đã được chuyển dời.</p>
-    <router-link
-      to="/tree"
-      class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-[#C85A32] text-white hover:bg-[#B24E2A] transition-colors"
+  <div class="relative min-h-[calc(100vh-8rem)] flex items-center justify-center p-8 overflow-hidden">
+    <!-- Ghost heritage decorations (mockup 03) -->
+    <div
+      aria-hidden="true"
+      class="absolute -left-14 -bottom-20 font-display font-bold text-[18rem] leading-[1] text-terracotta opacity-[0.04] select-none pointer-events-none"
     >
-      Về trang chủ cây phả hệ
-    </router-link>
+      Phả
+    </div>
+    <div aria-hidden="true" class="absolute right-14 top-16 hidden sm:flex items-center gap-1.5 opacity-50">
+      <span class="w-2.5 h-2.5 rounded-full bg-gen-1"></span>
+      <span class="w-2 h-2 rounded-full bg-gen-2"></span>
+      <span class="w-2 h-2 rounded-full bg-gen-3"></span>
+    </div>
+
+    <div class="relative max-w-md text-center px-4" data-testid="not-found">
+      <!-- Icon disc: lost-branch illustration -->
+      <div class="mx-auto w-20 h-20 rounded-full bg-terracotta-soft flex items-center justify-center mb-6">
+        <IconExclamationCircle class="w-11 h-11 text-terracotta" stroke-width="1.5" />
+      </div>
+
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-terracotta mb-2" style="line-height: 1.45">
+        Lỗi 404
+      </p>
+      <p
+        class="font-display font-bold text-terracotta text-7xl sm:text-8xl"
+        style="line-height: 1.05"
+        aria-hidden="true"
+      >
+        404
+      </p>
+      <h1 class="mt-4 text-2xl font-bold font-display text-slate-800">Không tìm thấy trang</h1>
+      <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+        Đường dẫn bạn yêu cầu không tồn tại hoặc đã được chuyển dời — như một nhánh đã lìa khỏi cây
+        phả hệ.
+      </p>
+
+      <div class="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <AppButton
+          variant="primary"
+          size="lg"
+          to="/tree"
+          data-testid="not-found-home"
+        >
+          <span class="flex items-center justify-center gap-2">
+            <IconArrowLeft class="w-4 h-4" />
+            <span>Về cây gia phả</span>
+          </span>
+        </AppButton>
+        <AppButton
+          variant="ghost"
+          size="lg"
+          to="/feed"
+          data-testid="not-found-feed"
+        >
+          <span class="flex items-center justify-center gap-2">
+            <span>Xem bảng tin</span>
+            <IconArrowRight class="w-4 h-4" />
+          </span>
+        </AppButton>
+      </div>
+
+      <p class="mt-6 text-xs text-slate-400">
+        Hoặc
+        <button
+          type="button"
+          class="text-terracotta hover:text-terracotta-hover hover:underline cursor-pointer"
+          @click="router.back()"
+        >
+          quay lại trang trước
+        </button>.
+      </p>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// 404 Not Found view
+import { useRouter } from 'vue-router';
+import AppButton from '@/components/ui/AppButton.vue';
+import { IconArrowLeft, IconArrowRight, IconExclamationCircle } from '@/components/icons';
+
+const router = useRouter();
 </script>
