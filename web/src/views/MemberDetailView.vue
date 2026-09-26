@@ -140,7 +140,7 @@
                   v-for="rel in group.members"
                   :key="rel.id"
                   :to="`/members/${encodeURIComponent(rel.id)}`"
-                  class="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white p-2.5 hover:border-terracotta hover:shadow-xs transition-all"
+                  class="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white p-2.5 hover:border-terracotta hover:shadow-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-1"
                   :style="rel.generation_index ? { borderLeftWidth: '4px', borderLeftColor: `var(${genAccentVar(rel.generation_index)})` } : {}"
                   :data-testid="`relation-${rel.id}`"
                 >

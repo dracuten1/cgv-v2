@@ -64,7 +64,7 @@
         Hoặc
         <button
           type="button"
-          class="text-terracotta hover:text-terracotta-hover hover:underline cursor-pointer"
+          class="text-terracotta hover:text-terracotta-hover hover:underline cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-1"
           @click="router.back()"
         >
           quay lại trang trước

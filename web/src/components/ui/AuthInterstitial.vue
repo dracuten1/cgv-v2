@@ -96,7 +96,7 @@
             </AppButton>
             <router-link
               :to="loginTarget"
-              class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-terracotta hover:text-terracotta-hover hover:underline transition-colors"
+              class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-terracotta hover:text-terracotta-hover hover:underline transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2"
             >
               {{ loginLabel }}
             </router-link>

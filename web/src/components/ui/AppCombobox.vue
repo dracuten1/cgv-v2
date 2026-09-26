@@ -42,7 +42,7 @@
       <button
         v-if="!disabled"
         type="button"
-        class="text-slate-400 hover:text-slate-600 p-1 rounded-md transition-colors cursor-pointer shrink-0 ml-1"
+        class="text-slate-400 hover:text-slate-600 p-1 rounded-md transition-colors cursor-pointer shrink-0 ml-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-1"
         aria-label="Xóa chọn"
         data-testid="combobox-clear-btn"
         @click="clearSelection"
@@ -220,6 +220,10 @@ const filteredOptions = computed(() => {
   return props.options.filter((m) => {
     return m.full_name.toLowerCase().includes(q);
   });
+});
+
+watch(filteredOptions, () => {
+  activeIndex.value = -1;
 });
 
 watch(isOpen, (val) => {

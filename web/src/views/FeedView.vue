@@ -46,7 +46,7 @@
       <!-- Image URL adder (no upload endpoint — images are JSONB URL arrays) -->
       <div class="mt-3 flex items-center gap-2">
         <div
-          class="flex-1 flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-cream-muted/60 px-3 py-1.5 hover:border-slate-400 transition-colors"
+          class="flex-1 flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-cream-muted/60 px-3 py-1.5 hover:border-slate-400 transition-colors focus-within:ring-2 focus-within:ring-terracotta focus-within:border-transparent"
         >
           <IconLink class="w-4 h-4 text-slate-400 shrink-0" />
           <input
@@ -81,7 +81,7 @@
           <span class="truncate max-w-[180px]" :title="img">{{ img }}</span>
           <button
             type="button"
-            class="w-4 h-4 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+            class="w-4 h-4 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-1"
             :aria-label="`Xóa ảnh ${index + 1}`"
             @click="removeImage(index)"
           >
