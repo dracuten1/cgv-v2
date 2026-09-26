@@ -35,11 +35,13 @@ test('focused Apple mockup browser regression', async ({ browser }) => {
       expect(label).toContain(current);
       expect(href).toBe('person-detail.html');
       await cta.click();
-      await expect(page).toHaveURL(/\/person-detail\.html\?/);
+      await page.waitForURL(url => new URL(url).pathname === '/person-detail.html');
+      const landedUrl = new URL(page.url());
+      expect(landedUrl.pathname).toBe('/person-detail.html');
       const hero = (await page.locator('.person-hero h2').innerText()).trim();
       const nameField = (await page.locator('.kv').filter({ hasText: 'Họ và tên' }).locator('.kv__value').innerText()).trim();
       expect(hero).toBe(current); expect(nameField).toBe(current);
-      return { selectedIdentity: current, ctaLabel: label, href, landedUrl: page.url(), destinationHeroIdentity: hero, destinationNameField: nameField };
+      return { selectedIdentity: current, ctaLabel: label, href, landedUrl: landedUrl.href, destinationHeroIdentity: hero, destinationNameField: nameField };
     });
     for (const theme of ['light', 'dark']) {
       await page.setViewportSize({ width: 390, height: 844 }); await page.emulateMedia({ colorScheme: theme }); await page.goto(`${base}/tree.html?theme=${theme}`, { waitUntil: 'networkidle' });
