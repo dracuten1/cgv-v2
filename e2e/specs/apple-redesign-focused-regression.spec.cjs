@@ -28,14 +28,18 @@ test('focused Apple mockup browser regression', async ({ browser }) => {
   const url = file => `${base}/${file}.html?theme=light`;
   try {
     await page.goto(url('tree'), { waitUntil: 'networkidle' });
-    await record(page, 'tree-desktop-inspector-destination', 'CTA destination heading identifies the person promised by its label', async () => {
+    await record(page, 'tree-desktop-inspector-destination', 'CTA label, real destination navigation, hero identity and name field match selected person', async () => {
       const cta = page.locator('.tree-panel--right a[href]');
       const label = (await cta.innerText()).trim(); const href = await cta.getAttribute('href');
       const current = (await page.locator('.tree-panel--right .tree-person__name').innerText()).trim();
-      const target = await page.evaluate(async h => { const d = await (await fetch(h)).text(); const doc = new DOMParser().parseFromString(d, 'text/html'); return doc.querySelector('h1')?.textContent.trim() || doc.title; }, href);
-      await cta.click(); const landed = (await page.locator('h1').first().innerText()).trim();
-      expect(label).toContain(current); expect(target).toContain(current); expect(landed).toContain(current);
-      return { selectedIdentity: current, ctaLabel: label, href, destinationIdentity: target, landedIdentity: landed };
+      expect(label).toContain(current);
+      expect(href).toBe('person-detail.html');
+      await cta.click();
+      await expect(page).toHaveURL(/\/person-detail\.html\?/);
+      const hero = (await page.locator('.person-hero h2').innerText()).trim();
+      const nameField = (await page.locator('.kv').filter({ hasText: 'Họ và tên' }).locator('.kv__value').innerText()).trim();
+      expect(hero).toBe(current); expect(nameField).toBe(current);
+      return { selectedIdentity: current, ctaLabel: label, href, landedUrl: page.url(), destinationHeroIdentity: hero, destinationNameField: nameField };
     });
     for (const theme of ['light', 'dark']) {
       await page.setViewportSize({ width: 390, height: 844 }); await page.emulateMedia({ colorScheme: theme }); await page.goto(`${base}/tree.html?theme=${theme}`, { waitUntil: 'networkidle' });
