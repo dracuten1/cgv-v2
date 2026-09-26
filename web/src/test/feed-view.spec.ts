@@ -305,6 +305,46 @@ describe('FeedView', () => {
     expect(submit.attributes('disabled')).toBeDefined();
   });
 
+  it('handles boundary rune counts (4999, 5000) and multibyte/emoji correctly', async () => {
+    const auth = useAuthStore();
+    auth.user = testUser;
+    auth.status = 'authenticated';
+
+    mockedFeedApi.list.mockResolvedValue({ posts: [], next_cursor: null });
+
+    const wrapper = mount(FeedView, { global: { plugins: [pinia], stubs: { RouterLink: true } } });
+    await flushPromises();
+    await flushPromises();
+
+    const form = wrapper.find('[data-testid="composer-form"]');
+    const textareaComp = form.findComponent({ name: 'AppTextarea' });
+    const counter = form.find('[data-testid="composer-char-counter"]');
+    const submit = form.find('button[type="submit"]');
+
+    // 4999 runes: valid and enabled
+    textareaComp.vm.$emit('update:modelValue', 'x'.repeat(4999));
+    await flushPromises();
+    expect(counter.text()).toBe('4999/5000');
+    expect(counter.classes()).not.toContain('text-red-600');
+    expect(submit.attributes('disabled')).toBeUndefined();
+
+    // 5000 runes: exactly at limit, still valid and enabled
+    textareaComp.vm.$emit('update:modelValue', 'x'.repeat(5000));
+    await flushPromises();
+    expect(counter.text()).toBe('5000/5000');
+    expect(counter.classes()).not.toContain('text-red-600');
+    expect(submit.attributes('disabled')).toBeUndefined();
+
+    // Multibyte Vietnamese and emojis: code points vs UTF-16 code units
+    // E.g. '🌳' (surrogate pair in JS string length=2, but 1 rune in [...str])
+    // 'Cây phả hệ 🌳' = 11 characters + 1 emoji = 12 runes
+    const complexText = 'Cây phả hệ 🌳';
+    textareaComp.vm.$emit('update:modelValue', complexText);
+    await flushPromises();
+    expect(counter.text()).toBe('12/5000');
+    expect(submit.attributes('disabled')).toBeUndefined();
+  });
+
   it('composer submitting state: CTA disabled with spinner label while createPost is in flight', async () => {
     const auth = useAuthStore();
     auth.user = testUser;

@@ -48,6 +48,10 @@ describe('NotFoundView.vue (mockup 03 / spec §6.3)', () => {
     expect(kinship.attributes('href')).toBe('/kinship');
     expect(kinship.text()).toContain('Tìm người trong họ');
     // The gen-pastel dot cluster is decorative only — no links/buttons inside
+    const cluster = wrapper.find('.top-16');
+    expect(cluster.exists()).toBe(true);
+    expect(cluster.attributes('aria-hidden')).toBe('true');
+    expect(cluster.findAll('a, button').length).toBe(0);
     const dots = wrapper.find('div[aria-hidden="true"].bg-gen-1, span.bg-gen-1');
     expect(dots.exists()).toBe(true);
   });
