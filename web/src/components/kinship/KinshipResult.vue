@@ -22,7 +22,7 @@
         {{ result.distance_label }}
       </AppChip>
       <AppChip :variant="result.is_blood ? 'success' : 'warning'">
-        {{ result.is_blood ? 'Huyết thống' : 'Hôn phối' }}
+        {{ !result.line && (!result.path || result.path.length === 0) ? 'Không rõ' : (result.is_blood ? 'Huyết thống' : 'Hôn phối') }}
       </AppChip>
       <AppChip v-if="result.dialect" variant="default">
         {{ dialectLabel }}

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { kinshipApi, type KinshipQueryParams } from '@/api/kinship';
 import { formatApiError } from '@/api/client';
 import type { KinshipResult } from '@/types/api';
@@ -15,6 +15,11 @@ export const useKinshipStore = defineStore('kinship', () => {
 
   const loading = ref(false);
   const error = ref<string | null>(null);
+
+  watch([fromMemberId, toMemberId, dialect], () => {
+    result.value = null;
+    error.value = null;
+  });
 
   async function calculateKinship(params?: Partial<KinshipQueryParams>): Promise<KinshipResult | null> {
     const from = params?.from || fromMemberId.value;

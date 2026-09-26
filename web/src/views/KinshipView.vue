@@ -15,7 +15,7 @@
       <span class="text-xs text-slate-500 font-medium">Lối tắt thử nghiệm:</span>
       <button
         type="button"
-        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 transition-colors cursor-pointer"
         data-testid="quick-demo-chip"
         @click="fillQuickDemo"
       >
@@ -30,7 +30,7 @@
         <!-- Swap direction button (desktop: centered between the two pickers) -->
         <button
           type="button"
-          class="hidden md:flex absolute left-1/2 top-9 -translate-x-1/2 z-20 w-8 h-8 items-center justify-center rounded-full bg-white border border-slate-300 text-slate-500 shadow-sm hover:text-terracotta hover:border-terracotta focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors cursor-pointer"
+          class="hidden md:flex absolute left-1/2 top-9 -translate-x-1/2 z-20 w-8 h-8 items-center justify-center rounded-full bg-white border border-slate-300 text-slate-500 shadow-sm hover:text-terracotta hover:border-terracotta focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta transition-colors cursor-pointer"
           aria-label="Đổi vị trí hai người"
           data-testid="swap-pickers-desktop"
           @click="swapSelections"
@@ -74,7 +74,7 @@
       <div class="flex md:hidden justify-center -mt-2">
         <button
           type="button"
-          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-300 text-xs font-medium text-slate-500 shadow-sm hover:text-terracotta hover:border-terracotta focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors cursor-pointer"
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-300 text-xs font-medium text-slate-500 shadow-sm hover:text-terracotta hover:border-terracotta focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta transition-colors cursor-pointer"
           aria-label="Đổi vị trí hai người"
           data-testid="swap-pickers-mobile"
           @click="swapSelections"
@@ -201,13 +201,11 @@ const toast = useToast();
 // Backend engine fallback term when the two members share no relation within
 // the lookup depth (api/internal/kinship/engine.go returns it as a result,
 // not an error) — drives the dedicated "unrelated" state panel.
-const UNRELATED_TERM = 'Không xác định được quan hệ';
-
 const bothSelected = computed(
   () => Boolean(kinshipStore.fromMemberId) && Boolean(kinshipStore.toMemberId)
 );
 
-const isUnrelated = computed(() => kinshipStore.result?.term === UNRELATED_TERM);
+const isUnrelated = computed(() => { const result = kinshipStore.result; return Boolean(result && !result.line && (!result.path || result.path.length === 0)); });
 
 const members = ref<Member[]>([]);
 const loadingMembers = ref(false);
@@ -251,16 +249,6 @@ function swapSelections() {
 }
 
 function fillQuickDemo() {
-  // An -> Bình (or Grandson -> An depending on "Ông -> Cháu nội")
-  // Note: Seed test has GrandsonID -> RootID calculating "Ông nội" (Bình calling An = "Ông nội").
-  // If An -> Bình it would be "Cháu nội".
-  // The deliverable spec:
-  // "Seed quick-demo: from aaaaaaa1-0000-4000-8000-000000000001 (Nguyễn Văn An) to bbbbbbb2-0000-4000-8000-000000000002 (Nguyễn Văn Bình) → term 'Ông nội', line 'Chi nội', distance_label 'Cách 2 đời'."
-  // Or vice versa depending on who is from / to. We set from=Grandson, to=Root if that returns "Ông nội", or from=Root to=Grandson as specified.
-  // The spec specifically states:
-  // "quick-demo chip 'Thử nhanh: Ông → Cháu nội' that fills the two seed IDs above"
-  // Let's set from = RootID, to = GrandsonID (or ensure both names are set).
-  // If the user wants An calling Bình or Bình calling An, they can see both or click swap.
   kinshipStore.fromMemberId = SEED_ROOT_ID;
   kinshipStore.toMemberId = SEED_GRANDSON_ID;
 
@@ -296,7 +284,7 @@ async function handleCalculate() {
   }
 
   const res = await kinshipStore.calculateKinship();
-  if (res) {
+  if (res && !isUnrelated.value) {
     toast.success('Đã tính toán quan hệ thành công!');
   }
 }

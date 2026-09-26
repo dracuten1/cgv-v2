@@ -202,6 +202,42 @@ describe('KinshipView (mockup 04 / spec §6.4 — AppCombobox pickers)', () => {
     expect(wrapper.find('[data-testid="kinship-result-container"]').exists()).toBe(false);
   });
 
+  it('clears stale result and returns to initial prompt when a picker changes post-calculation', async () => {
+    const wrapper = await mountView();
+    const store = useKinshipStore();
+    store.fromMemberId = seedMembers[0].id;
+    store.toMemberId = seedMembers[1].id;
+    await flushPromises();
+
+    vi.spyOn(store, 'calculateKinship').mockImplementation(async () => {
+      store.result = {
+        term: 'Cháu nội',
+        line: 'Chi nội',
+        generation_distance: 2,
+        distance_label: 'Cách 2 đời',
+        is_blood: true,
+        dialect: 'bac',
+        path: [seedMembers[0].id, seedMembers[1].id],
+      };
+      return store.result;
+    });
+
+    await wrapper.find('[data-testid="calculate-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="kinship-result-container"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="kinship-initial-prompt"]').exists()).toBe(false);
+
+    // Change a picker (e.g. clear toMemberId)
+    store.toMemberId = null;
+    await flushPromises();
+
+    // Result should be cleared by the store watcher, and initial prompt should reappear
+    expect(store.result).toBeNull();
+    expect(wrapper.find('[data-testid="kinship-result-container"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="kinship-initial-prompt"]').exists()).toBe(true);
+  });
+
   it('reset button clears both selections', async () => {
     const wrapper = await mountView();
     const store = useKinshipStore();
