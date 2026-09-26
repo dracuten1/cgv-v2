@@ -75,7 +75,7 @@ Fallback when generation unknown: terracotta pair (`--color-terracotta` / `--col
 
 ### 1.7 Banned hexes & unregistered palettes
 - **Banned slate-blue family**: `#4e6d8c`, `#5b7a99`, `#7d9cb8`, `#e9f0f6`, `#eef3f8`, `#f4f8fb` (and all other slate-blue hexes). They are not part of the registered token set and dilute the warm heritage aesthetic. Always use the registered neutral slate ramp (§1.4) or generation pastels (§1.3) instead.
-- **Banned stray soft-terracotta hexes**: Do not invent arbitrary tints (e.g. `#c08370`, `#F3D5C6`). Use the canonical terracotta tokens: `--color-terracotta-soft` (`#F9EAE1`), `--color-terracotta-border` (`#F4D0C2`), `--color-terracotta` (`#C85A32`), `--color-terracotta-hover` (`#B24E2A`), and `--color-terracotta-dark` (`#983F1E`).
+- **Banned stray soft-terracotta hexes**: Do not invent arbitrary tints (e.g. `#c08370`). Use the canonical terracotta tokens: `--color-terracotta-soft` (`#F9EAE1`), `--color-terracotta-border` (`#F4D0C2`), `--color-terracotta-border-hover` (`#F3D5C6`), `--color-terracotta` (`#C85A32`), `--color-terracotta-hover` (`#B24E2A`), and `--color-terracotta-dark` (`#983F1E`).
 
 ---
 
@@ -135,7 +135,7 @@ Sections inside a card separated by `border-t border-slate-100`.
 Base: `inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium leading-normal`
 | Variant | Classes |
 |---|---|
-| Primary/active | `bg-terracotta-soft text-terracotta-dark border-[#F4D0C2]` hover `hover:bg-[#F3D5C6]` |
+| Primary/active | `bg-terracotta-soft text-terracotta-dark border-terracotta-border` hover `hover:bg-terracotta-border-hover` |
 | Neutral | `bg-white text-slate-600 border-slate-300` hover `hover:bg-slate-50` |
 | Success | `bg-emerald-50 text-emerald-700 border-emerald-200` |
 | Warning (hôn phối/demo-adjacent) | `bg-amber-50 text-amber-800 border-amber-200` |
@@ -150,12 +150,12 @@ Swap hue per §1.5. Demo badge: `bg-amber-100 text-amber-800 px-1.5 py-0.5 round
 ### 4.5 Buttons (`AppButton` — keep API, adjust variant classes)
 | Variant | Classes | Change vs today |
 |---|---|---|
-| primary | `bg-terracotta text-white hover:bg-terracotta-hover focus:ring-terracotta shadow-sm` | replace `bg-[#C85A32]` literals with tokens |
-| outline | `border border-slate-300 bg-white text-slate-700 hover:bg-cream-muted hover:border-slate-400 focus:ring-terracotta` | hover warms from slate-50 → cream-muted |
-| secondary | `bg-cream-muted text-slate-700 hover:bg-slate-200 focus:ring-slate-400` | unchanged |
-| ghost | `text-slate-600 hover:bg-slate-100 focus:ring-slate-300` | unchanged |
-| danger | `bg-red-600 text-white hover:bg-red-700 focus:ring-red-500` | unchanged |
-| **demo (new)** | `bg-amber-400 text-amber-950 hover:bg-amber-300 focus:ring-amber-500 border border-amber-500/40 shadow-sm` | INV-04: demo CTA is amber, not terracotta |
+| primary | `bg-terracotta text-white hover:bg-terracotta-hover focus-visible:ring-terracotta shadow-sm` | replace `bg-[#C85A32]` literals with tokens |
+| outline | `border border-slate-300 bg-white text-slate-700 hover:bg-cream-muted hover:border-slate-400 focus-visible:ring-terracotta` | hover warms from slate-50 → cream-muted |
+| secondary | `bg-cream-muted text-slate-700 hover:bg-slate-200 focus-visible:ring-slate-400` | unchanged |
+| ghost | `text-slate-600 hover:bg-slate-100 focus-visible:ring-slate-300` | unchanged |
+| danger | `bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500` | unchanged |
+| **demo (new)** | `bg-amber-400 text-amber-950 hover:bg-amber-300 focus-visible:ring-amber-500 border border-amber-500/40 shadow-sm` | INV-04: demo CTA is amber, not terracotta |
 Sizes: `sm px-3 py-1.5 text-xs` · `md px-4 py-2 text-sm` · `lg px-5 py-3 text-base`.
 
 ### 4.6 Demo affordance (INV-04)
@@ -164,8 +164,8 @@ Sizes: `sm px-3 py-1.5 text-xs` · `md px-4 py-2 text-sm` · `lg px-5 py-3 text-
 - Never use terracotta for anything demo-only.
 
 ### 4.7 Focus & states
-- **Focus-ring completeness rule (INV-06)**: The implemented UI kit enforces visible focus rings (`focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta`) on **ALL** interactive elements (buttons, links, inputs, combobox triggers, tabs). Static mockups omit focus rings purely for visual brevity — mockups are visual reference, the kit is the contract.
-- Global focus: `focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta` (buttons/links); inputs use `focus:ring-2 focus:ring-terracotta focus:border-transparent` (no offset).
+- **Focus-ring completeness rule (INV-06)**: The implemented UI kit enforces visible focus rings (`focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta`) on **ALL** interactive elements (buttons, links, inputs, combobox triggers, tabs). Static mockups omit focus rings purely for visual brevity — mockups are visual reference, the kit is the contract.
+- Global focus: `focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta` (buttons/links); inputs use `focus:ring-2 focus:ring-terracotta focus:border-transparent` (no offset).
 - Tree canvas keeps `focus:ring-offset-1` (denser surface).
 - Input: `block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 hover:border-slate-400` + focus above. Error: `border-red-500 focus:ring-red-500` + `text-xs text-red-600` message.
 - Disabled: `opacity-60 cursor-not-allowed` (buttons) / `bg-slate-100 text-slate-500` (inputs).
@@ -235,10 +235,10 @@ Style rules: stroke inherits `currentColor`; sizing via class (`w-4 h-4` inline,
 
 1. **Login** `/login` — cream page, centered `max-w-md` card; brand lockup = terracotta `Phả` rounded-lg glyph + Fraunces wordmark + tagline; OAuth outline buttons w/ provider marks; "Hoặc email" divider on card bg; magic-link row (envelope icon input + outline send); "Thử nghiệm" divider; **demo panel in amber** (§4.6). Ghost heritage: oversized `Phả` Fraunces glyph at 5% opacity + gen-pastel dot cluster behind card. Mobile: same card `p-4`, full-width.
 2. **Auth interstitials** `/auth/email/verify`, `/auth/oauth/callback` — ONE shared `AuthInterstitial` pattern: same login-card chrome, status disc (spinner terracotta / emerald check-circle / rose exclamation), title + copy, action row (Retry outline + "Về trang đăng nhập" text link). Both routes render the same component with props.
-3. **404** — cream page, `exclamation-circle` disc in terracotta-soft; display `404` in Fraunces terracotta with gen-pastel dot cluster; copy; primary "Về cây gia phả" + ghost "Xem bảng tin". Responsive by centering.
+3. **404** — cream page, `exclamation-circle` disc in terracotta-soft; display `404` in Fraunces terracotta with gen-pastel dot cluster; copy; primary "Về cây gia phả" + ghost "Tìm người trong họ" (`/kinship`). Responsive by centering.
 4. **Kinship** `/kinship` — keep page header + quick-demo chip; **PeoplePickerCombobox**: AppInput-style trigger with `magnifying-glass`, dropdown rows = avatar (photo w/ initials fallback, §4.9) + name (font-display semibold) + `Đời N` gen micro-badge + gender micro-badge; selected state = compact gen-stripe chip w/ avatar + x-mark clear; swap button between the two pickers on desktop (chevron-left/right, mobile stacked); dialect AppSelect; results: term hero (Fraunces 4xl terracotta, quoted), metadata chips, path timeline where each step shows avatar + name + gen micro-badge (replacing bare numbered dots).
 5. **Member detail** `/members/:id` — hero card with `w-14` photo avatar (initials fallback gen-tinted), name + gen chip + living chip + years `font-mono`; actions right; tab underline active `border-terracotta text-terracotta-dark`; relations grid: gen-stripe cards w/ avatar + name + gen label (+ gender micro-badge); posts tab reuses `PostCard` idiom verbatim (author avatar photo fallback, timestamp, content, image grid).
-6. **Feed composer** — card `p-4`: row = `w-10` avatar + borderless textarea (`bg-transparent resize-none focus:ring-0`, placeholder "Chia sẻ câu chuyện với gia đình…", 3 rows); divider; image-URL row = ghost input w/ `link` icon prefix + outline sm "Thêm ảnh"; queued images = chips w/ `photo` icon + truncate + x-mark; footer row = helper text "Bài viết hiển thị cho cả gia đình" (xs slate-400) + primary "Đăng bài" (paper-airplane). Anonymous state = warm hint banner (§4.10).
+6. **Feed composer** — card `p-4`: row = `w-10` avatar + borderless textarea (`bg-transparent resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta/40 focus-visible:ring-inset`, placeholder "Chia sẻ câu chuyện với gia đình…", 3 rows); divider; image-URL row = ghost input w/ `link` icon prefix + outline sm "Thêm ảnh"; queued images = chips w/ `photo` icon + truncate + x-mark; footer row = helper text "Bài viết hiển thị cho cả gia đình" (xs slate-400) + primary "Đăng bài" (paper-airplane). Anonymous state = warm hint banner (§4.10).
 
 ---
 
@@ -250,7 +250,7 @@ Style rules: stroke inherits `currentColor`; sizing via class (`w-4 h-4` inline,
 - Order of work: tokens/cleanup → shared AuthInterstitial + 404 → Login → Kinship picker → Member detail → Feed composer.
 
 ### 7.1 API-derived constraints
-- **Feed constraints**: The feed API has NO visibility selector, NO member tagging, and NO reaction bar. `CreatePostInput` accepts `content` (string) + `images[]` (string array of URLs) only. UI components must not render unbacked controls for visibility/privacy or tags.
+- **Feed constraints**: The feed API has NO visibility selector, NO member tagging, and NO reaction bar. `CreatePostInput` accepts `content` (string) + `images[]` (string array of URLs) only. UI components must not render unbacked controls for visibility/privacy or tags. Feed content budget: MaxContentRunes = 5000 (Go runes, api/internal/feed/service.go); client mirrors via `[...content].length` + native `maxlength`.
 - **Kinship path constraints**: Kinship path steps carry member IDs only — the API response does not provide per-step relation labels. The client calculates and renders `"Đời thứ N"` and gender badges for intermediate steps.
 - **Member relation constraints**: Member relations returned by the backend are strictly `parents`, `children`, `siblings`, and `spouses`. There is NO grandchildren section and NO branch badge.
 - **Avatar constraints**: Avatars are restricted to 8 bundled SVGs under `/static/avatars` (enforced via M4 shared regex validation in backend/frontend) plus initials fallback only. There is no custom photo upload or arbitrary external image URL support for avatars.
