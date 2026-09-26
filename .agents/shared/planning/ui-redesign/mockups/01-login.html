@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>CGP v2 — Đăng nhập (thiết kế lại) · Mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="./mockup-fonts.css"/>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: {
+    cream:'#FDFBF7', 'cream-card':'#FFFFFF', 'cream-muted':'#F5EFE6',
+    terracotta:{DEFAULT:'#C85A32',hover:'#B24E2A',dark:'#983F1E',soft:'#F9EAE1',border:'#F4D0C2'},
+    'gen-1':'#E07A5F','gen-1-soft':'#FBECE8','gen-2':'#81B29A','gen-2-soft':'#EDF5F1',
+    'gen-3':'#6B9080','gen-3-soft':'#EAF0EE','gen-4':'#D4A373','gen-4-soft':'#FAF3EB'
+  },
+  fontFamily:{ display:['Fraunces','Georgia','serif'], body:['"Be Vietnam Pro"','system-ui','sans-serif'] }
+}}}
+</script>
+<style>
+  body{font-family:'Be Vietnam Pro',system-ui,sans-serif;line-height:1.6;background:#ECE7DE;color:#1E293B;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4,h5,h6{font-family:Fraunces,Georgia,serif;line-height:1.45}
+  .frame-label{display:inline-flex;align-items:center;gap:.5rem;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#78716c;background:#ffffffcc;border:1px solid #e7e0d5;border-radius:9999px;padding:.25rem .75rem}
+</style>
+</head>
+<body class="p-6 sm:p-10 space-y-10">
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<div class="max-w-[1180px] mx-auto">
+  <p class="frame-label">CGP v2 · Mockup 01 — /login</p>
+  <h1 class="mt-3 text-2xl font-bold text-stone-800">Đăng nhập — “Warm Heritage” reskin</h1>
+  <p class="mt-1 text-sm text-stone-600 max-w-2xl">Nền kem ấm + brand lockup terracotta. Demo panel chuyển sang <strong>amber</strong> (INV-04: demo luôn phân biệt bằng amber, không dùng terracotta). Divider đặt trên nền thẻ, không đục lỗ nền trắng.</p>
+</div>
+
+<!-- ═══════════════ DESKTOP ═══════════════ -->
+<div class="max-w-[1180px] mx-auto">
+  <p class="frame-label mb-3">🖥 Desktop ≥ 768px</p>
+  <div class="rounded-xl overflow-hidden shadow-xl border border-stone-300 bg-cream">
+    <div class="bg-stone-100 border-b border-stone-200 px-4 h-9 flex items-center gap-2">
+      <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+      <span class="ml-3 text-xs text-stone-500 bg-white border border-stone-200 rounded-full px-3 py-0.5">localhost:3456/login</span>
+    </div>
+
+    <div class="relative min-h-[760px] flex items-center justify-center p-6 sm:p-10 overflow-hidden">
+      <!-- Heritage ghost decorations -->
+      <div aria-hidden="true" class="absolute -right-16 -top-10 font-display font-bold text-[22rem] leading-[1] text-terracotta opacity-[0.05] select-none pointer-events-none">Phả</div>
+      <div aria-hidden="true" class="absolute left-10 top-14 flex items-center gap-1.5 opacity-60">
+        <span class="w-2.5 h-2.5 rounded-full bg-gen-1"></span><span class="w-2 h-2 rounded-full bg-gen-2"></span>
+        <span class="w-24 h-px bg-gen-2/40"></span>
+        <span class="w-3 h-3 rounded-full bg-gen-3"></span><span class="w-2 h-2 rounded-full bg-gen-4"></span>
+      </div>
+      <div aria-hidden="true" class="absolute left-24 bottom-16 flex items-center gap-1.5 opacity-50">
+        <span class="w-2 h-2 rounded-full bg-gen-4"></span><span class="w-16 h-px bg-gen-4/40"></span><span class="w-2.5 h-2.5 rounded-full bg-gen-1"></span>
+      </div>
+
+      <!-- Login card -->
+      <div class="relative w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
+        <!-- Brand lockup -->
+        <div class="text-center mb-8">
+          <div class="mx-auto w-14 h-14 rounded-2xl bg-terracotta text-white flex items-center justify-center font-display font-bold text-2xl shadow-md shadow-terracotta/20 mb-4">Phả</div>
+          <h1 class="text-3xl font-bold font-display text-slate-800 tracking-tight">Cây Gia Phả</h1>
+          <p class="text-slate-500 text-sm mt-1">Gìn giữ nguồn cội, kết nối muôn đời</p>
+        </div>
+
+        <!-- OAuth buttons -->
+        <div class="space-y-3 mb-6">
+          <button type="button" class="w-full inline-flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-cream-muted hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.15z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.94H1.27v3.15C3.25 21.32 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.26c-.24-.72-.38-1.49-.38-2.26s.14-1.54.38-2.26V6.59H1.27C.46 8.21 0 10.05 0 12s.46 3.79 1.27 5.41l4.01-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.68 1.27 6.59l4.01 3.15c.95-2.84 3.6-4.99 6.72-4.99z"/></svg>
+            Đăng nhập với Google
+          </button>
+          <button type="button" class="w-full inline-flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-cream-muted hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors">
+            <svg class="w-4 h-4 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Đăng nhập với Facebook
+          </button>
+          <button type="button" class="w-full inline-flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-cream-muted hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors">
+            <span class="w-4 h-4 flex items-center justify-center text-[#0068FF] font-bold text-base tracking-tighter">Z</span>
+            Đăng nhập với Zalo
+          </button>
+        </div>
+
+        <!-- Divider -->
+        <div class="relative my-6">
+          <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+          <div class="relative flex justify-center"><span class="bg-white px-3 text-xs uppercase font-medium text-slate-400 tracking-wider">Hoặc email</span></div>
+        </div>
+
+        <!-- Magic link -->
+        <form class="space-y-4 mb-6" onsubmit="return false">
+          <div>
+            <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Địa chỉ email</label>
+            <div class="relative">
+              <svg class="pointer-events-none w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+              <input id="email" type="email" placeholder="Nhập email của bạn" class="block w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-sm text-slate-800 placeholder-slate-400 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta focus:border-transparent transition-colors"/>
+            </div>
+            <p class="mt-1 text-xs text-slate-400">Chúng tôi gửi liên kết đăng nhập — không cần mật khẩu.</p>
+          </div>
+          <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-cream-muted hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
+            Gửi liên kết đăng nhập
+          </button>
+        </form>
+
+        <!-- Divider: trial -->
+        <div class="relative my-6">
+          <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+          <div class="relative flex justify-center"><span class="bg-white px-3 text-xs uppercase font-medium text-slate-400 tracking-wider">Thử nghiệm</span></div>
+        </div>
+
+        <!-- DEMO panel — amber per INV-04 -->
+        <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
+          <div class="flex items-start gap-3">
+            <span class="w-9 h-9 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg>
+            </span>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-amber-900">Dùng thử ngay</p>
+              <p class="text-xs text-amber-800/90 mt-0.5">Truy cập tức thì với gia phả mẫu Nguyễn Văn An, không cần tạo tài khoản.</p>
+            </div>
+          </div>
+          <button type="button" data-testid="demo-login-btn" class="mt-3 w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg bg-amber-400 text-amber-950 border border-amber-500/40 shadow-sm hover:bg-amber-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors">
+            Vào bản dùng thử
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+          </button>
+        </div>
+
+        <p class="mt-6 text-center text-xs text-slate-400">Việc đăng nhập nghĩa là bạn đồng ý với Điều khoản sử dụng &amp; Chính sách bảo mật.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MOBILE + NOTES ═══════════════ -->
+<div class="max-w-[1180px] mx-auto grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-8 items-start">
+
+  <!-- Phone frame -->
+  <div>
+    <p class="frame-label mb-3">📱 Mobile &lt; 768px — trạng thái: đã gửi liên kết</p>
+    <div class="mx-auto w-[390px] rounded-[2.5rem] border-[10px] border-stone-800 bg-cream shadow-2xl overflow-hidden relative">
+      <div class="h-7 bg-stone-800 flex items-center justify-center"><span class="w-24 h-4 rounded-full bg-stone-900"></span></div>
+      <div class="relative min-h-[740px] px-4 py-6 overflow-hidden">
+        <div aria-hidden="true" class="absolute -right-8 -top-6 font-display font-bold text-[11rem] leading-[1] text-terracotta opacity-[0.05] select-none pointer-events-none">Phả</div>
+
+        <div class="relative bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+          <div class="text-center mb-6">
+            <div class="mx-auto w-12 h-12 rounded-xl bg-terracotta text-white flex items-center justify-center font-display font-bold text-xl shadow-md shadow-terracotta/20 mb-3">Phả</div>
+            <h1 class="text-2xl font-bold font-display text-slate-800 tracking-tight">Cây Gia Phả</h1>
+            <p class="text-slate-500 text-xs mt-1">Gìn giữ nguồn cội, kết nối muôn đời</p>
+          </div>
+
+          <!-- Verified callback notice -->
+          <div class="mb-5 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 flex items-start gap-2">
+            <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Email của bạn đã được xác thực thành công. Bạn có thể tiếp tục sử dụng hệ thống!</span>
+          </div>
+
+          <!-- Magic link sent confirmation -->
+          <div class="p-4 bg-terracotta-soft border border-terracotta-border rounded-lg text-sm text-terracotta-dark space-y-1 mb-4">
+            <div class="flex items-center gap-2 font-medium">
+              <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 9v5.25a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V9m2.25-3h15A2.25 2.25 0 0121 9m-18 0V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75V9m-9-3.75h.008v.008H12V5.25z"/></svg>
+              <span>Đã gửi liên kết đăng nhập</span>
+            </div>
+            <p class="text-xs text-terracotta-dark/80 leading-relaxed">Mở email và nhấn liên kết để đăng nhập. Liên kết sẽ mở ứng dụng và tự động đăng nhập tài khoản của bạn.</p>
+          </div>
+
+          <div class="space-y-3 mb-5">
+            <button type="button" class="w-full inline-flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-cream-muted transition-colors">
+              <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.15z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.94H1.27v3.15C3.25 21.32 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.26c-.24-.72-.38-1.49-.38-2.26s.14-1.54.38-2.26V6.59H1.27C.46 8.21 0 10.05 0 12s.46 3.79 1.27 5.41l4.01-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.68 1.27 6.59l4.01 3.15c.95-2.84 3.6-4.99 6.72-4.99z"/></svg>
+              Đăng nhập với Google
+            </button>
+            <button type="button" class="w-full inline-flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-cream-muted transition-colors">
+              <svg class="w-4 h-4 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              Đăng nhập với Facebook
+            </button>
+          </div>
+
+          <div class="relative my-4">
+            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+            <div class="relative flex justify-center"><span class="bg-white px-3 text-xs uppercase font-medium text-slate-400 tracking-wider">Thử nghiệm</span></div>
+          </div>
+
+          <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5">
+            <div class="flex items-center gap-2.5">
+              <svg class="w-5 h-5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+              <p class="text-sm font-semibold text-amber-900">Dùng thử ngay</p>
+            </div>
+            <button type="button" class="mt-2.5 w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg bg-amber-400 text-amber-950 border border-amber-500/40 shadow-sm hover:bg-amber-300 transition-colors">
+              Vào bản dùng thử
+            </button>
+            <p class="mt-2 text-center text-[11px] text-amber-800/80">Gia phả mẫu Nguyễn Văn An · không cần tài khoản</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Design notes -->
+  <div class="bg-white rounded-xl border border-stone-200 shadow-sm p-6 max-w-xl">
+    <h2 class="text-lg font-display font-semibold text-stone-800 mb-3">Ghi chú thiết kế — Login</h2>
+    <ul class="space-y-2.5 text-sm text-stone-700 list-disc pl-5">
+      <li><strong>Nền &amp; thẻ:</strong> trang phủ <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">bg-cream #FDFBF7</code>, thẻ trắng <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">rounded-2xl border-slate-200/80</code> — identical chrome với auth interstitial (mockup 02) để hai màn hình này đọc như một cặp.</li>
+      <li><strong>Brand lockup:</strong> glyph “Phả” nâng cấp thành ô vuông <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">rounded-2xl bg-terracotta</code> + wordmark Fraunces — dùng lại đúng công thức logo ở AppLayout header.</li>
+      <li><strong>Di sản nền:</strong> chữ “Phả” Fraunces khổng lồ ở 5% opacity + chùm chấm pastel 4 đời (gen-1→4) — gợi nhánh cây, không tạo tiếng ồn; tắt ở <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">prefers-reduced-motion</code>/in ấn.</li>
+      <li><strong>OAuth buttons:</strong> giữ outline slate-300 nhưng hover ấm sang <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">hover:bg-cream-muted</code> (thay slate-50 lạnh).</li>
+      <li><strong>Demo (INV-04):</strong> CTA chuyển từ terracotta-primary sang <strong>amber panel + amber button</strong> — người dùng nhìn ra lối “thử nghiệm” khác hẳn lối “đăng nhập thật”. Badge Demo màu amber trong app giữ nguyên.</li>
+      <li><strong>Trạng thái hiển thị:</strong> desktop = form thường; mobile = notice “đã xác thực email” (emerald) + xác nhận “đã gửi liên kết” (terracotta-soft) — bốn trạng thái notice của trang này đều có mặt trong 2 frame.</li>
+      <li><strong>Focus:</strong> mọi nút/input đều <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">focus:ring-2 ring-terracotta</code>; line-height ≥ 1.45/1.6 toàn trang (INV-02).</li>
+    </ul>
+  </div>
+</div>
+
+<p class="max-w-[1180px] mx-auto text-center text-[11px] text-stone-400 pb-2">CGP v2 mockup · Fraunces + Be Vietnam Pro tự nhúng base64 (không CDN font) · Tailwind CDN chỉ dùng cho mockup — bản thật dùng token Tailwind 4.1 trong main.css</p>
+</body>
+</html>

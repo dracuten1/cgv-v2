@@ -54,7 +54,7 @@
         <input
           v-model="form.isLiving"
           type="checkbox"
-          class="w-4 h-4 rounded border-slate-300 text-[#C85A32] focus:ring-[#C85A32] cursor-pointer"
+          class="w-4 h-4 rounded border-slate-300 text-terracotta focus:ring-terracotta cursor-pointer"
           data-testid="member-is-living"
         />
         <span class="text-sm text-slate-700 font-medium">Đang sống</span>
@@ -69,7 +69,7 @@
           v-model="form.notes"
           rows="3"
           placeholder="Ghi chú về thành viên…"
-          class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-[#C85A32] focus:border-transparent hover:border-slate-400 resize-y"
+          class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus:border-transparent hover:border-slate-400 resize-y"
         />
       </div>
 

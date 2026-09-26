@@ -1,15 +1,18 @@
 <template>
-  <button
-    :type="type"
-    :disabled="disabled || loading"
+  <component
+    :is="to ? 'router-link' : 'button'"
+    :to="to"
+    :type="to ? undefined : type"
+    :disabled="to ? undefined : (disabled || loading)"
+    :aria-disabled="to && (disabled || loading) ? 'true' : undefined"
     :class="[
-      'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2',
+      'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
       sizeClasses,
       variantClasses,
       fullWidth ? 'w-full' : '',
-      disabled || loading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+      disabled || loading ? 'opacity-60 cursor-not-allowed pointer-events-none' : 'cursor-pointer',
     ]"
-    @click="$emit('click', $event)"
+    @click="handleClick"
   >
     <svg
       v-if="loading"
@@ -25,19 +28,21 @@
       ></path>
     </svg>
     <slot />
-  </button>
+  </component>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { RouteLocationRaw } from 'vue-router';
 
 interface Props {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'demo';
   size?: 'sm' | 'md' | 'lg';
   type?: 'button' | 'submit' | 'reset';
   disabled?: boolean;
   loading?: boolean;
   fullWidth?: boolean;
+  to?: RouteLocationRaw;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -47,11 +52,20 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   loading: false,
   fullWidth: false,
+  to: undefined,
 });
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'click', event: MouseEvent): void;
 }>();
+
+const handleClick = (event: MouseEvent) => {
+  if (props.disabled || props.loading) {
+    event.preventDefault();
+    return;
+  }
+  emit('click', event);
+};
 
 const sizeClasses = computed(() => {
   switch (props.size) {
@@ -68,16 +82,18 @@ const sizeClasses = computed(() => {
 const variantClasses = computed(() => {
   switch (props.variant) {
     case 'secondary':
-      return 'bg-cream-muted text-slate-700 hover:bg-slate-200 focus:ring-slate-400';
+      return 'bg-cream-muted text-slate-700 hover:bg-slate-200 focus-visible:ring-slate-400';
     case 'outline':
-      return 'border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-terracotta';
+      return 'border border-slate-300 bg-white text-slate-700 hover:bg-cream-muted hover:border-slate-400 focus-visible:ring-terracotta';
     case 'ghost':
-      return 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:ring-slate-300';
+      return 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-slate-300';
     case 'danger':
-      return 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500';
+      return 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500';
+    case 'demo':
+      return 'bg-amber-400 text-amber-950 hover:bg-amber-300 focus-visible:ring-amber-500 border border-amber-500/40 shadow-sm';
     case 'primary':
     default:
-      return 'bg-[#C85A32] text-white hover:bg-[#B24E2A] focus:ring-[#C85A32] shadow-sm';
+      return 'bg-terracotta text-white hover:bg-terracotta-hover focus-visible:ring-terracotta shadow-sm';
   }
 });
 </script>

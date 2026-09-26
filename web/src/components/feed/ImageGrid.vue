@@ -6,7 +6,7 @@
       :href="image"
       target="_blank"
       rel="noopener noreferrer"
-      class="block overflow-hidden rounded-lg bg-slate-100 aspect-square"
+      class="block overflow-hidden rounded-lg bg-cream-muted aspect-square"
       @click.stop
     >
       <img

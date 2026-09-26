@@ -43,7 +43,11 @@ describe('EmailVerifyView.vue', () => {
 
     await flushPromises();
 
+    // Thin wrapper renders the shared AuthInterstitial error state
     expect(wrapper.find('[data-testid="verify-error"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="status-disc-error"]').exists()).toBe(true);
+    // No retry affordance without a token (matches v-if="hasToken" contract)
+    expect(wrapper.text()).not.toContain('Thử lại');
     expect(wrapper.text()).toContain('Liên kết không hợp lệ');
     expect(wrapper.text()).toContain('Không tìm thấy mã xác thực');
     expect(wrapper.text()).toContain('Về trang đăng nhập');
@@ -84,7 +88,9 @@ describe('EmailVerifyView.vue', () => {
     await flushPromises();
 
     expect(verifySpy).toHaveBeenCalledWith('valid-jwt-token');
+    // Thin wrapper renders the shared AuthInterstitial success state
     expect(wrapper.find('[data-testid="verify-success"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="status-disc-success"]').exists()).toBe(true);
     expect(wrapper.text()).toContain('Đăng nhập thành công!');
   });
 
@@ -108,7 +114,10 @@ describe('EmailVerifyView.vue', () => {
     await flushPromises();
 
     expect(wrapper.find('[data-testid="verify-error"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="status-disc-error"]').exists()).toBe(true);
     expect(wrapper.text()).toContain('Xác thực thất bại');
     expect(wrapper.text()).toContain('Mã xác thực đã hết hạn hoặc không hợp lệ.');
+    // Retry affordance renders when a token is present (retryable=hasToken)
+    expect(wrapper.text()).toContain('Thử lại');
   });
 });

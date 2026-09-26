@@ -6,75 +6,61 @@
         Tính quan hệ họ hàng
       </h1>
       <p class="text-slate-500 text-sm mt-1">
-        Xác định danh xưng xưng hô gia tộc chính xác theo chuẩn văn hóa Việt Nam
+        Xác định danh xưng gia tộc chính xác theo chuẩn văn hóa Việt Nam
       </p>
     </div>
 
-    <!-- Quick-demo Chip -->
+    <!-- Quick-demo Chip (demo entry point → amber per INV-04) -->
     <div class="flex items-center gap-2 flex-wrap">
       <span class="text-xs text-slate-500 font-medium">Lối tắt thử nghiệm:</span>
       <button
         type="button"
-        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#F9EAE1] text-[#983F1E] border border-[#F4D0C2] hover:bg-[#F3D5C6] transition-colors cursor-pointer"
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 transition-colors cursor-pointer"
         data-testid="quick-demo-chip"
         @click="fillQuickDemo"
       >
-        <span>⚡ Thử nhanh: Ông → Cháu nội (Nguyễn Văn An → Nguyễn Văn Bình)</span>
+        <IconSparkles class="w-3.5 h-3.5 shrink-0" />
+        <span>Thử nhanh: Ông → Cháu nội (Nguyễn Văn An → Nguyễn Văn Bình)</span>
       </button>
+    </div>
+
+    <!-- Member list failure: pickers stay empty, say why (never silent) -->
+    <div
+      v-if="membersError"
+      class="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
+      data-testid="members-error"
+    >
+      {{ membersError }}
     </div>
 
     <!-- Main Calculator Form Card -->
     <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="relative grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Swap direction button (desktop: centered between the two pickers) -->
+        <button
+          type="button"
+          class="hidden md:flex absolute left-1/2 top-9 -translate-x-1/2 z-20 w-8 h-8 items-center justify-center rounded-full bg-white border border-slate-300 text-slate-500 shadow-sm hover:text-terracotta hover:border-terracotta focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta transition-colors cursor-pointer"
+          aria-label="Đổi vị trí hai người"
+          data-testid="swap-pickers-desktop"
+          @click="swapSelections"
+        >
+          <IconChevronLeft class="w-3.5 h-3.5" />
+          <IconChevronRight class="w-3.5 h-3.5 -ml-1.5" />
+        </button>
+
         <!-- Person 1 Picker -->
         <div class="space-y-2">
           <label class="block text-sm font-medium text-slate-700">
             Người thứ nhất (Người gọi / Bắt đầu) <span class="text-red-500">*</span>
           </label>
-
-          <div class="relative">
-            <AppInput
-              v-model="searchQuery1"
-              placeholder="Chọn người thứ nhất..."
-              :disabled="loadingMembers"
-              data-testid="picker-input-1"
-              @focus="showDropdown1 = true"
-            />
-
-            <!-- Selected Chip -->
-            <div v-if="selectedMember1" class="mt-2 flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-200 text-xs">
-              <span class="font-medium text-slate-800">
-                {{ selectedMember1.full_name }}
-                <span class="text-slate-400 ml-1">
-                  (Đời {{ selectedMember1.generation_index || '?' }} · {{ toUiGender(selectedMember1.gender) }})
-                </span>
-              </span>
-              <button
-                type="button"
-                class="text-slate-400 hover:text-slate-600 font-bold ml-2"
-                @click="clearSelection(1)"
-              >
-                ✕
-              </button>
-            </div>
-
-            <!-- Dropdown Options -->
-            <div
-              v-if="showDropdown1 && filteredMembers1.length > 0"
-              class="absolute z-30 mt-1 w-full bg-white rounded-lg border border-slate-200 shadow-lg max-h-56 overflow-y-auto divide-y divide-slate-100"
-            >
-              <button
-                v-for="m in filteredMembers1"
-                :key="m.id"
-                type="button"
-                class="w-full text-left p-2.5 hover:bg-slate-50 text-xs flex items-center justify-between transition-colors"
-                @click="selectMember(1, m)"
-              >
-                <span class="font-medium text-slate-800">{{ m.full_name }}</span>
-                <span class="text-slate-400">Đời {{ m.generation_index || '?' }} · {{ toUiGender(m.gender) }}</span>
-              </button>
-            </div>
-          </div>
+          <AppCombobox
+            v-model="kinshipStore.fromMemberId"
+            :options="pickerOptions"
+            placeholder="Tìm và chọn người thứ nhất…"
+            empty-text="Không tìm thấy thành viên phù hợp"
+            :disabled="loadingMembers"
+            data-testid="picker-input-1"
+          />
         </div>
 
         <!-- Person 2 Picker -->
@@ -82,51 +68,30 @@
           <label class="block text-sm font-medium text-slate-700">
             Người thứ hai (Người được gọi / Cần tính) <span class="text-red-500">*</span>
           </label>
-
-          <div class="relative">
-            <AppInput
-              v-model="searchQuery2"
-              placeholder="Chọn người thứ hai..."
-              :disabled="loadingMembers"
-              data-testid="picker-input-2"
-              @focus="showDropdown2 = true"
-            />
-
-            <!-- Selected Chip -->
-            <div v-if="selectedMember2" class="mt-2 flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-200 text-xs">
-              <span class="font-medium text-slate-800">
-                {{ selectedMember2.full_name }}
-                <span class="text-slate-400 ml-1">
-                  (Đời {{ selectedMember2.generation_index || '?' }} · {{ toUiGender(selectedMember2.gender) }})
-                </span>
-              </span>
-              <button
-                type="button"
-                class="text-slate-400 hover:text-slate-600 font-bold ml-2"
-                @click="clearSelection(2)"
-              >
-                ✕
-              </button>
-            </div>
-
-            <!-- Dropdown Options -->
-            <div
-              v-if="showDropdown2 && filteredMembers2.length > 0"
-              class="absolute z-30 mt-1 w-full bg-white rounded-lg border border-slate-200 shadow-lg max-h-56 overflow-y-auto divide-y divide-slate-100"
-            >
-              <button
-                v-for="m in filteredMembers2"
-                :key="m.id"
-                type="button"
-                class="w-full text-left p-2.5 hover:bg-slate-50 text-xs flex items-center justify-between transition-colors"
-                @click="selectMember(2, m)"
-              >
-                <span class="font-medium text-slate-800">{{ m.full_name }}</span>
-                <span class="text-slate-400">Đời {{ m.generation_index || '?' }} · {{ toUiGender(m.gender) }}</span>
-              </button>
-            </div>
-          </div>
+          <AppCombobox
+            v-model="kinshipStore.toMemberId"
+            :options="pickerOptions"
+            placeholder="Tìm và chọn người thứ hai…"
+            empty-text="Không tìm thấy thành viên phù hợp"
+            :disabled="loadingMembers"
+            data-testid="picker-input-2"
+          />
         </div>
+      </div>
+
+      <!-- Mobile swap button (pickers stack; control sits between them) -->
+      <div class="flex md:hidden justify-center -mt-2">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-300 text-xs font-medium text-slate-500 shadow-sm hover:text-terracotta hover:border-terracotta focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta transition-colors cursor-pointer"
+          aria-label="Đổi vị trí hai người"
+          data-testid="swap-pickers-mobile"
+          @click="swapSelections"
+        >
+          <IconChevronLeft class="w-3.5 h-3.5" />
+          <span>Đổi chiều</span>
+          <IconChevronRight class="w-3.5 h-3.5" />
+        </button>
       </div>
 
       <!-- Dialect AppSelect -->
@@ -158,7 +123,6 @@
         <AppButton
           variant="outline"
           size="md"
-          class="border-slate-300 text-slate-700 hover:bg-slate-50"
           data-testid="reset-btn"
           @click="handleReset"
         >
@@ -169,18 +133,60 @@
       <!-- Error notification -->
       <div
         v-if="kinshipStore.error"
-        class="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700"
+        class="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
         data-testid="kinship-error"
       >
         {{ kinshipStore.error }}
       </div>
     </div>
 
+    <!-- Initial prompt: guidance before both people are chosen -->
+    <div
+      v-if="!bothSelected && !kinshipStore.result"
+      class="bg-cream-muted/60 rounded-xl border border-dashed border-slate-300 p-6 flex items-start gap-4"
+      data-testid="kinship-initial-prompt"
+    >
+      <div class="w-10 h-10 rounded-full bg-terracotta-soft text-terracotta flex items-center justify-center shrink-0">
+        <IconSparkles class="w-5 h-5" />
+      </div>
+      <div class="text-left">
+        <h2 class="text-base font-semibold font-display text-slate-800" style="line-height: 1.45">
+          Chọn hai người để tính quan hệ
+        </h2>
+        <p class="text-sm text-slate-500 mt-1 leading-relaxed">
+          Chọn người gọi và người được gọi ở hai ô phía trên, rồi bấm “Tính quan hệ” để xem danh xưng
+          chuẩn theo từng chi họ.
+        </p>
+      </div>
+    </div>
+
+    <!-- Unrelated result: engine returns the fallback term when no relation is in the graph -->
+    <div
+      v-else-if="kinshipStore.result && isUnrelated"
+      class="bg-terracotta-soft rounded-xl border border-terracotta-border p-6 flex items-start gap-4"
+      data-testid="kinship-unrelated"
+    >
+      <div class="w-10 h-10 rounded-full bg-white text-terracotta flex items-center justify-center shrink-0 shadow-xs">
+        <IconExclamationCircle class="w-5 h-5" />
+      </div>
+      <div class="text-left">
+        <h2 class="text-base font-semibold font-display text-slate-800" style="line-height: 1.45">
+          Không tìm thấy quan hệ họ hàng
+        </h2>
+        <p class="text-sm text-slate-600 mt-1 leading-relaxed">
+          Hai người này không có quan hệ trong phạm vi tra cứu hoặc thuộc hai nhánh khác nhau của gia
+          tộc. Hãy thử đổi chiều hoặc chọn lại hai người.
+        </p>
+      </div>
+    </div>
+
     <!-- Result Display Panel -->
-    <div v-if="kinshipStore.result" data-testid="kinship-result-container">
+    <div v-else-if="kinshipStore.result" data-testid="kinship-result-container">
       <KinshipResult
         :result="kinshipStore.result"
         :member-map="memberMap"
+        :from-name="fromMemberName"
+        :to-name="toMemberName"
       />
     </div>
   </div>
@@ -190,132 +196,87 @@
 import { ref, computed, onMounted } from 'vue';
 import { useKinshipStore } from '@/stores/kinship';
 import { membersApi } from '@/api/members';
+import { formatApiError } from '@/api/client';
 import { useToast } from '@/composables/useToast';
-import AppInput from '@/components/ui/AppInput.vue';
+import AppCombobox from '@/components/ui/AppCombobox.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import KinshipResult from '@/components/kinship/KinshipResult.vue';
+import { IconChevronLeft, IconChevronRight, IconSparkles, IconExclamationCircle } from '@/components/icons';
+import { DEMO_ROOT_ID, DEMO_GRANDSON_ID, getMissingDemoRecords } from '@/utils/demo';
 import type { Member } from '@/types/api';
-import { toUiGender } from '@/api/gender';
 
 const kinshipStore = useKinshipStore();
 const toast = useToast();
 
+/** Single page size for the picker member list (combobox search source). */
+const MEMBER_PAGE_LIMIT = 100;
+
+const bothSelected = computed(
+  () => Boolean(kinshipStore.fromMemberId) && Boolean(kinshipStore.toMemberId)
+);
+
+const isUnrelated = computed(() => {
+  const result = kinshipStore.result;
+  return Boolean(result && !result.line && (!result.path || result.path.length === 0));
+});
+
 const members = ref<Member[]>([]);
 const loadingMembers = ref(false);
+const membersError = ref<string | null>(null);
+
+// Demo-only synthetic pair: derived from the fetched list (never pushed into
+// it), so the shared member search stays uncontaminated. The records surface
+// only while the API list does not already contain the demo ids (offline /
+// unseeded backend), keeping the selected chips resolvable in that case.
+const demoMembers = computed<Member[]>(() => getMissingDemoRecords(members.value));
+
+const pickerOptions = computed<Member[]>(() => [...demoMembers.value, ...members.value]);
+
 const memberMap = computed<Record<string, Member>>(() => {
   const map: Record<string, Member> = {};
-  for (const m of members.value) {
+  for (const m of pickerOptions.value) {
     map[m.id] = m;
   }
   return map;
 });
 
-// Seed demo constants
-const SEED_ROOT_ID = 'aaaaaaa1-0000-4000-8000-000000000001'; // Nguyễn Văn An
-const SEED_GRANDSON_ID = 'bbbbbbb2-0000-4000-8000-000000000002'; // Nguyễn Văn Bình
-
-const searchQuery1 = ref('');
-const searchQuery2 = ref('');
-const showDropdown1 = ref(false);
-const showDropdown2 = ref(false);
-
-const selectedMember1 = computed(() => {
-  if (!kinshipStore.fromMemberId) return null;
-  return memberMap.value[kinshipStore.fromMemberId] || null;
+const fromMemberName = computed(() => {
+  return kinshipStore.fromMemberId ? memberMap.value[kinshipStore.fromMemberId]?.full_name || '' : '';
 });
 
-const selectedMember2 = computed(() => {
-  if (!kinshipStore.toMemberId) return null;
-  return memberMap.value[kinshipStore.toMemberId] || null;
-});
-
-const filteredMembers1 = computed(() => {
-  const q = searchQuery1.value.trim().toLowerCase();
-  if (!q) return members.value.slice(0, 15);
-  return members.value.filter((m) => m.full_name.toLowerCase().includes(q)).slice(0, 15);
-});
-
-const filteredMembers2 = computed(() => {
-  const q = searchQuery2.value.trim().toLowerCase();
-  if (!q) return members.value.slice(0, 15);
-  return members.value.filter((m) => m.full_name.toLowerCase().includes(q)).slice(0, 15);
+const toMemberName = computed(() => {
+  return kinshipStore.toMemberId ? memberMap.value[kinshipStore.toMemberId]?.full_name || '' : '';
 });
 
 async function loadAllMembers() {
   loadingMembers.value = true;
+  membersError.value = null;
   try {
-    const page = await membersApi.listMembers({ limit: 100 });
+    const page = await membersApi.listMembers({ limit: MEMBER_PAGE_LIMIT });
     members.value = page.items || [];
-  } catch (err) {
+  } catch (err: unknown) {
     // If backend isn't populated or running during unit tests, graceful empty
+    console.warn('[KinshipView] Không tải được danh sách thành viên:', err);
     members.value = [];
+    membersError.value = formatApiError(err);
   } finally {
     loadingMembers.value = false;
   }
 }
 
-function selectMember(pickerNum: 1 | 2, m: Member) {
-  if (pickerNum === 1) {
-    kinshipStore.fromMemberId = m.id;
-    searchQuery1.value = m.full_name;
-    showDropdown1.value = false;
-  } else {
-    kinshipStore.toMemberId = m.id;
-    searchQuery2.value = m.full_name;
-    showDropdown2.value = false;
-  }
-}
-
-function clearSelection(pickerNum: 1 | 2) {
-  if (pickerNum === 1) {
-    kinshipStore.fromMemberId = null;
-    searchQuery1.value = '';
-  } else {
-    kinshipStore.toMemberId = null;
-    searchQuery2.value = '';
-  }
+function swapSelections() {
+  const from = kinshipStore.fromMemberId;
+  kinshipStore.fromMemberId = kinshipStore.toMemberId;
+  kinshipStore.toMemberId = from;
 }
 
 function fillQuickDemo() {
-  // An -> Bình (or Grandson -> An depending on "Ông -> Cháu nội")
-  // Note: Seed test has GrandsonID -> RootID calculating "Ông nội" (Bình calling An = "Ông nội").
-  // If An -> Bình it would be "Cháu nội".
-  // The deliverable spec:
-  // "Seed quick-demo: from aaaaaaa1-0000-4000-8000-000000000001 (Nguyễn Văn An) to bbbbbbb2-0000-4000-8000-000000000002 (Nguyễn Văn Bình) → term 'Ông nội', line 'Chi nội', distance_label 'Cách 2 đời'."
-  // Or vice versa depending on who is from / to. We set from=Grandson, to=Root if that returns "Ông nội", or from=Root to=Grandson as specified.
-  // The spec specifically states:
-  // "quick-demo chip 'Thử nhanh: Ông → Cháu nội' that fills the two seed IDs above"
-  // Let's set from = RootID, to = GrandsonID (or ensure both names are set).
-  // If the user wants An calling Bình or Bình calling An, they can see both or click.
-  kinshipStore.fromMemberId = SEED_ROOT_ID;
-  kinshipStore.toMemberId = SEED_GRANDSON_ID;
-  searchQuery1.value = memberMap.value[SEED_ROOT_ID]?.full_name || 'Nguyễn Văn An';
-  searchQuery2.value = memberMap.value[SEED_GRANDSON_ID]?.full_name || 'Nguyễn Văn Bình';
-
-  // If memberMap doesn't have them yet (e.g. offline/mock), synthesize entries so UI renders nicely
-  if (!memberMap.value[SEED_ROOT_ID]) {
-    members.value.push({
-      id: SEED_ROOT_ID,
-      family_id: '11111111-1111-4111-8111-000000000001',
-      full_name: 'Nguyễn Văn An',
-      gender: 'male',
-      generation_index: 1,
-      is_living: false,
-      created_at: new Date().toISOString(),
-    });
-  }
-  if (!memberMap.value[SEED_GRANDSON_ID]) {
-    members.value.push({
-      id: SEED_GRANDSON_ID,
-      family_id: '11111111-1111-4111-8111-000000000001',
-      full_name: 'Nguyễn Văn Bình',
-      gender: 'male',
-      generation_index: 3,
-      is_living: true,
-      created_at: new Date().toISOString(),
-    });
-  }
+  // Names/records for the chips resolve through the derived `demoMembers`
+  // computed (utils/demo.ts) — this action only selects the pair and never
+  // synthesizes or mutates the shared member list.
+  kinshipStore.fromMemberId = DEMO_ROOT_ID;
+  kinshipStore.toMemberId = DEMO_GRANDSON_ID;
 }
 
 async function handleCalculate() {
@@ -325,17 +286,13 @@ async function handleCalculate() {
   }
 
   const res = await kinshipStore.calculateKinship();
-  if (res) {
+  if (res && !isUnrelated.value) {
     toast.success('Đã tính toán quan hệ thành công!');
   }
 }
 
 function handleReset() {
   kinshipStore.reset();
-  searchQuery1.value = '';
-  searchQuery2.value = '';
-  showDropdown1.value = false;
-  showDropdown2.value = false;
 }
 
 onMounted(() => {

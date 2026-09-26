@@ -32,3 +32,20 @@ export function toApiGender(input: string | null | undefined): Gender {
   }
   throw new Error(`Giá trị giới tính không hợp lệ: "${input}" (chấp nhận 'nam'/'nữ' hoặc 'male'/'female')`);
 }
+
+/**
+ * Gender micro-badge classes (mockup 04 / member rows).
+ * Single source of truth for KinshipResult, MemberDetailView and AppCombobox —
+ * pairs with toUiGender() for the label. Returns border width + color classes;
+ * host elements should NOT add a separate `border` class.
+ */
+export function getGenderBadgeClass(gender: Gender | string | null | undefined): string {
+  const normalized = (gender || '').toString().trim().toLowerCase();
+  if (normalized === 'male' || normalized === 'nam') {
+    return 'bg-sky-50 text-sky-700 border border-sky-200';
+  }
+  if (normalized === 'female' || normalized === 'nữ' || normalized === 'nu') {
+    return 'bg-rose-50 text-rose-700 border border-rose-200';
+  }
+  return 'bg-slate-50 text-slate-600 border border-slate-200';
+}

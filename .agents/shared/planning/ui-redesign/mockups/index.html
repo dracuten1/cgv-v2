@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>CGP v2 — UI Redesign Mockups · Gallery</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="./mockup-fonts.css"/>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: {
+    cream:'#FDFBF7', 'cream-muted':'#F5EFE6',
+    terracotta:{DEFAULT:'#C85A32',hover:'#B24E2A',dark:'#983F1E',soft:'#F9EAE1',border:'#F4D0C2'},
+    'gen-1':'#E07A5F','gen-1-soft':'#FBECE8','gen-2':'#81B29A','gen-2-soft':'#EDF5F1',
+    'gen-3':'#6B9080','gen-3-soft':'#EAF0EE','gen-4':'#D4A373','gen-4-soft':'#FAF3EB'
+  },
+  fontFamily:{ display:['Fraunces','Georgia','serif'], body:['"Be Vietnam Pro"','system-ui','sans-serif'] }
+}}}
+</script>
+<style>
+  body{font-family:'Be Vietnam Pro',system-ui,sans-serif;line-height:1.6;background:#FDFBF7;color:#1E293B;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:Fraunces,Georgia,serif;line-height:1.45}
+</style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+    <!-- Header -->
+    <div class="flex items-center gap-3 mb-2">
+      <span class="w-11 h-11 rounded-xl bg-terracotta text-white flex items-center justify-center font-display font-bold text-xl shadow-md shadow-terracotta/20">Phả</span>
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800">Cây Gia Phả — UI Redesign Mockups</h1>
+        <p class="text-sm text-slate-500">Mở rộng ngôn ngữ thiết kế “Warm Heritage” từ /tree ra toàn app · spec: <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">.agents/shared/planning/ui-redesign/design-system.md</code></p>
+      </div>
+    </div>
+
+    <!-- Token strip -->
+    <div class="mt-6 bg-white rounded-xl border border-slate-200 shadow-xs p-5">
+      <h2 class="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wider" style="line-height:1.45;">Bảng token cốt lõi</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div>
+          <p class="text-slate-400 mb-1.5" style="line-height:1.45;">Bề mặt</p>
+          <div class="space-y-1">
+            <div class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-slate-200" style="background:#FDFBF7"></span><span>cream #FDFBF7</span></div>
+            <div class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-slate-200" style="background:#FFFFFF"></span><span>card #FFFFFF</span></div>
+            <div class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-slate-200" style="background:#F5EFE6"></span><span>muted #F5EFE6</span></div>
+          </div>
+        </div>
+        <div>
+          <p class="text-slate-400 mb-1.5" style="line-height:1.45;">Terracotta</p>
+          <div class="space-y-1">
+            <div class="flex items-center gap-2"><span class="w-5 h-5 rounded" style="background:#C85A32"></span><span>#C85A32</span></div>
+            <div class="flex items-center gap-2"><span class="w-5 h-5 rounded" style="background:#B24E2A"></span><span>#B24E2A</span></div>
+            <div class="flex items-center gap-2"><span class="w-5 h-5 rounded" style="background:#983F1E"></span><span>#983F1E</span></div>
+            <div class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-slate-200" style="background:#F9EAE1"></span><span>soft #F9EAE1</span></div>
+          </div>
+        </div>
+        <div>
+          <p class="text-slate-400 mb-1.5" style="line-height:1.45;">4 đời (gen)</p>
+          <div class="space-y-1">
+            <div class="flex items-center gap-2"><span class="w-5 h-5 rounded" style="background:#E07A5F"></span><span>gen-1 #E07A5F</span></div>
+            <div class="flex items-center gap-2"><span class="w-5 h-5 rounded" style="background:#81B29A"></span><span>gen-2 #81B29A</span></div>
+            <div class="flex items-center gap-2"><span class="w-5 h-5 rounded" style="background:#6B9080"></span><span>gen-3 #6B9080</span></div>
+            <div class="flex items-center gap-2"><span class="w-5 h-5 rounded" style="background:#D4A373"></span><span>gen-4 #D4A373</span></div>
+          </div>
+        </div>
+        <div>
+          <p class="text-slate-400 mb-1.5" style="line-height:1.45;">Chữ</p>
+          <p class="font-display font-bold text-base text-slate-800" style="line-height:1.45;">Fraunces 600/700 — display</p>
+          <p class="text-slate-600" style="line-height:1.6;">Be Vietnam Pro 400–700 — body · line-height ≥ 1.45/1.6 (INV-02)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <a href="./01-login.html" class="group bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-md hover:border-terracotta transition-all p-5">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="w-9 h-9 rounded-lg bg-terracotta-soft text-terracotta-dark flex items-center justify-center text-sm font-bold">01</span>
+          <h3 class="text-base font-semibold text-slate-800">Đăng nhập</h3>
+        </div>
+        <p class="text-sm text-slate-500">Reskin ấm heritage · OAuth + magic-link · demo panel amber · desktop + mobile</p>
+      </a>
+      <a href="./02-auth-interstitials.html" class="group bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-md hover:border-terracotta transition-all p-5">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="w-9 h-9 rounded-lg bg-terracotta-soft text-terracotta-dark flex items-center justify-center text-sm font-bold">02</span>
+          <h3 class="text-base font-semibold text-slate-800">Auth interstitials</h3>
+        </div>
+        <p class="text-sm text-slate-500">1 pattern chung cho verify + callback · working / success / error</p>
+      </a>
+      <a href="./03-notfound.html" class="group bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-md hover:border-terracotta transition-all p-5">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="w-9 h-9 rounded-lg bg-terracotta-soft text-terracotta-dark flex items-center justify-center text-sm font-bold">03</span>
+          <h3 class="text-base font-semibold text-slate-800">404 NotFound</h3>
+        </div>
+        <p class="text-sm text-slate-500">“Nhánh lìa cây” · Fraunces 404 terracotta · 2 lối thoát</p>
+      </a>
+      <a href="./04-kinship.html" class="group bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-md hover:border-terracotta transition-all p-5">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="w-9 h-9 rounded-lg bg-terracotta-soft text-terracotta-dark flex items-center justify-center text-sm font-bold">04</span>
+          <h3 class="text-base font-semibold text-slate-800">Tính quan hệ họ hàng</h3>
+        </div>
+        <p class="text-sm text-slate-500">Combobox chọn người có avatar + huy hiệu đời · kết quả timeline avatar</p>
+      </a>
+      <a href="./05-member-detail.html" class="group bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-md hover:border-terracotta transition-all p-5">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="w-9 h-9 rounded-lg bg-terracotta-soft text-terracotta-dark flex items-center justify-center text-sm font-bold">05</span>
+          <h3 class="text-base font-semibold text-slate-800">Hồ sơ thành viên</h3>
+        </div>
+        <p class="text-sm text-slate-500">Avatar ảnh thật + stripe đời · quan hệ có huy hiệu danh xưng · posts = PostCard</p>
+      </a>
+      <a href="./06-feed-composer.html" class="group bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-md hover:border-terracotta transition-all p-5">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="w-9 h-9 rounded-lg bg-terracotta-soft text-terracotta-dark flex items-center justify-center text-sm font-bold">06</span>
+          <h3 class="text-base font-semibold text-slate-800">Bảng tin — composer</h3>
+        </div>
+        <p class="text-sm text-slate-500">Textarea không viền + ghost URL field + chip ảnh · banner khách ấm</p>
+      </a>
+    </div>
+
+    <p class="mt-8 text-xs text-slate-400 text-center">Mockup tĩnh · font tự nhúng base64 (không CDN font) · Tailwind CDN chỉ dùng cho mockup — bản implement dùng token Tailwind 4.1 trong <code class="text-xs bg-cream-muted px-1.5 py-0.5 rounded">main.css</code></p>
+  </div>
+</body>
+</html>

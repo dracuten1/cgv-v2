@@ -5,3 +5,7 @@ export { default as AppChip } from './AppChip.vue';
 export { default as AppDialog } from './AppDialog.vue';
 export { default as EmptyState } from './EmptyState.vue';
 export { default as ToastHost } from './ToastHost.vue';
+export { default as AppAvatar } from './AppAvatar.vue';
+export { default as AppCombobox } from './AppCombobox.vue';
+export { default as AppTextarea } from './AppTextarea.vue';
+export { default as AuthInterstitial } from './AuthInterstitial.vue';

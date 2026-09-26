@@ -14,7 +14,7 @@
       <AppButton
         variant="outline"
         size="sm"
-        class="self-start sm:self-auto text-slate-600 border-slate-300 hover:bg-slate-50"
+        class="self-start sm:self-auto"
         data-testid="logout-btn"
         @click="handleLogout"
       >
@@ -30,9 +30,7 @@
     <!-- User Profile Card -->
     <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-full bg-[#F9EAE1] text-[#C85A32] flex items-center justify-center font-bold text-xl font-display flex-shrink-0 border border-[#F4D0C2]">
-          {{ avatarInitial }}
-        </div>
+        <AppAvatar :name="authStore.displayName" size="w-14" data-testid="user-avatar" />
         <div>
           <div class="flex items-center gap-2 flex-wrap">
             <h2 class="text-lg font-bold text-slate-800" data-testid="user-display-name">
@@ -76,13 +74,18 @@
         <div
           v-for="identity in authStore.identities"
           :key="identity.id"
-          class="border border-slate-200 rounded-xl p-4 flex flex-col justify-between hover:border-slate-300 transition-colors bg-slate-50/50"
+          class="border border-slate-200 rounded-xl p-4 flex flex-col justify-between hover:border-slate-300 transition-colors bg-cream-muted/50"
           :data-testid="`identity-card-${identity.id}`"
         >
           <div class="flex items-start justify-between gap-3 mb-3">
             <div class="flex items-center gap-2.5">
               <span class="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-sm font-bold shadow-2xs">
-                {{ getProviderIcon(identity.provider) }}
+                <component
+                  :is="providerIcon(identity.provider)"
+                  v-if="providerIcon(identity.provider)"
+                  class="w-4 h-4"
+                />
+                <template v-else>{{ getProviderLetter(identity.provider) }}</template>
               </span>
               <div>
                 <span class="text-sm font-semibold text-slate-800">
@@ -140,11 +143,10 @@
             :key="prov.id"
             variant="outline"
             size="sm"
-            class="border-slate-300 text-slate-700 hover:bg-slate-50"
             @click="startLinking(prov.id)"
           >
             <span class="flex items-center gap-2">
-              <span>{{ getProviderIcon(prov.id) }}</span>
+              <span>{{ getProviderLetter(prov.id) }}</span>
               <span>Liên kết với {{ prov.name }}</span>
             </span>
           </AppButton>
@@ -168,12 +170,13 @@
         <div
           v-for="contact in authStore.contacts"
           :key="contact.id"
-          class="p-3.5 flex items-center justify-between gap-3 bg-white hover:bg-slate-50/60 transition-colors"
+          class="p-3.5 flex items-center justify-between gap-3 bg-white hover:bg-cream-muted/60 transition-colors"
           :data-testid="`contact-row-${contact.id}`"
         >
           <div class="flex items-center gap-3">
-            <span class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs">
-              {{ contact.kind === 'email' ? '✉️' : '📞' }}
+            <span class="w-7 h-7 rounded-full bg-cream-muted text-slate-600 flex items-center justify-center">
+              <IconEnvelope v-if="contact.kind === 'email'" class="w-3.5 h-3.5" />
+              <IconPhone v-else class="w-3.5 h-3.5" />
             </span>
             <div>
               <div class="text-sm font-medium text-slate-800">
@@ -211,7 +214,7 @@
           </div>
         </div>
       </div>
-      <div v-else class="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-lg border border-slate-200">
+      <div v-else class="text-xs text-slate-500 italic p-3 bg-cream-muted/60 rounded-lg border border-slate-200">
         Chưa có điểm liên hệ nào được lưu.
       </div>
 
@@ -294,15 +297,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, type Component } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { formatApiError } from '@/api/client';
 import { useToast } from '@/composables/useToast';
 import AppButton from '@/components/ui/AppButton.vue';
 import AppChip from '@/components/ui/AppChip.vue';
+import AppAvatar from '@/components/ui/AppAvatar.vue';
 import AppInput from '@/components/ui/AppInput.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
 import AppDialog from '@/components/ui/AppDialog.vue';
+import { IconEnvelope, IconPhone, IconSparkles, IconUserCircle } from '@/components/icons';
 import type { UserIdentity } from '@/types/api';
 
 const router = useRouter();
@@ -310,11 +316,6 @@ const authStore = useAuthStore();
 const toast = useToast();
 
 const isSoleIdentity = computed(() => authStore.identities.length <= 1);
-
-const avatarInitial = computed(() => {
-  const name = authStore.displayName || 'Khách';
-  return name.trim().charAt(0).toUpperCase();
-});
 
 const linkableProviders = [
   { id: 'google', name: 'Google' },
@@ -341,7 +342,7 @@ function getProviderLabel(provider: string): string {
   }
 }
 
-function getProviderIcon(provider: string): string {
+function getProviderLetter(provider: string): string {
   switch (provider) {
     case 'google':
       return 'G';
@@ -349,12 +350,24 @@ function getProviderIcon(provider: string): string {
       return 'f';
     case 'zalo':
       return 'Z';
-    case 'email':
-      return '✉️';
-    case 'demo':
-      return '⚡';
     default:
-      return '🔑';
+      return provider.charAt(0).toUpperCase();
+  }
+}
+
+// Emoji glyphs replaced by the shared icon set (spec §5): envelope for email
+// magic link, sparkles for demo, user-circle for unknown providers. Brand
+// letters (G/f/Z) stay text marks.
+function providerIcon(provider: string): Component | null {
+  switch (provider) {
+    case 'email':
+      return IconEnvelope;
+    case 'demo':
+      return IconSparkles;
+    case 'mock':
+      return IconUserCircle;
+    default:
+      return null;
   }
 }
 
@@ -401,8 +414,8 @@ async function confirmUnlink() {
     await authStore.unlinkIdentity(selectedIdentity.value.id);
     toast.success('Hủy liên kết thành công.');
     isUnlinkDialogOpen.value = false;
-  } catch (err: any) {
-    toast.warning(err?.message || 'Không thể hủy liên kết phương thức đăng nhập duy nhất của tài khoản.');
+  } catch (err: unknown) {
+    toast.warning(formatApiError(err) || 'Không thể hủy liên kết phương thức đăng nhập duy nhất của tài khoản.');
   } finally {
     unlinking.value = false;
   }
@@ -425,8 +438,8 @@ async function submitAddContact() {
     await authStore.addContact(newContactKind.value, newContactValue.value.trim());
     toast.success('Đã thêm điểm liên hệ thành công.');
     newContactValue.value = '';
-  } catch (err: any) {
-    toast.error(err?.message || 'Thêm điểm liên hệ thất bại.');
+  } catch (err: unknown) {
+    toast.error(formatApiError(err) || 'Thêm điểm liên hệ thất bại.');
   } finally {
     addingContact.value = false;
   }
@@ -437,8 +450,8 @@ async function triggerVerifyContact(contactId: string) {
   try {
     await authStore.verifyContact(contactId);
     toast.success('Đã gửi yêu cầu xác thực đến điểm liên hệ của bạn.');
-  } catch (err: any) {
-    toast.error(err?.message || 'Gửi yêu cầu xác thực thất bại.');
+  } catch (err: unknown) {
+    toast.error(formatApiError(err) || 'Gửi yêu cầu xác thực thất bại.');
   } finally {
     verifyingContactId.value = null;
   }
@@ -449,8 +462,8 @@ async function handleLogout() {
     await authStore.logout();
     toast.info('Đã đăng xuất thành công.');
     await router.push('/login');
-  } catch (err: any) {
-    toast.error(err?.message || 'Đăng xuất thất bại.');
+  } catch (err: unknown) {
+    toast.error(formatApiError(err) || 'Đăng xuất thất bại.');
   }
 }
 

@@ -5,6 +5,13 @@
       <span v-if="required" class="text-red-500">*</span>
     </label>
     <div class="relative rounded-md shadow-sm">
+      <div
+        v-if="hasLeading"
+        class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"
+        aria-hidden="true"
+      >
+        <slot name="leading" />
+      </div>
       <input
         :id="inputId"
         :type="type"
@@ -13,7 +20,8 @@
         :disabled="disabled"
         :required="required"
         :class="[
-          'block w-full rounded-lg border px-3 py-2 text-sm text-slate-800 placeholder-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-[#C85A32] focus:border-transparent',
+          'block w-full rounded-lg border py-2 pr-3 text-sm text-slate-800 placeholder-slate-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus:border-transparent',
+          hasLeading ? 'pl-9' : 'px-3',
           error ? 'border-red-500 text-red-900 focus:ring-red-500' : 'border-slate-300 bg-white hover:border-slate-400',
           disabled ? 'bg-slate-100 cursor-not-allowed text-slate-500' : '',
         ]"
@@ -28,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, useSlots } from 'vue';
 
 interface Props {
   modelValue?: string | number | null;
@@ -63,6 +71,10 @@ const emit = defineEmits<{
 }>();
 
 const inputId = computed(() => props.id || `input-${Math.random().toString(36).substring(2, 9)}`);
+
+/** Leading-icon slot present → pad the input left (pl-9) instead of px-3. */
+const slots = useSlots();
+const hasLeading = computed(() => Boolean(slots.leading));
 
 const onInput = (event: Event) => {
   const target = event.target as HTMLInputElement;

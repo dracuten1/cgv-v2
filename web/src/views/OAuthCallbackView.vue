@@ -1,60 +1,34 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-slate-50 p-4 sm:p-6 font-sans">
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8 text-center">
-      <!-- Logo / Header -->
-      <div class="mb-6">
-        <h1 class="text-2xl font-bold font-display text-slate-800 tracking-tight">
-          Cây Gia Phả
-        </h1>
-        <p class="text-slate-500 text-xs mt-1">
-          Xác thực liên kết tài khoản
-        </p>
-      </div>
-
-      <!-- State: Success -->
-      <div v-if="outcome.type === 'success'" class="py-6 space-y-4" data-testid="oauth-success">
-        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 text-emerald-600">
-          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h2 class="text-base font-semibold text-slate-800">Liên kết tài khoản thành công!</h2>
-        <p class="text-xs text-slate-600 leading-normal" data-testid="oauth-message">
-          {{ outcome.message }}
-        </p>
-        <div class="pt-2 flex flex-col gap-2">
-          <router-link
-            to="/account"
-            class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-[#C85A32] hover:bg-[#B24E2A] transition-colors"
-            data-testid="oauth-nav-affordance"
-          >
-            Quay lại trang tài khoản
-          </router-link>
-        </div>
-      </div>
-
-      <!-- State: Error -->
-      <div v-else class="py-6 space-y-4" data-testid="oauth-error">
-        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-rose-100 text-rose-600">
-          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </div>
-        <h2 class="text-base font-semibold text-slate-800">Liên kết tài khoản không thành công</h2>
-        <p class="text-xs text-slate-600 leading-normal" data-testid="oauth-message">
-          {{ outcome.message }}
-        </p>
-        <div class="pt-2 flex flex-col gap-2">
-          <router-link
-            :to="errorNavTarget"
-            class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-[#C85A32] hover:bg-[#B24E2A] transition-colors"
-            data-testid="oauth-nav-affordance"
-          >
-            {{ errorNavLabel }}
-          </router-link>
-        </div>
-      </div>
-    </div>
+  <div :data-testid="`oauth-${outcome.type}`">
+    <AuthInterstitial
+      :status="outcome.type === 'success' ? 'success' : 'error'"
+      :step="3"
+      :retryable="false"
+      :title="outcome.type === 'success' ? 'Liên kết tài khoản thành công!' : 'Liên kết tài khoản không thành công'"
+      :copy="outcome.message"
+    >
+      <template #copy>
+        <span data-testid="oauth-message">{{ outcome.message }}</span>
+      </template>
+      <template #actions>
+        <router-link
+          v-if="outcome.type === 'success'"
+          to="/account"
+          class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-terracotta text-white hover:bg-terracotta-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta transition-colors"
+          data-testid="oauth-nav-affordance"
+        >
+          Quay lại trang tài khoản
+        </router-link>
+        <router-link
+          v-else
+          :to="errorNavTarget"
+          class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-terracotta text-white hover:bg-terracotta-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta transition-colors"
+          data-testid="oauth-nav-affordance"
+        >
+          {{ errorNavLabel }}
+        </router-link>
+      </template>
+    </AuthInterstitial>
   </div>
 </template>
 
@@ -62,6 +36,7 @@
 import { computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import AuthInterstitial from '@/components/ui/AuthInterstitial.vue';
 
 const route = useRoute();
 const router = useRouter();

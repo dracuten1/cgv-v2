@@ -5,7 +5,7 @@ import FeedView from '@/views/FeedView.vue';
 import { useAuthStore } from '@/stores/auth';
 import { feedApi } from '@/api/feed';
 import { familiesApi } from '@/api/families';
-import type { FeedListResponse, FeedPostItem, User } from '@/types/api';
+import type { FeedListResponse, FeedPost, FeedPostItem, User } from '@/types/api';
 
 vi.mock('@/api/feed', () => ({
   feedApi: {
@@ -84,6 +84,8 @@ describe('FeedView', () => {
     expect(wrapper.text()).toContain('Đăng nhập để đăng bài viết.');
     expect(wrapper.find('[data-testid="login-cta"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="composer-form"]').exists()).toBe(false);
+    // Warm banner per §4.10 (terracotta-soft, never cold slate)
+    expect(wrapper.find('[data-testid="anonymous-hint"]').classes()).toContain('bg-terracotta-soft');
   });
 
   it('renders the composer for authenticated users', async () => {
@@ -99,11 +101,21 @@ describe('FeedView', () => {
 
     const form = wrapper.find('[data-testid="composer-form"]');
     expect(form.exists()).toBe(true);
+    // Uses AppAvatar w-10 for composer author
+    const avatar = form.findComponent({ name: 'AppAvatar' });
+    expect(avatar.exists()).toBe(true);
+    expect(avatar.props('size')).toBe('w-10');
+
+    // Uses AppTextarea borderless
+    const textarea = form.findComponent({ name: 'AppTextarea' });
+    expect(textarea.exists()).toBe(true);
+    expect(textarea.props('variant')).toBe('borderless');
     expect(form.find('textarea').attributes('placeholder')).toBe(
       'Chia sẻ câu chuyện với gia đình…'
     );
     expect(form.text()).toContain('Thêm ảnh');
     expect(form.text()).toContain('Đăng bài');
+    expect(form.text()).toContain('Bài viết hiển thị cho cả gia đình');
   });
 
   it('renders PostCards with author, vi-VN date and image grids (1 vs 3 images)', async () => {
@@ -210,5 +222,172 @@ describe('FeedView', () => {
 
     expect(wrapper.find('[data-testid="feed-error"]').exists()).toBe(true);
     expect(wrapper.text()).toContain('Máy chủ gặp sự cố. Vui lòng thử lại sau.');
+  });
+
+  it('shows the loading skeleton while the feed fetches, then the list', async () => {
+    const auth = useAuthStore();
+    auth.user = testUser;
+    auth.status = 'authenticated';
+
+    let resolveList!: (v: FeedListResponse) => void;
+    mockedFeedApi.list.mockImplementation(
+      () => new Promise<FeedListResponse>((res) => (resolveList = res))
+    );
+
+    const wrapper = mount(FeedView, { global: { plugins: [pinia], stubs: { RouterLink: true } } });
+    await flushPromises();
+
+    const skeleton = wrapper.find('[data-testid="feed-loading"]');
+    expect(skeleton.exists()).toBe(true);
+    // Warm pulse placeholders, not a cold spinner
+    expect(skeleton.find('.animate-pulse').exists()).toBe(true);
+    expect(skeleton.text()).toContain('Đang tải bài viết…');
+
+    resolveList({ posts: [makePost()], next_cursor: null });
+    await flushPromises();
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="feed-loading"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="feed-list"]').exists()).toBe(true);
+  });
+
+  it('enforces the backend 5000-rune budget: maxlength attr + live counter', async () => {
+    const auth = useAuthStore();
+    auth.user = testUser;
+    auth.status = 'authenticated';
+
+    mockedFeedApi.list.mockResolvedValue({ posts: [], next_cursor: null });
+
+    const wrapper = mount(FeedView, { global: { plugins: [pinia], stubs: { RouterLink: true } } });
+    await flushPromises();
+    await flushPromises();
+
+    const form = wrapper.find('[data-testid="composer-form"]');
+    const textarea = form.find('textarea');
+    const counter = form.find('[data-testid="composer-char-counter"]');
+
+    // Backend parity: api/internal/feed/service.go MaxContentRunes = 5000
+    expect(textarea.attributes('maxlength')).toBe('5000');
+    expect(counter.text()).toBe('0/5000');
+
+    await textarea.setValue('Xin chào cả nhà');
+    expect(counter.text()).toBe('15/5000');
+    expect(counter.classes()).not.toContain('text-red-600');
+
+    // Publish stays enabled within budget
+    const submit = form.find('button[type="submit"]');
+    expect(submit.attributes('disabled')).toBeUndefined();
+  });
+
+  it('disables publish and flags the counter red beyond the rune budget', async () => {
+    const auth = useAuthStore();
+    auth.user = testUser;
+    auth.status = 'authenticated';
+
+    mockedFeedApi.list.mockResolvedValue({ posts: [], next_cursor: null });
+
+    const wrapper = mount(FeedView, { global: { plugins: [pinia], stubs: { RouterLink: true } } });
+    await flushPromises();
+    await flushPromises();
+
+    const form = wrapper.find('[data-testid="composer-form"]');
+    // maxlength clamps real typing; drive the model past the budget directly
+    // (mirrors an IME / programmatic overflow) to exercise the guard rail.
+    const textareaComp = form.findComponent({ name: 'AppTextarea' });
+    textareaComp.vm.$emit('update:modelValue', 'a'.repeat(5001));
+    await flushPromises();
+
+    const counter = form.find('[data-testid="composer-char-counter"]');
+    expect(counter.text()).toBe('5001/5000');
+    expect(counter.classes()).toContain('text-red-600');
+
+    const submit = form.find('button[type="submit"]');
+    expect(submit.attributes('disabled')).toBeDefined();
+  });
+
+  it('handles boundary rune counts (4999, 5000) and multibyte/emoji correctly', async () => {
+    const auth = useAuthStore();
+    auth.user = testUser;
+    auth.status = 'authenticated';
+
+    mockedFeedApi.list.mockResolvedValue({ posts: [], next_cursor: null });
+
+    const wrapper = mount(FeedView, { global: { plugins: [pinia], stubs: { RouterLink: true } } });
+    await flushPromises();
+    await flushPromises();
+
+    const form = wrapper.find('[data-testid="composer-form"]');
+    const textareaComp = form.findComponent({ name: 'AppTextarea' });
+    const counter = form.find('[data-testid="composer-char-counter"]');
+    const submit = form.find('button[type="submit"]');
+
+    // 4999 runes: valid and enabled
+    textareaComp.vm.$emit('update:modelValue', 'x'.repeat(4999));
+    await flushPromises();
+    expect(counter.text()).toBe('4999/5000');
+    expect(counter.classes()).not.toContain('text-red-600');
+    expect(submit.attributes('disabled')).toBeUndefined();
+
+    // 5000 runes: exactly at limit, still valid and enabled
+    textareaComp.vm.$emit('update:modelValue', 'x'.repeat(5000));
+    await flushPromises();
+    expect(counter.text()).toBe('5000/5000');
+    expect(counter.classes()).not.toContain('text-red-600');
+    expect(submit.attributes('disabled')).toBeUndefined();
+
+    // Multibyte Vietnamese and emojis: code points vs UTF-16 code units
+    // E.g. '🌳' (surrogate pair in JS string length=2, but 1 rune in [...str])
+    // 'Cây phả hệ 🌳' = 11 characters + 1 emoji = 12 runes
+    const complexText = 'Cây phả hệ 🌳';
+    textareaComp.vm.$emit('update:modelValue', complexText);
+    await flushPromises();
+    expect(counter.text()).toBe('12/5000');
+    expect(submit.attributes('disabled')).toBeUndefined();
+  });
+
+  it('composer submitting state: CTA disabled with spinner label while createPost is in flight', async () => {
+    const auth = useAuthStore();
+    auth.user = testUser;
+    auth.status = 'authenticated';
+
+    mockedFeedApi.list.mockResolvedValue({ posts: [], next_cursor: null });
+    let resolveCreate!: (v: FeedPost) => void;
+    mockedFeedApi.create.mockImplementation(
+      () => new Promise<FeedPost>((res) => (resolveCreate = res))
+    );
+
+    const wrapper = mount(FeedView, { global: { plugins: [pinia], stubs: { RouterLink: true } } });
+    await flushPromises();
+    await flushPromises();
+
+    const form = wrapper.find('[data-testid="composer-form"]');
+    await form.find('textarea').setValue('Bài viết đầu tiên');
+
+    const submit = form.find('button[type="submit"]');
+    expect(submit.text()).toContain('Đăng bài');
+
+    await form.trigger('submit');
+    await flushPromises();
+
+    // In flight: aria-busy on the form, spinner label, CTA disabled
+    expect(form.attributes('aria-busy')).toBe('true');
+    expect(submit.text()).toContain('Đang đăng…');
+    expect(submit.attributes('disabled')).toBeDefined();
+
+    resolveCreate({
+      id: 'p-new',
+      family_id: 'f1',
+      author_member_id: null,
+      content: 'Bài viết đầu tiên',
+      images: [],
+      created_at: '2026-09-25T00:00:00Z',
+    });
+    await flushPromises();
+    await flushPromises();
+
+    expect(form.attributes('aria-busy')).toBeUndefined();
+    expect(form.find('button[type="submit"]').text()).toContain('Đăng bài');
+    // Composer resets after a successful post
+    expect((form.find('textarea').element as HTMLTextAreaElement).value).toBe('');
   });
 });

@@ -70,4 +70,53 @@ describe('KinshipResult.vue (INV-05 structural contract & rendering)', () => {
     expect(wrapper.text()).toContain('Cách 2 đời');
     expect(wrapper.text()).toContain('Huyết thống');
   });
+
+  it('renders a path timeline of avatar nodes with numbered badges and start/end subtitles', () => {
+    const wrapper = mount(KinshipResultComponent, {
+      props: {
+        result: mockResult,
+        memberMap: {
+          'm-1': {
+            id: 'm-1',
+            family_id: 'f1',
+            full_name: 'Nguyễn Văn An',
+            gender: 'male',
+            generation_index: 1,
+            is_living: false,
+            created_at: '2026-01-01T00:00:00Z',
+          },
+          'm-3': {
+            id: 'm-3',
+            family_id: 'f1',
+            full_name: 'Nguyễn Văn Bình',
+            gender: 'male',
+            generation_index: 3,
+            is_living: true,
+            created_at: '2026-01-01T00:00:00Z',
+          },
+        },
+      },
+      global: {
+        stubs: { RouterLink: true },
+      },
+    });
+
+    // Timeline steps with testids
+    const steps = wrapper.findAll('[data-testid="kinship-step-0"], [data-testid="kinship-step-1"], [data-testid="kinship-step-2"]');
+    expect(steps.length).toBe(3);
+
+    // Avatar nodes replace bare numbered dots: AppAvatar initials inside each node
+    const avatars = wrapper.findAllComponents({ name: 'AppAvatar' });
+    expect(avatars.length).toBe(3);
+
+    // Start / endpoint subtitles
+    expect(wrapper.text()).toContain('Điểm bắt đầu');
+    expect(wrapper.text()).toContain('Đối tượng xưng hô');
+
+    // Grammar context line: "A gọi B" derived from memberMap
+    expect(wrapper.text()).toContain('gọi');
+
+    // Gender micro-badges render for known members
+    expect(wrapper.text()).toContain('Nam');
+  });
 });

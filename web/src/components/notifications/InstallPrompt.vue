@@ -1,24 +1,17 @@
 <template>
   <div
     v-if="visible"
-    class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl shadow-xs border border-[#F4D0C2] p-4 mb-4"
+    class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl shadow-xs border border-terracotta-border p-4 mb-4"
     data-testid="install-prompt"
     role="region"
     aria-label="Cài đặt ứng dụng"
   >
     <div class="flex items-center space-x-3">
       <div
-        class="w-10 h-10 rounded-lg bg-[#F9EAE1] text-[#B24E2A] flex items-center justify-center shrink-0"
+        class="w-10 h-10 rounded-lg bg-terracotta-soft text-terracotta flex items-center justify-center shrink-0"
         aria-hidden="true"
       >
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.5"
-            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
-          />
-        </svg>
+        <IconArrowDownTray class="w-5 h-5" />
       </div>
       <div>
         <p class="text-sm font-semibold text-slate-800">Cài đặt Cây Gia Phả</p>
@@ -29,7 +22,7 @@
       <button
         type="button"
         data-testid="install-button"
-        class="px-4 py-1.5 text-sm font-medium rounded-lg bg-[#C85A32] text-white hover:bg-[#B24E2A] transition-colors"
+        class="px-4 py-1.5 text-sm font-medium rounded-lg bg-terracotta text-white hover:bg-terracotta-hover transition-colors"
         @click="install"
       >
         Cài đặt
@@ -48,6 +41,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
+import { IconArrowDownTray } from '@/components/icons';
 
 /** Minimal shape of the non-standard beforeinstallprompt event. */
 interface BeforeInstallPromptEvent extends Event {
