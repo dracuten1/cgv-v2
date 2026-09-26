@@ -112,26 +112,20 @@
           </p>
         </div>
 
-        <div>
-          <label for="magic-link-email" class="block text-sm font-medium text-slate-700 mb-1">
-            Địa chỉ email
-          </label>
-          <div class="relative">
-            <IconEnvelope class="pointer-events-none w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              id="magic-link-email"
-              v-model="email"
-              type="email"
-              placeholder="Nhập email của bạn"
-              required
-              :disabled="magicLinkLoading"
-              class="block w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-sm text-slate-800 placeholder-slate-400 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta focus:border-transparent transition-colors"
-            />
-          </div>
-          <p class="mt-1 text-xs text-slate-400">
-            Chúng tôi gửi liên kết đăng nhập — không cần mật khẩu.
-          </p>
-        </div>
+        <AppInput
+          id="magic-link-email"
+          v-model="email"
+          label="Địa chỉ email"
+          type="email"
+          placeholder="Nhập email của bạn"
+          required
+          hint="Chúng tôi gửi liên kết đăng nhập — không cần mật khẩu."
+          :disabled="magicLinkLoading"
+        >
+          <template #leading>
+            <IconEnvelope class="w-4 h-4" />
+          </template>
+        </AppInput>
         <AppButton
           type="submit"
           variant="outline"
@@ -199,6 +193,7 @@ import { authApi } from '@/api/auth';
 import { formatApiError } from '@/api/client';
 import { useToast } from '@/composables/useToast';
 import AppButton from '@/components/ui/AppButton.vue';
+import AppInput from '@/components/ui/AppInput.vue';
 import {
   IconArrowRight,
   IconCheckCircle,
@@ -243,8 +238,9 @@ async function loadProviders() {
     if (res && Array.isArray(res.providers)) {
       rawProviders.value = res.providers;
     }
-  } catch {
-    // Graceful fallback list
+  } catch (err: unknown) {
+    // Graceful fallback list — the default provider buttons stay rendered
+    console.warn('[LoginView] Không tải được danh sách nhà cung cấp, dùng danh sách mặc định:', err);
     rawProviders.value = defaultProviders;
   }
 }
@@ -278,8 +274,8 @@ async function handleDemoLogin() {
     await authStore.loginDemo();
     const redirect = (route.query.redirect as string) || '/tree';
     await router.push(redirect);
-  } catch (err: any) {
-    toast.error(err?.message || 'Đăng nhập dùng thử thất bại');
+  } catch (err: unknown) {
+    toast.error(formatApiError(err) || 'Đăng nhập dùng thử thất bại');
   } finally {
     demoLoading.value = false;
   }
