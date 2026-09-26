@@ -116,7 +116,9 @@ export async function apiRequest<T = any>(
   let response: Response;
   try {
     response = await fetch(url, config);
-  } catch (error: any) {
+  } catch {
+    // Network failure surfaced as a typed ApiError — formatApiError() at the
+    // call site maps this code to the friendly network message.
     throw new ApiError(0, 'NETWORK_ERROR', 'Không thể kết nối đến máy chủ. Kiểm tra kết nối mạng.');
   }
 

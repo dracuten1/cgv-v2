@@ -80,10 +80,10 @@ async function verifyToken() {
     setTimeout(async () => {
       await router.push('/tree');
     }, 500);
-  } catch (err: any) {
+  } catch (err: unknown) {
     state.value = 'error';
     errorTitle.value = 'Xác thực thất bại';
-    errorMessage.value = err?.message || formatApiError(err) || 'Không thể xác thực liên kết đăng nhập.';
+    errorMessage.value = formatApiError(err) || 'Không thể xác thực liên kết đăng nhập.';
   }
 }
 

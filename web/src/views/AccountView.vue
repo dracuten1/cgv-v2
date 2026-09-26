@@ -300,6 +300,7 @@
 import { ref, computed, onMounted, type Component } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { formatApiError } from '@/api/client';
 import { useToast } from '@/composables/useToast';
 import AppButton from '@/components/ui/AppButton.vue';
 import AppChip from '@/components/ui/AppChip.vue';
@@ -413,8 +414,8 @@ async function confirmUnlink() {
     await authStore.unlinkIdentity(selectedIdentity.value.id);
     toast.success('Hủy liên kết thành công.');
     isUnlinkDialogOpen.value = false;
-  } catch (err: any) {
-    toast.warning(err?.message || 'Không thể hủy liên kết phương thức đăng nhập duy nhất của tài khoản.');
+  } catch (err: unknown) {
+    toast.warning(formatApiError(err) || 'Không thể hủy liên kết phương thức đăng nhập duy nhất của tài khoản.');
   } finally {
     unlinking.value = false;
   }
@@ -437,8 +438,8 @@ async function submitAddContact() {
     await authStore.addContact(newContactKind.value, newContactValue.value.trim());
     toast.success('Đã thêm điểm liên hệ thành công.');
     newContactValue.value = '';
-  } catch (err: any) {
-    toast.error(err?.message || 'Thêm điểm liên hệ thất bại.');
+  } catch (err: unknown) {
+    toast.error(formatApiError(err) || 'Thêm điểm liên hệ thất bại.');
   } finally {
     addingContact.value = false;
   }
@@ -449,8 +450,8 @@ async function triggerVerifyContact(contactId: string) {
   try {
     await authStore.verifyContact(contactId);
     toast.success('Đã gửi yêu cầu xác thực đến điểm liên hệ của bạn.');
-  } catch (err: any) {
-    toast.error(err?.message || 'Gửi yêu cầu xác thực thất bại.');
+  } catch (err: unknown) {
+    toast.error(formatApiError(err) || 'Gửi yêu cầu xác thực thất bại.');
   } finally {
     verifyingContactId.value = null;
   }
@@ -461,8 +462,8 @@ async function handleLogout() {
     await authStore.logout();
     toast.info('Đã đăng xuất thành công.');
     await router.push('/login');
-  } catch (err: any) {
-    toast.error(err?.message || 'Đăng xuất thất bại.');
+  } catch (err: unknown) {
+    toast.error(formatApiError(err) || 'Đăng xuất thất bại.');
   }
 }
 
