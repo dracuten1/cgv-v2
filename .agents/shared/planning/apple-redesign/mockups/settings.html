@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cài đặt — Cây Gia Phả</title>
+<script>if(new URLSearchParams(location.search).get("theme")==="light")document.documentElement.dataset.theme="light";</script>
+<link rel="stylesheet" href="assets/tokens.css">
+<style>
+  .settings-grid { display:grid; grid-template-columns:1fr; gap:18px; }
+  @media (min-width:900px) { .settings-grid{grid-template-columns:260px minmax(0,1fr);} }
+  .settings-menu { padding:8px; }
+  .settings-menu a { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--r-md); font-size:var(--text-sm); color:var(--ink-2); }
+  .settings-menu a:hover { background:var(--surface-well); color:var(--ink-1); }
+  .settings-menu a.is-active { background:var(--accent-tint); color:var(--accent-fg); font-weight:600; }
+  .settings-menu svg {width:16px;height:16px;}
+  .settings-section { padding:24px; }
+  .settings-section__head { margin-bottom:18px; }
+  .settings-section__head p { color:var(--ink-3); margin-top:4px; }
+  .settings-fields { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .settings-fields .full { grid-column:1/-1; }
+  .toggle-row { display:flex; gap:16px; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid var(--hairline); }
+  .toggle-row:last-child{border-bottom:0;}
+  .toggle-row__title { font-weight:500; font-size:var(--text-sm); }
+  .toggle-row__sub { font-size:var(--text-xs); color:var(--ink-3); margin-top:2px; }
+  .switch:disabled { cursor:not-allowed; opacity:.7; }
+  .switch { width:42px; height:25px; border-radius:999px; background:var(--accent); padding:3px; flex:none; }
+  .switch::after { content:''; display:block; margin-left:auto; width:19px; height:19px; border-radius:50%; background:#fff; box-shadow:var(--shadow-1); }
+  .switch.is-off { background:var(--surface-well); }
+  .switch.is-off::after { margin-left:0; }
+  @media (max-width:767px) { .settings-fields {grid-template-columns:1fr;} .settings-menu{display:flex; overflow:auto; white-space:nowrap;} .settings-section{padding:18px;} }
+
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="container topbar__inner">
+    <a class="brand" href="tree.html"><span class="brand__mark">Ph</span>Cây Gia Phả</a>
+    <nav class="nav" aria-label="Điều hướng chính">
+      <a href="tree.html">Gia phả</a>
+      <a href="persons.html">Thành viên</a>
+      <a href="dashboard.html">Tổng quan</a>
+      <a href="settings.html" class="is-active" aria-current="page">Cài đặt</a>
+    </nav>
+    <div class="row" style="gap:10px;">
+      <span class="chip chip--demo"><span class="badge-dot"></span>Demo</span>
+      <span class="avatar avatar--36" aria-hidden="true">NMP</span>
+    </div>
+  </div>
+</header>
+
+
+<main class="page">
+<div class="container">
+  <div class="page-head">
+    <div>
+      <p class="page-head__eyebrow">Cá nhân hóa</p>
+      <h1 class="t-title">Cài đặt</h1>
+      <p class="page-head__sub t-body">Xem tùy chọn tài khoản và quyền riêng tư trong bản mẫu.</p>
+    </div>
+  </div>
+
+  <div class="settings-grid">
+    <aside class="card settings-menu" aria-label="Danh mục cài đặt">
+      <a class="is-active" aria-current="location" href="#profile">◉ &nbsp;Hồ sơ của tôi</a>
+      <a href="#notifications">◌ &nbsp;Thông báo</a>
+      <a href="#privacy">◈ &nbsp;Quyền riêng tư</a>
+      <a href="#danger">⌘ &nbsp;Tài khoản</a>
+    </aside>
+
+    <div class="stack">
+      <section class="card settings-section" id="profile">
+        <div class="settings-section__head">
+          <h2 class="t-sub">Hồ sơ của tôi</h2>
+          <p class="t-note">Bản mẫu chỉ để xem. Đăng nhập tài khoản thật để chỉnh sửa hồ sơ.</p>
+        </div>
+        <div class="row" style="gap:14px; margin-bottom:20px;">
+          <span class="avatar avatar--56">NMP</span>
+          <div><p style="font-size:var(--text-sm); font-weight:600;">Nguyễn Minh Phúc</p><p class="t-note">Tài khoản dùng thử</p></div>
+          
+        </div>
+        <div class="settings-fields">
+          <div class="field"><label for="name">Họ và tên</label><input id="name" class="input" readonly value="Nguyễn Minh Phúc"></div>
+          <div class="field"><label for="email">Email</label><input id="email" class="input" readonly type="email" value="demo@example.com"></div>
+          <div class="field"><label for="role">Vai trò</label><select id="role" class="select" disabled><option>Thành viên</option><option>Quản trị</option></select></div>
+          <div class="field"><label for="language">Ngôn ngữ</label><select id="language" class="select" disabled><option>Tiếng Việt</option><option>English</option></select></div>
+        </div>
+        <div class="row" style="justify-content:flex-end; margin-top:22px;"><button class="btn btn--primary" type="button" disabled title="Bản dùng thử không thể lưu hồ sơ">Lưu thay đổi</button></div>
+      </section>
+
+      <section class="card settings-section" id="notifications">
+        <div class="settings-section__head"><h2 class="t-sub">Thông báo</h2><p class="t-note">Những cập nhật bạn muốn nhận từ gia phả.</p></div>
+        <div class="toggle-row"><div><p class="toggle-row__title">Thành viên mới</p><p class="toggle-row__sub">Khi có người được thêm vào gia phả.</p></div><button class="switch" disabled title="Bản dùng thử không lưu tùy chọn" role="switch" aria-checked="true" aria-label="Thông báo thành viên mới"></button></div>
+        <div class="toggle-row"><div><p class="toggle-row__title">Ngày kỷ niệm</p><p class="toggle-row__sub">Nhắc ngày giỗ và sự kiện quan trọng.</p></div><button class="switch" disabled title="Bản dùng thử không lưu tùy chọn" role="switch" aria-checked="true" aria-label="Thông báo ngày kỷ niệm"></button></div>
+        <div class="toggle-row"><div><p class="toggle-row__title">Tổng hợp hàng tuần</p><p class="toggle-row__sub">Điểm tin mỗi tuần qua email.</p></div><button class="switch is-off" disabled title="Bản dùng thử không lưu tùy chọn" role="switch" aria-checked="false" aria-label="Tổng hợp hàng tuần"></button></div>
+      </section>
+
+      <section class="card settings-section" id="privacy">
+        <div class="settings-section__head"><h2 class="t-sub">Quyền riêng tư</h2><p class="t-note">Chọn ai có thể xem thông tin của bạn.</p></div>
+        <div class="field"><label for="visibility">Chế độ hiển thị</label><select id="visibility" class="select" disabled><option>Chỉ người trong gia phả</option><option>Chỉ mình tôi</option></select></div>
+      </section>
+
+      <section class="card settings-section" id="danger" style="border-color:color-mix(in srgb, var(--danger) 25%, transparent);">
+        <h2 class="t-sub" style="color:var(--danger-fg);">Tài khoản</h2>
+        <p class="t-note" style="margin-top:4px;">Bạn đang xem dữ liệu mẫu. Đăng nhập tài khoản thật để quản lý gia phả.</p>
+        <div class="row" style="margin-top:16px;"><a class="btn btn--secondary btn--sm" href="login.html">Thoát bản Demo</a></div>
+      </section>
+    </div>
+  </div>
+  <section class="state-gallery" aria-label="Trạng thái cài đặt — mẫu thiết kế">
+    <div><p class="state-gallery__title">Bản dùng thử · chỉ xem</p><div class="state-card state-card--demo"><h2>Không thể lưu trong bản Demo</h2><p>Đăng nhập tài khoản thật để lưu thay đổi hồ sơ và tùy chọn.</p><a class="btn btn--secondary btn--sm" href="login.html" style="margin-top:14px;">Đến đăng nhập</a></div></div>
+    <div><p class="state-gallery__title">Lỗi khi lưu · tài khoản thật</p><div class="state-card state-card--error" role="alert"><h2>Chưa lưu được thay đổi</h2><p>Kiểm tra kết nối rồi thử lại. Nội dung bạn nhập vẫn còn.</p><button class="btn btn--secondary btn--sm" type="button" style="margin-top:14px;">Thử lại</button></div></div>
+    <div><p class="state-gallery__title">Đang lưu · tài khoản thật</p><div class="state-card state-card--loading" role="status"><h2>Đang lưu thay đổi…</h2></div></div>
+  </section>
+</div>
+</main>
+
+<!-- Mobile tab bar -->
+<nav class="tabbar" aria-label="Điều hướng di động">
+  <a href="tree.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2.4"/><circle cx="5" cy="12" r="2.4"/><circle cx="19" cy="12" r="2.4"/><circle cx="8.5" cy="19.5" r="2.4"/><circle cx="15.5" cy="19.5" r="2.4"/><path d="M12 7v2.5M12 9.5H5V12M12 9.5h7V12M8.5 14.4v2.7M15.5 14.4v2.7"/></svg>
+    Gia phả
+  </a>
+  <a href="persons.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 6.2a3 3 0 0 1 0 5.6M17.5 14.2c2 .8 3 2.4 3 4.8"/></svg>
+    Thành viên
+  </a>
+  <a href="dashboard.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-3H4zM14 8h6V4h-6z"/></svg>
+    Tổng quan
+  </a>
+  <a href="settings.html" class="is-active" aria-current="page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M12 3.5 13 6a6.4 6.4 0 0 1 2 .8l2.6-.8 1.6 1.6-.8 2.6c.3.6.6 1.3.8 2l2.5 1v2.3l-2.5 1a6.4 6.4 0 0 1-.8 2l.8 2.6-1.6 1.6-2.6-.8a6.4 6.4 0 0 1-2 .8l-1 2.5h-2.3l-1-2.5a6.4 6.4 0 0 1-2-.8l-2.6.8-1.6-1.6.8-2.6a6.4 6.4 0 0 1-.8-2L3.5 15v-2.3l2.5-1c.2-.7.5-1.4.8-2L6 7.1 7.6 5.5l2.6.8c.6-.3 1.3-.6 2-.8l1-2z" transform="scale(.9) translate(1.3 1.3)"/></svg>
+    Cài đặt
+  </a>
+</nav>
+
+</body>
+</html>

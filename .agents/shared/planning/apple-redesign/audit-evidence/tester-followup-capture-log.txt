@@ -1,0 +1,36 @@
+login 320 light base {"title": "Đăng nhập — Cây Gia Phả", "viewport": 320, "scroll": 320, "body": 320, "panel": 320, "drawerDisplay": "block", "focused": null, "bg": "rgb(248, 246, 242)"}
+saved login-320-light.png 57440
+tree 320 light base {"title": "Cây gia phả — Cây Gia Phả", "viewport": 320, "scroll": 320, "body": 320, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "none", "drawerOpen": false, "expanded": "false", "focused": null, "bg": "rgb(248, 246, 242)"}
+saved tree-320-light.png 48480
+tree 320 light menu-click {"title": "Cây gia phả — Cây Gia Phả", "viewport": 320, "scroll": 320, "body": 320, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "block", "drawerOpen": true, "expanded": "true", "focused": "Đóng bảng điều hướng", "bg": "rgb(248, 246, 242)"}
+saved tree-320-light-menu-open.png 57976
+tree 320 light escape {"title": "Cây gia phả — Cây Gia Phả", "viewport": 320, "scroll": 320, "body": 320, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "none", "drawerOpen": false, "expanded": "false", "focused": "Hiện bảng điều hướng", "bg": "rgb(248, 246, 242)"}
+tree 320 light search-enter {"title": "Cây gia phả — Cây Gia Phả", "viewport": 320, "scroll": 320, "body": 320, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "block", "drawerOpen": true, "expanded": "true", "focused": "tree-search", "bg": "rgb(248, 246, 242)"}
+saved tree-320-light-search-open.png 58132
+login 390 light base {"title": "Đăng nhập — Cây Gia Phả", "viewport": 390, "scroll": 390, "body": 390, "panel": 390, "drawerDisplay": "block", "focused": null, "bg": "rgb(248, 246, 242)"}
+saved login-390-light.png 60284
+tree 390 light base {"title": "Cây gia phả — Cây Gia Phả", "viewport": 390, "scroll": 390, "body": 390, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "none", "drawerOpen": false, "expanded": "false", "focused": null, "bg": "rgb(248, 246, 242)"}
+saved tree-390-light.png 49304
+tree 390 light menu-click {"title": "Cây gia phả — Cây Gia Phả", "viewport": 390, "scroll": 390, "body": 390, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "block", "drawerOpen": true, "expanded": "true", "focused": "Đóng bảng điều hướng", "bg": "rgb(248, 246, 242)"}
+saved tree-390-light-menu-open.png 64404
+tree 390 light escape {"title": "Cây gia phả — Cây Gia Phả", "viewport": 390, "scroll": 390, "body": 390, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "none", "drawerOpen": false, "expanded": "false", "focused": "Hiện bảng điều hướng", "bg": "rgb(248, 246, 242)"}
+tree 390 light search-enter {"title": "Cây gia phả — Cây Gia Phả", "viewport": 390, "scroll": 390, "body": 390, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "block", "drawerOpen": true, "expanded": "true", "focused": "tree-search", "bg": "rgb(248, 246, 242)"}
+saved tree-390-light-search-open.png 64320
+login 320 dark base {"title": "Đăng nhập — Cây Gia Phả", "viewport": 320, "scroll": 320, "body": 320, "panel": 320, "drawerDisplay": "block", "focused": null, "bg": "rgb(28, 26, 25)"}
+saved login-320-dark.png 60772
+tree 320 dark base {"title": "Cây gia phả — Cây Gia Phả", "viewport": 320, "scroll": 320, "body": 320, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "none", "drawerOpen": false, "expanded": "false", "focused": null, "bg": "rgb(28, 26, 25)"}
+saved tree-320-dark.png 50584
+tree 320 dark menu-click {"title": "Cây gia phả — Cây Gia Phả", "viewport": 320, "scroll": 320, "body": 320, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "block", "drawerOpen": true, "expanded": "true", "focused": "Đóng bảng điều hướng", "bg": "rgb(28, 26, 25)"}
+saved tree-320-dark-menu-open.png 60500
+tree 320 dark escape {"title": "Cây gia phả — Cây Gia Phả", "viewport": 320, "scroll": 320, "body": 320, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "none", "drawerOpen": false, "expanded": "false", "focused": "Hiện bảng điều hướng", "bg": "rgb(28, 26, 25)"}
+tree 320 dark search-enter {"title": "Cây gia phả — Cây Gia Phả", "viewport": 320, "scroll": 320, "body": 320, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "block", "drawerOpen": true, "expanded": "true", "focused": "tree-search", "bg": "rgb(28, 26, 25)"}
+saved tree-320-dark-search-open.png 60496
+login 390 dark base {"title": "Đăng nhập — Cây Gia Phả", "viewport": 390, "scroll": 390, "body": 390, "panel": 390, "drawerDisplay": "block", "focused": null, "bg": "rgb(28, 26, 25)"}
+saved login-390-dark.png 63196
+tree 390 dark base {"title": "Cây gia phả — Cây Gia Phả", "viewport": 390, "scroll": 390, "body": 390, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "none", "drawerOpen": false, "expanded": "false", "focused": null, "bg": "rgb(28, 26, 25)"}
+saved tree-390-dark.png 51156
+tree 390 dark menu-click {"title": "Cây gia phả — Cây Gia Phả", "viewport": 390, "scroll": 390, "body": 390, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "block", "drawerOpen": true, "expanded": "true", "focused": "Đóng bảng điều hướng", "bg": "rgb(28, 26, 25)"}
+saved tree-390-dark-menu-open.png 67160
+tree 390 dark escape {"title": "Cây gia phả — Cây Gia Phả", "viewport": 390, "scroll": 390, "body": 390, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "none", "drawerOpen": false, "expanded": "false", "focused": "Hiện bảng điều hướng", "bg": "rgb(28, 26, 25)"}
+tree 390 dark search-enter {"title": "Cây gia phả — Cây Gia Phả", "viewport": 390, "scroll": 390, "body": 390, "treeName": "Nguyễn Văn Cường", "treeTarget": "Xem hồ sơ Nguyễn Văn Cường →", "drawerDisplay": "block", "drawerOpen": true, "expanded": "true", "focused": "tree-search", "bg": "rgb(28, 26, 25)"}
+saved tree-390-dark-search-open.png 67248

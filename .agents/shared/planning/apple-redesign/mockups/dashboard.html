@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tổng quan — Cây Gia Phả</title>
+<script>if(new URLSearchParams(location.search).get("theme")==="light")document.documentElement.dataset.theme="light";</script>
+<link rel="stylesheet" href="assets/tokens.css">
+<style>
+  .stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  @media (min-width: 760px) { .stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .stat { padding: 18px; min-width:0; }
+  .stat__label, .stat__meta { overflow-wrap:anywhere; }
+  .page-head > div { min-width:0; }
+  @media(max-width:767px) { .page-head > .row { flex-wrap:wrap; width:100%; } .page-head > .row .btn { min-width:0; flex:1; } }
+  .stat__label { font-size: var(--text-xs); color: var(--ink-3); }
+  .stat__value { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-top: 6px; }
+  .stat__meta { font-size: var(--text-xs); color: var(--ink-3); margin-top: 2px; }
+  .stat__spark { color: var(--success-fg); font-weight: 600; font-size: var(--text-xs); }
+
+  .genbar { display: flex; flex-direction: column; gap: 10px; }
+  .genbar__scale { color:var(--ink-3); font-size:var(--text-xs); line-height:1.5; margin:-8px 0 14px; }
+  .genbar__row { display: grid; grid-template-columns: 84px 1fr 34px; align-items: center; gap: 12px; }
+  .genbar__label { font-size: var(--text-xs); color: var(--ink-2); }
+  .genbar__track { height: 8px; border-radius: 999px; background: var(--surface-well); overflow: hidden; }
+  .genbar__fill { display:block; height: 100%; border-radius: 999px; }
+  .genbar__count { font-size: var(--text-xs); color: var(--ink-3); text-align: right; font-variant-numeric: tabular-nums; }
+
+  .person-row { display: flex; align-items: center; gap: 13px; padding: 11px 18px; border-bottom: 1px solid var(--hairline); transition: background var(--dur-fast) var(--ease-out); }
+  .person-row:last-child { border-bottom: 0; }
+  .person-row:hover { background: var(--surface-well); }
+  .person-row__name { font-size: var(--text-sm); font-weight: 500; }
+  .person-row__meta { font-size: var(--text-xs); color: var(--ink-3); margin-top: 1px; }
+
+  @media (max-width:767px) { .cta-band .row { flex-direction:column; align-items:stretch !important; } .cta-band .btn { width:100%; } }
+  .cta-band .row > div { min-width:0; }
+  .cta-band { position: relative; overflow: hidden; border-radius: var(--r-xl); border: 1px solid var(--accent-border); background: linear-gradient(135deg, var(--accent-tint), transparent 62%); padding: 22px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="container topbar__inner">
+    <a class="brand" href="tree.html"><span class="brand__mark">Ph</span>Cây Gia Phả</a>
+    <nav class="nav" aria-label="Điều hướng chính">
+      <a href="tree.html">Gia phả</a>
+      <a href="persons.html">Thành viên</a>
+      <a href="dashboard.html" class="is-active" aria-current="page">Tổng quan</a>
+      <a href="settings.html">Cài đặt</a>
+    </nav>
+    <div class="row" style="gap:10px;">
+      <span class="chip chip--demo"><span class="badge-dot"></span>Demo</span>
+      <span class="avatar avatar--36" aria-hidden="true">NMP</span>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container">
+
+    <div class="page-head">
+      <div>
+        <p class="page-head__eyebrow">Dòng họ Nguyễn Văn A</p>
+        <h1 class="t-title">Xin chào, Phúc</h1>
+        <p class="page-head__sub t-body">Gia phả của bạn có 128 thành viên qua 4 thế hệ — dữ liệu mới nhất hôm nay.</p>
+      </div>
+      <div class="row" style="gap:10px;">
+        <button class="btn btn--secondary btn--sm" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
+          Làm mới
+        </button>
+        <a class="btn btn--primary btn--sm" href="tree.html">Mở cây gia phả</a>
+      </div>
+    </div>
+
+    <div class="stack" style="gap: 18px;">
+
+      <!-- Stats -->
+      <section class="stat-grid" aria-label="Thống kê gia phả">
+        <div class="card stat">
+          <p class="stat__label">Thành viên</p>
+          <p class="stat__value mono">128</p>
+          <p class="stat__meta"><span class="stat__spark">+6</span> trong 90 ngày</p>
+        </div>
+        <div class="card stat">
+          <p class="stat__label">Thế hệ</p>
+          <p class="stat__value mono">4</p>
+          <p class="stat__meta">1921 → nay</p>
+        </div>
+        <div class="card stat">
+          <p class="stat__label">Hồ sơ đủ thông tin</p>
+          <p class="stat__value mono">82%</p>
+          <p class="stat__meta">105/128 hồ sơ</p>
+        </div>
+        <div class="card stat">
+          <p class="stat__label">Chờ duyệt</p>
+          <p class="stat__value mono">3</p>
+          <p class="stat__meta">Cập nhật từ chi họ</p>
+        </div>
+      </section>
+
+      <div class="split">
+        <!-- Left column -->
+        <div class="stack">
+          <!-- CTA band -->
+          <section class="cta-band">
+            <div class="row row--between" style="align-items:flex-start;">
+              <div style="max-width: 46ch;">
+                <h2 class="t-sub">Hoàn tất hồ sơ đời thứ tư</h2>
+                <p class="t-note" style="margin-top:4px; color:var(--ink-2); font-size: var(--text-xs); line-height:1.6;">23 thành viên sinh sau 1995 còn thiếu ngày sinh hoặc quan hệ hôn nhân.</p>
+              </div>
+              <a class="btn btn--primary btn--sm" href="persons.html">Xem danh sách</a>
+            </div>
+          </section>
+
+          <!-- Recently updated -->
+          <section class="card" aria-label="Cập nhật gần đây">
+            <div class="row row--between" style="padding: 16px 18px 12px;">
+              <h2 class="t-sub" style="font-size: var(--text-base);">Cập nhật gần đây</h2>
+              <a class="t-note" style="color:var(--accent-fg);" href="persons.html">Xem tất cả</a>
+            </div>
+            <div>
+              <a class="person-row" href="persons.html">
+                <span class="avatar avatar--44">NTA</span>
+                <span style="min-width:0;">
+                  <span class="person-row__name" style="display:block;">Nguyễn Thị Anh</span>
+                  <span class="person-row__meta">Đời thứ 3 · Thêm hình ảnh &amp; ghi chú</span>
+                </span>
+                <span class="t-note mobile-hide" style="margin-left:auto;">10:24</span>
+              </a>
+              <a class="person-row" href="persons.html">
+                <span class="avatar avatar--44">NVC</span>
+                <span style="min-width:0;">
+                  <span class="person-row__name" style="display:block;">Nguyễn Văn Cường</span>
+                  <span class="person-row__meta">Đời thứ 2 · Cập nhật ngày mất</span>
+                </span>
+                <span class="t-note mobile-hide" style="margin-left:auto;">09:02</span>
+              </a>
+              <a class="person-row" href="persons.html">
+                <span class="avatar avatar--44">NMT</span>
+                <span style="min-width:0;">
+                  <span class="person-row__name" style="display:block;">Nguyễn Minh Tuấn</span>
+                  <span class="person-row__meta">Đời thứ 4 · Cập nhật hồ sơ</span>
+                </span>
+                <span class="t-note mobile-hide" style="margin-left:auto;">Hôm qua</span>
+              </a>
+              <a class="person-row" href="persons.html">
+                <span class="avatar avatar--44">PTH</span>
+                <span style="min-width:0;">
+                  <span class="person-row__name" style="display:block;">Phạm Thu Hằng</span>
+                  <span class="person-row__meta">Bạn đời · Gắn vào chi họ Nội</span>
+                </span>
+                <span class="t-note mobile-hide" style="margin-left:auto;">Hôm qua</span>
+              </a>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right column -->
+        <div class="stack">
+          <!-- Generation distribution -->
+          <section class="card panel-pad" aria-label="Phân bố thế hệ">
+            <h2 class="t-sub" style="font-size: var(--text-base); margin-bottom: 16px;">Phân bố thế hệ</h2>
+            <p class="genbar__scale">Thanh so với đời đông nhất (48 thành viên)</p>
+            <div class="genbar">
+              <div class="genbar__row">
+                <span class="genbar__label">Đời thứ 1</span>
+                <span class="genbar__track"><span class="genbar__fill" style="width:18.75%; background:var(--gen-1);"></span></span>
+                <span class="genbar__count mono">9</span>
+              </div>
+              <div class="genbar__row">
+                <span class="genbar__label">Đời thứ 2</span>
+                <span class="genbar__track"><span class="genbar__fill" style="width:50%; background:var(--gen-2);"></span></span>
+                <span class="genbar__count mono">24</span>
+              </div>
+              <div class="genbar__row">
+                <span class="genbar__label">Đời thứ 3</span>
+                <span class="genbar__track"><span class="genbar__fill" style="width:97.92%; background:var(--gen-3);"></span></span>
+                <span class="genbar__count mono">47</span>
+              </div>
+              <div class="genbar__row">
+                <span class="genbar__label">Đời thứ 4</span>
+                <span class="genbar__track"><span class="genbar__fill" style="width:100%; background:var(--gen-4);"></span></span>
+                <span class="genbar__count mono">48</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Quick actions -->
+          <section class="card panel-pad" aria-label="Thao tác nhanh">
+            <h2 class="t-sub" style="font-size: var(--text-base); margin-bottom: 6px;">Thao tác nhanh</h2>
+            <ul class="menu" style="padding: 6px 0 0;">
+              <li><a href="persons.html">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                Xem danh sách thành viên
+                <span class="menu__note">→</span>
+              </a></li>
+              <li><a href="tree.html">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2.2"/><circle cx="5" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M12 6.8v2.4M12 9.2H5V12M12 9.2h7V12"/></svg>
+                Duyệt cây theo thế hệ
+                <span class="menu__note">→</span>
+              </a></li>
+              <li><a href="settings.html">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m12 7 2.6 6L12 17l-2.6-4z"/></svg>
+                Mời người thân vào gia phả
+                <span class="menu__note">→</span>
+              </a></li>
+            </ul>
+          </section>
+
+          <!-- Demo notice -->
+          <section class="card panel-pad" style="background: var(--demo-soft); border-color: var(--demo-border);">
+            <div class="row" style="align-items:flex-start;">
+              <span class="demo-panel__icon" aria-hidden="true" style="width:30px;height:30px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M3 12h2M19 12h2M5.6 18.4 7 17M17 7l1.4-1.4"/><circle cx="12" cy="12" r="3.2"/></svg>
+              </span>
+              <div>
+                <p style="font-size:var(--text-xs); font-weight:600; color:var(--demo-deep);">Bạn đang ở bản dùng thử</p>
+                <p style="font-size:var(--text-xs); color:var(--demo-deep); line-height:1.6; margin-top:2px;">Dữ liệu là gia phả mẫu. Đăng nhập bằng tài khoản thật để lưu thay đổi.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <section class="state-gallery" aria-label="Trạng thái tổng quan — mẫu thiết kế">
+      <div><p class="state-gallery__title">Chưa có cập nhật</p><div class="state-card"><h2>Chưa có hoạt động gần đây</h2><p>Cập nhật một hồ sơ để những thay đổi mới nhất xuất hiện ở đây.</p><a class="btn btn--secondary btn--sm" href="persons.html" style="margin-top:14px;">Xem thành viên</a></div></div>
+      <div><p class="state-gallery__title">Không thể tải</p><div class="state-card state-card--error" role="alert"><h2>Không tải được tổng quan</h2><p>Số liệu chưa được cập nhật. Kiểm tra kết nối và thử lại.</p><button class="btn btn--secondary btn--sm" type="button" style="margin-top:14px;">Thử lại</button></div></div>
+      <div><p class="state-gallery__title">Đang tải</p><div class="state-card state-card--loading" role="status"><div style="flex:1;"><h2>Đang tải số liệu…</h2><div class="state-skeleton" style="width:70%;margin-top:12px;"></div></div></div></div>
+    </section>
+  </div>
+</main>
+
+<!-- Mobile tab bar -->
+<nav class="tabbar" aria-label="Điều hướng di động">
+  <a href="tree.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2.4"/><circle cx="5" cy="12" r="2.4"/><circle cx="19" cy="12" r="2.4"/><circle cx="8.5" cy="19.5" r="2.4"/><circle cx="15.5" cy="19.5" r="2.4"/><path d="M12 7v2.5M12 9.5H5V12M12 9.5h7V12M8.5 14.4v2.7M15.5 14.4v2.7"/></svg>
+    Gia phả
+  </a>
+  <a href="persons.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 6.2a3 3 0 0 1 0 5.6M17.5 14.2c2 .8 3 2.4 3 4.8"/></svg>
+    Thành viên
+  </a>
+  <a href="dashboard.html" class="is-active" aria-current="page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-3H4zM14 8h6V4h-6z"/></svg>
+    Tổng quan
+  </a>
+  <a href="settings.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M12 3.5 13 6a6.4 6.4 0 0 1 2 .8l2.6-.8 1.6 1.6-.8 2.6c.3.6.6 1.3.8 2l2.5 1v2.3l-2.5 1a6.4 6.4 0 0 1-.8 2l.8 2.6-1.6 1.6-2.6-.8a6.4 6.4 0 0 1-2 .8l-1 2.5h-2.3l-1-2.5a6.4 6.4 0 0 1-2-.8l-2.6.8-1.6-1.6.8-2.6a6.4 6.4 0 0 1-.8-2L3.5 15v-2.3l2.5-1c.2-.7.5-1.4.8-2L6 7.1 7.6 5.5l2.6.8c.6-.3 1.3-.6 2-.8l1-2z" transform="scale(.9) translate(1.3 1.3)"/></svg>
+    Cài đặt
+  </a>
+</nav>
+
+</body>
+</html>

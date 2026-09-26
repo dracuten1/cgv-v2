@@ -1,0 +1,24 @@
+dashboard desktop light {"title":"Tổng quan — Cây Gia Phả","viewport":1440,"scroll":1425,"maxRight":1425,"bg":"rgb(248, 246, 242)","theme":"light"}
+login desktop light {"title":"Đăng nhập — Cây Gia Phả","viewport":1440,"scroll":1425,"maxRight":1425,"bg":"rgb(248, 246, 242)","theme":"light"}
+person-detail desktop light {"title":"Hồ sơ thành viên — Cây Gia Phả","viewport":1440,"scroll":1425,"maxRight":1425,"bg":"rgb(248, 246, 242)","theme":"light"}
+persons desktop light {"title":"Thành viên — Cây Gia Phả","viewport":1440,"scroll":1425,"maxRight":1425,"bg":"rgb(248, 246, 242)","theme":"light"}
+settings desktop light {"title":"Cài đặt — Cây Gia Phả","viewport":1440,"scroll":1425,"maxRight":1425,"bg":"rgb(248, 246, 242)","theme":"light"}
+tree desktop light {"title":"Cây gia phả — Cây Gia Phả","viewport":1440,"scroll":1425,"maxRight":1425,"bg":"rgb(248, 246, 242)","theme":"light"}
+dashboard mobile light {"title":"Tổng quan — Cây Gia Phả","viewport":390,"scroll":390,"maxRight":390,"bg":"rgb(248, 246, 242)","theme":"light"}
+login mobile light {"title":"Đăng nhập — Cây Gia Phả","viewport":390,"scroll":390,"maxRight":390,"bg":"rgb(248, 246, 242)","theme":"light"}
+person-detail mobile light {"title":"Hồ sơ thành viên — Cây Gia Phả","viewport":390,"scroll":390,"maxRight":390,"bg":"rgb(248, 246, 242)","theme":"light"}
+persons mobile light {"title":"Thành viên — Cây Gia Phả","viewport":390,"scroll":390,"maxRight":456,"bg":"rgb(248, 246, 242)","theme":"light"}
+settings mobile light {"title":"Cài đặt — Cây Gia Phả","viewport":390,"scroll":390,"maxRight":500.84375,"bg":"rgb(248, 246, 242)","theme":"light"}
+tree mobile light {"title":"Cây gia phả — Cây Gia Phả","viewport":390,"scroll":390,"maxRight":390,"bg":"rgb(248, 246, 242)","theme":"light"}
+dashboard desktop dark {"title":"Tổng quan — Cây Gia Phả","viewport":1440,"scroll":1425,"maxRight":1425,"bg":"rgb(28, 26, 25)","theme":"system"}
+login desktop dark {"title":"Đăng nhập — Cây Gia Phả","viewport":1440,"scroll":1425,"maxRight":1425,"bg":"rgb(28, 26, 25)","theme":"system"}
+person-detail desktop dark {"title":"Hồ sơ thành viên — Cây Gia Phả","viewport":1440,"scroll":1425,"maxRight":1425,"bg":"rgb(28, 26, 25)","theme":"system"}
+persons desktop dark {"title":"Thành viên — Cây Gia Phả","viewport":1440,"scroll":1425,"maxRight":1425,"bg":"rgb(28, 26, 25)","theme":"system"}
+settings desktop dark {"title":"Cài đặt — Cây Gia Phả","viewport":1440,"scroll":1425,"maxRight":1425,"bg":"rgb(28, 26, 25)","theme":"system"}
+tree desktop dark {"title":"Cây gia phả — Cây Gia Phả","viewport":1440,"scroll":1425,"maxRight":1425,"bg":"rgb(28, 26, 25)","theme":"system"}
+dashboard mobile dark {"title":"Tổng quan — Cây Gia Phả","viewport":390,"scroll":390,"maxRight":390,"bg":"rgb(28, 26, 25)","theme":"system"}
+login mobile dark {"title":"Đăng nhập — Cây Gia Phả","viewport":390,"scroll":390,"maxRight":390,"bg":"rgb(28, 26, 25)","theme":"system"}
+person-detail mobile dark {"title":"Hồ sơ thành viên — Cây Gia Phả","viewport":390,"scroll":390,"maxRight":390,"bg":"rgb(28, 26, 25)","theme":"system"}
+persons mobile dark {"title":"Thành viên — Cây Gia Phả","viewport":390,"scroll":390,"maxRight":456,"bg":"rgb(28, 26, 25)","theme":"system"}
+settings mobile dark {"title":"Cài đặt — Cây Gia Phả","viewport":390,"scroll":390,"maxRight":500.84375,"bg":"rgb(28, 26, 25)","theme":"system"}
+tree mobile dark {"title":"Cây gia phả — Cây Gia Phả","viewport":390,"scroll":390,"maxRight":390,"bg":"rgb(28, 26, 25)","theme":"system"}
