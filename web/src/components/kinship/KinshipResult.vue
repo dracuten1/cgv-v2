@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-6">
+  <div v-if="hasResult" class="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-6">
     <!-- Main Result Header -->
     <div class="text-center py-4 border-b border-slate-100">
       <div class="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2" style="line-height: 1.45">
@@ -90,7 +90,7 @@
               <span
                 v-if="step.genderLabel"
                 :class="[
-                  'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border',
+                  'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium',
                   step.genderBadgeClass,
                 ]"
                 style="line-height: 1.45"
@@ -119,7 +119,7 @@ import type { KinshipResult, Member } from '@/types/api';
 import AppChip from '@/components/ui/AppChip.vue';
 import AppAvatar from '@/components/ui/AppAvatar.vue';
 import { IconArrowRight } from '@/components/icons';
-import { toUiGender } from '@/api/gender';
+import { toUiGender, getGenderBadgeClass } from '@/api/gender';
 import { genAccentVar } from '@/components/tree/card-visual';
 
 interface Props {
@@ -134,6 +134,12 @@ const props = withDefaults(defineProps<Props>(), {
   fromName: '',
   toName: '',
 });
+
+// Defensive guard: an empty/malformed result object must not crash the
+// term header or badge renders (root simply renders nothing).
+const hasResult = computed(
+  () => Boolean(props.result && typeof props.result === 'object')
+);
 
 const dialectLabel = computed(() => {
   switch (props.result.dialect) {
@@ -191,14 +197,8 @@ const stepItems = computed<StepItem[]>(() => {
     const gen = member?.generation_index || idx + 1;
     const heading = `Đời thứ ${gen}`;
 
-    const genderRaw = member?.gender ? String(member.gender).toLowerCase() : '';
     const genderLabel = member?.gender ? toUiGender(member.gender) : undefined;
-    const genderBadgeClass =
-      genderRaw === 'male' || genderRaw === 'nam'
-        ? 'bg-sky-50 text-sky-700 border-sky-200'
-        : genderRaw === 'female' || genderRaw === 'nữ' || genderRaw === 'nu'
-        ? 'bg-rose-50 text-rose-700 border-rose-200'
-        : 'bg-slate-50 text-slate-600 border-slate-200';
+    const genderBadgeClass = member?.gender ? getGenderBadgeClass(member.gender) : undefined;
 
     let subtitle: string | undefined;
     if (idx === 0) {

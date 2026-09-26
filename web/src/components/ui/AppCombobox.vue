@@ -33,7 +33,7 @@
           v-if="selectedMember.gender"
           :class="[
             'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-normal shrink-0',
-            genderBadgeClass(selectedMember.gender),
+            getGenderBadgeClass(selectedMember.gender),
           ]"
         >
           {{ genderLabel(selectedMember.gender) }}
@@ -143,7 +143,7 @@
               v-if="member.gender"
               :class="[
                 'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-normal',
-                genderBadgeClass(member.gender),
+                getGenderBadgeClass(member.gender),
               ]"
             >
               {{ genderLabel(member.gender) }}
@@ -160,6 +160,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import AppAvatar from './AppAvatar.vue';
 import { IconMagnifyingGlass, IconXMark } from '@/components/icons';
 import { genAccentVar, genSoftVar } from '@/components/tree/card-visual';
+import { getGenderBadgeClass } from '@/api/gender';
 
 export interface ComboboxMember {
   id: string;
@@ -297,16 +298,6 @@ const genBadgeStyle = (generation?: number): Record<string, string> => {
   };
 };
 
-const genderBadgeClass = (gender?: string | null) => {  const g = (gender || '').toLowerCase();
-  if (g === 'male' || g === 'nam') {
-    return 'bg-sky-50 text-sky-700 border border-sky-200';
-  }
-  if (g === 'female' || g === 'nữ' || g === 'nu') {
-    return 'bg-rose-50 text-rose-700 border border-rose-200';
-  }
-  return 'bg-slate-50 text-slate-600 border border-slate-200';
-};
-
 const genderLabel = (gender?: string | null) => {
   const g = (gender || '').toLowerCase();
   if (g === 'male' || g === 'nam') return 'Nam';
@@ -315,6 +306,11 @@ const genderLabel = (gender?: string | null) => {
 };
 
 const handleClickOutside = (e: MouseEvent) => {
+  // Ignore clicks on nodes already detached from the document (e.g. an option
+  // row removed mid-click) — contains() on a detached node is unreliable.
+  if (!document.contains(e.target as Node)) {
+    return;
+  }
   if (containerRef.value && !containerRef.value.contains(e.target as Node)) {
     isOpen.value = false;
   }

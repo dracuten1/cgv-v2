@@ -160,8 +160,8 @@
                       </span>
                       <span
                         :class="[
-                          'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border',
-                          genderBadgeClass(rel.gender),
+                          'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium',
+                          getGenderBadgeClass(rel.gender),
                         ]"
                         style="line-height: 1.45"
                       >
@@ -237,9 +237,9 @@ import { IconPencilSquare, IconTrash } from '@/components/icons';
 import { useMemberStore } from '@/stores/member';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
-import { toUiGender } from '@/api/gender';
+import { toUiGender, getGenderBadgeClass } from '@/api/gender';
 import { getYearsText, genAccentVar } from '@/components/tree/card-visual';
-import type { FeedPostItem, Gender, Member } from '@/types/api';
+import type { FeedPostItem, Member } from '@/types/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -280,13 +280,6 @@ const posts = computed(() => member.value?.posts || []);
 const memberPosts = computed<FeedPostItem[]>(() =>
   posts.value.map((p) => ({ ...p, author_display_name: member.value.full_name }))
 );
-
-function genderBadgeClass(gender: Gender): string {
-  const g = String(gender || '').toLowerCase();
-  if (g === 'male' || g === 'nam') return 'bg-sky-50 text-sky-700 border-sky-200';
-  if (g === 'female' || g === 'nữ' || g === 'nu') return 'bg-rose-50 text-rose-700 border-rose-200';
-  return 'bg-slate-50 text-slate-600 border-slate-200';
-}
 
 interface RelationGroup {
   title: string;
