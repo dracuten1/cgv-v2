@@ -6,7 +6,7 @@
         Tính quan hệ họ hàng
       </h1>
       <p class="text-slate-500 text-sm mt-1">
-        Xác định danh xưng xưng hô gia tộc chính xác theo chuẩn văn hóa Việt Nam
+        Xác định danh xưng gia tộc chính xác theo chuẩn văn hóa Việt Nam
       </p>
     </div>
 
@@ -22,6 +22,15 @@
         <IconSparkles class="w-3.5 h-3.5 shrink-0" />
         <span>Thử nhanh: Ông → Cháu nội (Nguyễn Văn An → Nguyễn Văn Bình)</span>
       </button>
+    </div>
+
+    <!-- Member list failure: pickers stay empty, say why (never silent) -->
+    <div
+      v-if="membersError"
+      class="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
+      data-testid="members-error"
+    >
+      {{ membersError }}
     </div>
 
     <!-- Main Calculator Form Card -->
@@ -46,7 +55,7 @@
           </label>
           <AppCombobox
             v-model="kinshipStore.fromMemberId"
-            :options="members"
+            :options="pickerOptions"
             placeholder="Tìm và chọn người thứ nhất…"
             empty-text="Không tìm thấy thành viên phù hợp"
             :disabled="loadingMembers"
@@ -61,7 +70,7 @@
           </label>
           <AppCombobox
             v-model="kinshipStore.toMemberId"
-            :options="members"
+            :options="pickerOptions"
             placeholder="Tìm và chọn người thứ hai…"
             empty-text="Không tìm thấy thành viên phù hợp"
             :disabled="loadingMembers"
@@ -187,31 +196,46 @@
 import { ref, computed, onMounted } from 'vue';
 import { useKinshipStore } from '@/stores/kinship';
 import { membersApi } from '@/api/members';
+import { formatApiError } from '@/api/client';
 import { useToast } from '@/composables/useToast';
 import AppCombobox from '@/components/ui/AppCombobox.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import KinshipResult from '@/components/kinship/KinshipResult.vue';
 import { IconChevronLeft, IconChevronRight, IconSparkles, IconExclamationCircle } from '@/components/icons';
+import { DEMO_ROOT_ID, DEMO_GRANDSON_ID, getMissingDemoRecords } from '@/utils/demo';
 import type { Member } from '@/types/api';
 
 const kinshipStore = useKinshipStore();
 const toast = useToast();
 
-// Backend engine fallback term when the two members share no relation within
-// the lookup depth (api/internal/kinship/engine.go returns it as a result,
-// not an error) — drives the dedicated "unrelated" state panel.
+/** Single page size for the picker member list (combobox search source). */
+const MEMBER_PAGE_LIMIT = 100;
+
 const bothSelected = computed(
   () => Boolean(kinshipStore.fromMemberId) && Boolean(kinshipStore.toMemberId)
 );
 
-const isUnrelated = computed(() => { const result = kinshipStore.result; return Boolean(result && !result.line && (!result.path || result.path.length === 0)); });
+const isUnrelated = computed(() => {
+  const result = kinshipStore.result;
+  return Boolean(result && !result.line && (!result.path || result.path.length === 0));
+});
 
 const members = ref<Member[]>([]);
 const loadingMembers = ref(false);
+const membersError = ref<string | null>(null);
+
+// Demo-only synthetic pair: derived from the fetched list (never pushed into
+// it), so the shared member search stays uncontaminated. The records surface
+// only while the API list does not already contain the demo ids (offline /
+// unseeded backend), keeping the selected chips resolvable in that case.
+const demoMembers = computed<Member[]>(() => getMissingDemoRecords(members.value));
+
+const pickerOptions = computed<Member[]>(() => [...demoMembers.value, ...members.value]);
+
 const memberMap = computed<Record<string, Member>>(() => {
   const map: Record<string, Member> = {};
-  for (const m of members.value) {
+  for (const m of pickerOptions.value) {
     map[m.id] = m;
   }
   return map;
@@ -225,18 +249,17 @@ const toMemberName = computed(() => {
   return kinshipStore.toMemberId ? memberMap.value[kinshipStore.toMemberId]?.full_name || '' : '';
 });
 
-// Seed demo constants
-const SEED_ROOT_ID = 'aaaaaaa1-0000-4000-8000-000000000001'; // Nguyễn Văn An
-const SEED_GRANDSON_ID = 'bbbbbbb2-0000-4000-8000-000000000002'; // Nguyễn Văn Bình
-
 async function loadAllMembers() {
   loadingMembers.value = true;
+  membersError.value = null;
   try {
-    const page = await membersApi.listMembers({ limit: 100 });
+    const page = await membersApi.listMembers({ limit: MEMBER_PAGE_LIMIT });
     members.value = page.items || [];
-  } catch {
+  } catch (err: unknown) {
     // If backend isn't populated or running during unit tests, graceful empty
+    console.warn('[KinshipView] Không tải được danh sách thành viên:', err);
     members.value = [];
+    membersError.value = formatApiError(err);
   } finally {
     loadingMembers.value = false;
   }
@@ -249,32 +272,11 @@ function swapSelections() {
 }
 
 function fillQuickDemo() {
-  kinshipStore.fromMemberId = SEED_ROOT_ID;
-  kinshipStore.toMemberId = SEED_GRANDSON_ID;
-
-  // If memberMap doesn't have them yet (e.g. offline/mock), synthesize entries so the combobox chips resolve
-  if (!memberMap.value[SEED_ROOT_ID]) {
-    members.value.push({
-      id: SEED_ROOT_ID,
-      family_id: '11111111-1111-4111-8111-000000000001',
-      full_name: 'Nguyễn Văn An',
-      gender: 'male',
-      generation_index: 1,
-      is_living: false,
-      created_at: new Date().toISOString(),
-    });
-  }
-  if (!memberMap.value[SEED_GRANDSON_ID]) {
-    members.value.push({
-      id: SEED_GRANDSON_ID,
-      family_id: '11111111-1111-4111-8111-000000000001',
-      full_name: 'Nguyễn Văn Bình',
-      gender: 'male',
-      generation_index: 3,
-      is_living: true,
-      created_at: new Date().toISOString(),
-    });
-  }
+  // Names/records for the chips resolve through the derived `demoMembers`
+  // computed (utils/demo.ts) — this action only selects the pair and never
+  // synthesizes or mutates the shared member list.
+  kinshipStore.fromMemberId = DEMO_ROOT_ID;
+  kinshipStore.toMemberId = DEMO_GRANDSON_ID;
 }
 
 async function handleCalculate() {
