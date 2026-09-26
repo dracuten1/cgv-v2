@@ -14,7 +14,7 @@
         <router-link
           v-if="outcome.type === 'success'"
           to="/account"
-          class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-terracotta text-white hover:bg-terracotta-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors"
+          class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-terracotta text-white hover:bg-terracotta-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta transition-colors"
           data-testid="oauth-nav-affordance"
         >
           Quay lại trang tài khoản
@@ -22,7 +22,7 @@
         <router-link
           v-else
           :to="errorNavTarget"
-          class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-terracotta text-white hover:bg-terracotta-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta transition-colors"
+          class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-terracotta text-white hover:bg-terracotta-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta transition-colors"
           data-testid="oauth-nav-affordance"
         >
           {{ errorNavLabel }}

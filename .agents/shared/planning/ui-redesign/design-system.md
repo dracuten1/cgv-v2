@@ -36,8 +36,8 @@
 | `--color-terracotta` | `#C85A32` | `bg-terracotta` / `text-terracotta` | Primary buttons, active nav, links, focus ring |
 | `--color-terracotta-hover` | `#B24E2A` | `hover:bg-terracotta-hover` | Primary hover |
 | `--color-terracotta-dark` | `#983F1E` | `text-terracotta-dark` | Text on soft bg, active nav text, emphasis |
-| `--color-terracotta-soft` | `#F9EAE1` | `bg-terracotta-soft` | Soft fill: active nav pill, chips, banners |
-| *(derived, used in shipped code)* | `#F4D0C2` | `border-[#F4D0C2]` | Soft border paired with soft fill — **promote to `--color-terracotta-border`** |
+| `--color-terracotta-border-hover` | `#F3D5C6` | `hover:bg-terracotta-border-hover` | Hover border for terracotta-soft controls |
+
 
 ### 1.3 Generation pastels (heritage coding — extend app-wide)
 | Gen | Accent | Soft | Classes |
@@ -73,7 +73,10 @@ Fallback when generation unknown: terracotta pair (`--color-terracotta` / `--col
 ### 1.6 Tree-scene blues (context-scoped — do NOT reuse outside tree canvas)
 `--color-tree-bg #F8FAFC`, `--color-tree-card-border #BFDBFE`, `--color-tree-connector #93C5FD`, `--color-tree-self-ring #2563EB`, etc. remain tree-only.
 
-### 1.7 Banned hexes & unregistered palettes
+### 1.8 Provider brand colors (explicit exceptions)
+Google, Facebook, and Zalo marks may retain their official brand colors inside provider icons only. These are the sole approved non-token brand-color exceptions; all surrounding controls use registered theme tokens. `#F3D5C6` is registered exclusively as `--color-terracotta-border-hover`.
+
+
 - **Banned slate-blue family**: `#4e6d8c`, `#5b7a99`, `#7d9cb8`, `#e9f0f6`, `#eef3f8`, `#f4f8fb` (and all other slate-blue hexes). They are not part of the registered token set and dilute the warm heritage aesthetic. Always use the registered neutral slate ramp (§1.4) or generation pastels (§1.3) instead.
 - **Banned stray soft-terracotta hexes**: Do not invent arbitrary tints (e.g. `#c08370`). Use the canonical terracotta tokens: `--color-terracotta-soft` (`#F9EAE1`), `--color-terracotta-border` (`#F4D0C2`), `--color-terracotta-border-hover` (`#F3D5C6`), `--color-terracotta` (`#C85A32`), `--color-terracotta-hover` (`#B24E2A`), and `--color-terracotta-dark` (`#983F1E`).
 

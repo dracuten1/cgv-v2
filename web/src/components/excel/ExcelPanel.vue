@@ -54,7 +54,7 @@
             ref="fileInputEl"
             type="file"
             accept=".xlsx"
-            class="block w-full text-sm text-slate-600 border border-slate-300 rounded-lg cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-terracotta file:mr-3 file:py-2 file:px-3 file:rounded-l-lg file:border-0 file:bg-terracotta-soft file:text-terracotta-dark file:text-sm file:font-medium"
+            class="block w-full text-sm text-slate-600 border border-slate-300 rounded-lg cursor-pointer bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta file:mr-3 file:py-2 file:px-3 file:rounded-l-lg file:border-0 file:bg-terracotta-soft file:text-terracotta-dark file:text-sm file:font-medium"
             data-testid="excel-file-input"
             @change="onFileChange"
           />

@@ -75,7 +75,7 @@ const textareaId = computed(() => props.id || generatedId);
 
 const variantClasses = computed(() => {
   if (props.variant === 'bordered') {
-    return 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta focus:border-transparent resize-y';
+    return 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 hover:border-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus:border-transparent resize-y';
   }
   // borderless variant (default for composer)
   return 'bg-transparent resize-none border-0 px-0 py-2 text-base text-slate-800 placeholder-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta/40 focus-visible:ring-inset';
