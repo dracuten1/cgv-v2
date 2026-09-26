@@ -36,7 +36,7 @@
 | `--color-terracotta` | `#C85A32` | `bg-terracotta` / `text-terracotta` | Primary buttons, active nav, links, focus ring |
 | `--color-terracotta-hover` | `#B24E2A` | `hover:bg-terracotta-hover` | Primary hover |
 | `--color-terracotta-dark` | `#983F1E` | `text-terracotta-dark` | Text on soft bg, active nav text, emphasis |
-| `--color-terracotta-border-hover` | `#F3D5C6` | `hover:bg-terracotta-border-hover` | Hover border for terracotta-soft controls |
+| `--color-terracotta-border-hover` | `#F3D5C6` | `hover:bg-terracotta-border-hover` | Hover fill for terracotta-soft controls — applied as a background utility (`hover:bg-*`); the border remains `--color-terracotta-border` (`#F4D0C2`) |
 
 
 ### 1.3 Generation pastels (heritage coding — extend app-wide)
