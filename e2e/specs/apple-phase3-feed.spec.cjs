@@ -509,7 +509,7 @@ test('family selector change refetches the chosen family', async ({ browser }) =
   current.p = page; current.errors = []; attachLogging(page, current);
   await page.goto(base + '/feed', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('[data-testid="feed-list"] [data-testid="post-author"]')).toHaveCount(FEED_PAGE);
-  const selector = page.getByLabel('Chọn dòng họ'); // AppSelect renders native <select>
+  const selector = page.getByLabel('Chọn dòng họ').locator('select'); // AppSelect wrapper aria-label; native select child
   await expect(selector).toBeEnabled(); // loadingFamilies done :28
   await selector.selectOption(FAMILY2); // AppSelect.vue:8-29; onFamilyChange :311-315
   await expect(page.locator('[data-testid="feed-list"] [data-testid="post-author"]')).toHaveCount(2);
@@ -578,7 +578,7 @@ test('REAL demo: 403-first member binding and a real 201 post submit', async ({ 
   expect(postResp.status()).toBe(201);
   const postBody = await postResp.json();
   expect(postBody.content).toBe(marker);
-  expect(postBody.author_member_id).toBeNull(); // demo never links (INV-04) — author_member_id stays null
+  expect(postBody.author_member_id ?? null).toBeNull(); // demo post is not bound; API may omit optional null field
   current.proof.submit = { status: postResp.status(), author_member_id: postBody.author_member_id, family_id: postBody.family_id };
 
   await expect(page.getByText('Đã đăng bài viết.')).toBeVisible(); // success toast :348
