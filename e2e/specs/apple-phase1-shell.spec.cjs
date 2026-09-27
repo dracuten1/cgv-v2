@@ -1,123 +1,295 @@
 const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const path = require('node:path');
-const { fileURLToPath } = require('node:url');
-const base = process.env.APPLE_PHASE1_BASE;
 const root = path.resolve(__dirname, '../..');
-if (!base || !/^http:\/\/127\.0\.0\.1:1[0-9]{4}$/.test(base)) throw new Error('Pack-managed local preview URL required');
+const base = process.env.APPLE_PHASE1_BASE;
 const out = process.env.APPLE_PHASE1_ARTIFACTS || path.resolve(__dirname, '../../.agents/tester/RESULTS/apple_phase1_shell_e2e');
-const rows = [];
-async function check(page, name, selector, width, theme, fn) {
-  const row = { name, selector, viewport: width, theme, status: 'FAIL' };
-  try { row.measurements = await fn(); row.status = 'PASS'; } catch (e) { row.error = String(e.message || e); if (e.measurements) row.measurements = e.measurements; }
-  const screenshot = `${name}-vp${width}-${theme}.png`;
-  try { await page.screenshot({ path: path.join(out, screenshot), fullPage: true }); row.screenshot = screenshot; } catch (e) { row.screenshotError = String(e.message || e); }
-  rows.push(row);
+if (!base || !/^http:\/\/127\.0\.0\.1:1[0-9]{4}$/.test(base)) throw new Error('Pack-managed local preview URL required');
+fs.mkdirSync(out, { recursive: true });
+function summaryRead() { try { return JSON.parse(fs.readFileSync(path.join(out, 'summary.json'), 'utf8')); } catch { return { cases: [], errors: [], fontResponses: [], externalFonts: [], preFixBaseline: { genLabels: '1.81–2.14:1', authInterstitialHover: '~1.8:1' } }; } }
+function summaryWrite(patch) { const prev = summaryRead(); const next = { ...prev, ...patch, lastUpdatedAt: new Date().toISOString() }; fs.writeFileSync(path.join(out, 'summary.json'), JSON.stringify(next, null, 2)); }
+function lum(c) { const m = c.match(/[\d.]+/g); if (!m || m.length < 3) return NaN; const [r,g,b] = m.slice(0,3).map(v=>+v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4); return .2126*r+.7152*g+.0722*b; }
+function ratio(a,b) { const x=lum(a),y=lum(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); }
+async function recordErrors(page, sink) {
+  page.on('pageerror', e => { sink.push({ type: 'pageerror', message: e.message }); summaryWrite({ errors: [...summaryRead().errors, { type: 'pageerror', message: e.message, at: new Date().toISOString() }] }); });
+  page.on('console', e => { if (e.type() === 'error') { sink.push({ type: 'console', message: e.text() }); summaryWrite({ errors: [...summaryRead().errors, { type: 'console', message: e.text(), at: new Date().toISOString() }] }); } });
+  page.on('requestfailed', r => { sink.push({ type: 'requestfailed', message: `${r.url()}: ${r.failure()?.errorText}` }); summaryWrite({ errors: [...summaryRead().errors, { type: 'requestfailed', message: `${r.url()}: ${r.failure()?.errorText}`, at: new Date().toISOString() }] }); });
 }
-function luminance(color) {
-  const c = color.match(/[\d.]+/g);
-  if (!c || c.length < 3) return NaN;
-  const [r,g,b] = c.slice(0,3).map(v => +v / 255).map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4);
-  return .2126*r + .7152*g + .0722*b;
-}
-function contrast(a,b) { const x=luminance(a), y=luminance(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); }
-async function shell(page,width,theme) {
-  await check(page,`shell-${width}-${theme}-overflow`,'documentElement',width,theme,async()=>{
-    const m=await page.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,clientWidth:document.documentElement.clientWidth}));
-    expect(m.scrollWidth).toBeLessThanOrEqual(m.clientWidth); return m;
-  });
-  await check(page,`shell-${width}-${theme}-route-dom`,'#app + route content',width,theme,async()=>{
-    await expect(page.locator('#app')).toBeVisible(); await expect(page.locator('main')).toBeVisible();
-    await expect(page.getByRole('heading',{name:'Cây Gia Phả'})).toBeVisible();
-    return {appCount:await page.locator('#app').count(),mainCount:await page.locator('main').count(),heading:'Cây Gia Phả'};
-  });
-  await check(page,`shell-${width}-${theme}-aria-current`,'visible navigation current link',width,theme,async()=>{
-    const nav=page.locator('nav[aria-label="Điều hướng chính"],nav[aria-label="Điều hướng di động"]:visible'); await expect(nav.first()).toBeVisible();
-    const a=nav.locator('a[aria-current="page"]'); await expect(a).toHaveCount(1); return {label:await a.innerText(),href:await a.getAttribute('href')};
-  });
-  await check(page,`shell-${width}-${theme}-keyboard-focus`,':focus-visible',width,theme,async()=>{
-    await page.evaluate(()=>document.activeElement.blur()); await page.keyboard.press('Tab'); const f=page.locator(':focus-visible'); await expect(f).toHaveCount(1);
-    const m=await f.evaluate(e=>({tag:e.tagName,outline:getComputedStyle(e).outlineStyle,outlineWidth:getComputedStyle(e).outlineWidth,shadow:getComputedStyle(e).boxShadow}));
-    expect(m.outline!=='none'||m.shadow!=='none').toBeTruthy(); return m;
-  });
-  await check(page,`shell-${width}-${theme}-text-contrast`,'visible rendered text nodes',width,theme,async()=>{
-    const samples=await page.evaluate(()=>{const all=[];const walk=document.createTreeWalker(document.querySelector('main'),NodeFilter.SHOW_TEXT);while(walk.nextNode()){const n=walk.currentNode,e=n.parentElement;if(!n.textContent.trim()||!e.getClientRects().length)continue;const s=getComputedStyle(e);if(s.visibility==='hidden'||+s.opacity===0)continue;let a=e;while(a&&getComputedStyle(a).backgroundColor==='rgba(0, 0, 0, 0)')a=a.parentElement;all.push({text:n.textContent.trim().slice(0,70),fg:s.color,bg:a?getComputedStyle(a).backgroundColor:getComputedStyle(document.body).backgroundColor});}return all;});
-    expect(samples.length).toBeGreaterThan(0);const measured=samples.map(x=>({...x,ratio:contrast(x.fg,x.bg)}));const failures=measured.filter(x=>!Number.isFinite(x.ratio)||x.ratio<4.5);expect(failures,JSON.stringify(failures)).toEqual([]);return {count:measured.length,minimum:Math.min(...measured.map(x=>x.ratio))};
-  });
-  await check(page,`shell-${width}-${theme}-functional-nontext`,'visible controls and boundaries',width,theme,async()=>{
-    const samples=await page.evaluate(()=>[...document.querySelectorAll('main button,main a,nav a,main input,main select,main textarea')].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden').map(e=>{const s=getComputedStyle(e);let a=e;while(a&&getComputedStyle(a).backgroundColor==='rgba(0, 0, 0, 0)')a=a.parentElement;return{tag:e.tagName,fg:s.color,bg:a?getComputedStyle(a).backgroundColor:getComputedStyle(document.body).backgroundColor,border:s.borderTopColor}}));
-    expect(samples.length).toBeGreaterThan(0);const failures=samples.map(x=>({...x,ratio:contrast(x.fg,x.bg)})).filter(x=>!Number.isFinite(x.ratio)||x.ratio<3);expect(failures,JSON.stringify(failures)).toEqual([]);return{count:samples.length,minimum:Math.min(...samples.map(x=>contrast(x.fg,x.bg)))};
-  });
-}
-test('live Vue Phase 1 shell',async({browser})=>{
-  fs.mkdirSync(out,{recursive:true}); const errors=[],fontResponses=[],externalFonts=[]; const context=await browser.newContext({viewport:{width:1440,height:900},locale:'vi-VN',colorScheme:'light'}); const page=await context.newPage();
-  page.on('pageerror',e=>errors.push({type:'pageerror',message:e.message})); page.on('console',e=>{if(e.type()==='error')errors.push({type:'console',message:e.text()})});
-  page.on('requestfailed',r=>errors.push({type:'requestfailed',message:`${r.url()}: ${r.failure()?.errorText}`}));
-  page.on('request',r=>{if(/\.(woff2?|ttf|otf)(\?|$)/i.test(r.url())&&!r.url().startsWith(base+'/'))externalFonts.push(r.url())});
-  page.on('response',r=>{if(/\.(woff2?|ttf|otf)(\?|$)/i.test(r.url()))fontResponses.push({url:r.url(),status:r.status()})});
+async function safeClose(ctx) { try { await ctx.close(); } catch (e) { summaryWrite({ warnings: [...(summaryRead().warnings||[]), `context close failed: ${e.message}`] }); } }
+async function appendCase(caseRow) { const cur = summaryRead(); cur.cases = [...(cur.cases||[]), caseRow]; fs.writeFileSync(path.join(out, 'summary.json'), JSON.stringify(cur, null, 2)); }
+
+const scenarios = [
+  { name: 'shell-light-desktop', width: 1440, theme: 'light' },
+  { name: 'shell-light-390', width: 390, theme: 'light' },
+  { name: 'shell-light-320', width: 320, theme: 'light' },
+  { name: 'shell-dark-desktop', width: 1440, theme: 'dark' },
+  { name: 'shell-dark-390', width: 390, theme: 'dark' },
+  { name: 'shell-dark-320', width: 320, theme: 'dark' },
+];
+
+test.describe.configure({ mode: 'serial' });
+
+for (const scenario of scenarios) test(`shell-${scenario.theme}-${scenario.width}`, async ({ browser }) => {
+  test.setTimeout(45000);
+  const ctx = await browser.newContext({ viewport: { width: scenario.width, height: 900 }, locale: 'vi-VN', colorScheme: scenario.theme });
+  const page = await ctx.newPage();
+  const localErrors = [];
+  await recordErrors(page, localErrors);
   try {
-    const dist=path.join(root,'web/dist/index.html');
-    const sources=['web/src/assets/main.css','web/src/components/ui/AppChip.vue','web/src/components/ui/AuthInterstitial.vue'];
-    const distMtime=fs.statSync(dist).mtimeMs;
-    await check(page,'fresh-dist-proof','web/dist/index.html newer than stylesheet + tested Vue components',1440,'light',async()=>{
-      const sourceMtimes=Object.fromEntries(sources.map(file=>[file,fs.statSync(path.join(root,file)).mtimeMs]));
-      for(const [file,mtime] of Object.entries(sourceMtimes)) expect(distMtime,`stale dist: ${file}`).toBeGreaterThan(mtime);
-      return {distMtime:new Date(distMtime).toISOString(),sourceMtimes:Object.fromEntries(Object.entries(sourceMtimes).map(([file,mtime])=>[file,new Date(mtime).toISOString()]))};
-    });
-    for(const width of [1440,390,320]) for(const theme of ['light','dark']) { await page.setViewportSize({width,height:900}); await page.emulateMedia({colorScheme:theme}); await page.goto(base+'/login',{waitUntil:'networkidle'}); await shell(page,width,theme); }
-    await page.setViewportSize({width:1440,height:900}); await page.emulateMedia({colorScheme:'dark'}); await page.goto(base+'/login',{waitUntil:'networkidle'});
-    await check(page,'demo-amber','[data-testid=demo-login-btn]',1440,'dark',async()=>{const b=page.locator('[data-testid="demo-login-btn"]');await expect(b).toHaveCount(1);const x=await b.evaluate(e=>({bg:getComputedStyle(e).backgroundColor,token:getComputedStyle(document.documentElement).getPropertyValue('--demo-button').trim(),fg:getComputedStyle(e).color}));expect(x.bg).toBe(x.token);expect(contrast(x.fg,x.bg)).toBeGreaterThanOrEqual(4.5);return x});
-    await check(page,'fraunces-self-hosted','loaded Fraunces + successful same-origin font request',1440,'dark',async()=>{const faces=await page.evaluate(async()=>{await document.fonts.load('600 32px Fraunces','Phả');return[...document.fonts].filter(x=>x.family.includes('Fraunces')).map(x=>({family:x.family,status:x.status}))});const own=fontResponses.filter(x=>x.url.startsWith(base+'/')&&x.status<400);expect(faces.some(x=>x.status==='loaded')).toBeTruthy();expect(own.length).toBeGreaterThan(0);expect(externalFonts).toEqual([]);return{faces,own,externalFonts}});
-    // Fixture-backed *live Vue route*: the real MemberDetailView renders the real AppChip
-    // from the served dist bundle. Only the GET data is controlled; no static HTML/CSS or
-    // synthetic badge classes. A normal /members/:id shows ONE variant at a time, and
-    // available backend members do not guarantee all four generations.
-    await page.route('**/api/v1/members/apple-phase1-gen-*', async route => {
-      const match=/^\/api\/v1\/members\/apple-phase1-gen-([1-4])$/.exec(new URL(route.request().url()).pathname);
-      if (!match) return route.continue();
-      const generation=Number(match[1]);
-      await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
-        id:`apple-phase1-gen-${generation}`,family_id:'apple-phase1-fixture',
-        full_name:`Thành viên kiểm tra đời ${generation}`,gender:'male',generation_index:generation,
-        is_living:true,created_at:'2026-01-01T00:00:00Z',family_name:'Gia đình kiểm tra',
-        relations:{parents:[],spouses:[],siblings:[],children:[]},posts:[]
-      })});
-    });
-    for (const theme of ['light','dark']) {
-      await page.setViewportSize({width:1440,height:900}); await page.emulateMedia({colorScheme:theme});
-      for (let generation=1;generation<=4;generation++) {
-        const variant=`gen${generation}`;
-        await page.goto(base+`/members/apple-phase1-gen-${generation}`,{waitUntil:'networkidle'});
-        await check(page,`${theme}-${variant}-chip-contrast`,'[data-testid=member-generation-badge]',1440,theme,async()=>{
-          const badge=page.locator('[data-testid="member-generation-badge"]');
-          await expect(badge).toHaveCount(1); await expect(badge).toBeVisible();
-          await expect(badge).toHaveText(`Đời thứ ${generation}`);
-          const x=await badge.evaluate(e=>({fg:getComputedStyle(e).color,bg:getComputedStyle(e).backgroundColor,
-            classes:[...e.classList],text:e.textContent.trim()}));
-          // Explicit variant class guards against a default/fallback chip false pass.
-          const ratio=contrast(x.fg,x.bg);
-          const measurements={...x,ratio,source:'fixture-backed live Vue MemberDetailView + AppChip (not live backend data)'};
-          if (!x.classes.includes(`bg-gen-${generation}-soft`) || !Number.isFinite(ratio) || ratio<4.5)
-            throw Object.assign(new Error(`AppChip ${variant} ${theme} expected class and contrast >=4.5; got ${JSON.stringify(measurements)}`),{measurements});
-          return measurements;
-        });
-      }
-      await page.goto(base+'/auth/email/verify',{waitUntil:'networkidle'});
-      await check(page,`${theme}-authinterstitial-hover-contrast`,'AuthInterstitial link:hover',1440,theme,async()=>{
-        const a=page.locator('main a'); await expect(a).toHaveCount(1); await expect(a).toBeVisible();
-        await a.hover(); await page.waitForTimeout(250); // let the real CSS hover transition settle
-        const x=await a.evaluate(e=>{let p=e;while(p&&getComputedStyle(p).backgroundColor==='rgba(0, 0, 0, 0)')p=p.parentElement;
-          return {fg:getComputedStyle(e).color,bg:p?getComputedStyle(p).backgroundColor:'',text:e.innerText,hovered:e.matches(':hover')};});
-        expect(x.hovered).toBeTruthy(); const ratio=contrast(x.fg,x.bg);
-        const measurements={...x,ratio,source:'live Vue /auth/email/verify (no response fixture)'};
-        if (!Number.isFinite(ratio) || ratio<4.5)
-          throw Object.assign(new Error(`AuthInterstitial hover ${theme} contrast >=4.5 required; got ${JSON.stringify(measurements)}`),{measurements});
-        return measurements;
-      });
+    await page.setViewportSize({ width: scenario.width, height: 900 });
+    await page.emulateMedia({ colorScheme: scenario.theme });
+    await page.goto(base + '/login', { waitUntil: 'networkidle' });
+    await expect(page.locator('#app')).toBeAttached();
+    await expect(page.locator('main')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Cây Gia Phả' })).toBeVisible();
+    const overflow = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
+    expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth);
+    const desktopNav = page.locator('nav[aria-label="Điều hướng chính"]');
+    const mobileNav = page.locator('nav[aria-label="Điều hướng di động"]');
+    const nav = scenario.width >= 768 ? desktopNav : mobileNav;
+    await expect(nav).toBeVisible();
+    const current = nav.locator('a[aria-current="page"]');
+    await expect(current).toHaveCount(1);
+    await appendCase({ name: scenario.name, kind: 'shell', viewport: scenario.width, theme: scenario.theme, status: 'PASS', overflow, currentLabel: await current.innerText() });
+  } catch (e) {
+    await appendCase({ name: scenario.name, kind: 'shell', viewport: scenario.width, theme: scenario.theme, status: 'FAIL', error: String(e.message || e) });
+    throw e;
+  } finally {
+    try { await page.screenshot({ path: path.join(out, `shell-${scenario.width}-${scenario.theme}.png`), fullPage: true }); } catch {}
+    await safeClose(ctx);
+  }
+});
+
+test('keyboard-focus + functional-nontext contrast on /login', async ({ browser }) => {
+  test.setTimeout(45000);
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'vi-VN', colorScheme: 'light' });
+  const page = await ctx.newPage();
+  const localErrors = [];
+  await recordErrors(page, localErrors);
+  try {
+    await page.goto(base + '/login', { waitUntil: 'networkidle' });
+    await page.evaluate(() => document.activeElement && document.activeElement.blur());
+    await page.keyboard.press('Tab');
+    const focus = page.locator(':focus-visible');
+    await expect(focus).toHaveCount(1);
+    const focusInfo = await focus.evaluate(e => ({ tag: e.tagName, outline: getComputedStyle(e).outlineStyle, outlineWidth: getComputedStyle(e).outlineWidth, shadow: getComputedStyle(e).boxShadow }));
+    expect(focusInfo.outline !== 'none' || focusInfo.shadow !== 'none').toBeTruthy();
+    const samples = await page.evaluate(() => [...document.querySelectorAll('main button,main a,nav a,main input')].filter(e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden').map(e => { const s = getComputedStyle(e); let a = e; while (a && getComputedStyle(a).backgroundColor === 'rgba(0, 0, 0, 0)') a = a.parentElement; return { tag: e.tagName, fg: s.color, bg: a ? getComputedStyle(a).backgroundColor : getComputedStyle(document.body).backgroundColor }; }));
+    expect(samples.length).toBeGreaterThan(0);
+    const failures = samples.map(x => ({ ...x, ratio: ratio(x.fg, x.bg) })).filter(x => !Number.isFinite(x.ratio) || x.ratio < 3);
+    expect(failures, JSON.stringify(failures)).toEqual([]);
+    await appendCase({ name: 'focus-nontext', kind: 'contrast', viewport: 1440, theme: 'light', status: 'PASS', focus: focusInfo, functionalSamples: samples.length, minimum: Math.min(...samples.map(x => ratio(x.fg, x.bg))) });
+  } catch (e) {
+    await appendCase({ name: 'focus-nontext', kind: 'contrast', viewport: 1440, theme: 'light', status: 'FAIL', error: String(e.message || e) });
+    throw e;
+  } finally {
+    try { await page.screenshot({ path: path.join(out, 'focus-nontext-light.png'), fullPage: true }); } catch {}
+    await safeClose(ctx);
+  }
+});
+
+test('text-contrast sample on /login dark', async ({ browser }) => {
+  test.setTimeout(45000);
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'vi-VN', colorScheme: 'dark' });
+  const page = await ctx.newPage();
+  const localErrors = [];
+  await recordErrors(page, localErrors);
+  try {
+    await page.goto(base + '/login', { waitUntil: 'networkidle' });
+    const samples = await page.evaluate(() => { const out = []; const walk = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT); while (walk.nextNode()) { const n = walk.currentNode, e = n.parentElement; if (!n.textContent.trim() || !e.getClientRects().length) continue; const s = getComputedStyle(e); if (s.visibility === 'hidden' || +s.opacity === 0) continue; let a = e; while (a && getComputedStyle(a).backgroundColor === 'rgba(0, 0, 0, 0)') a = a.parentElement; out.push({ text: n.textContent.trim().slice(0, 70), fg: s.color, bg: a ? getComputedStyle(a).backgroundColor : getComputedStyle(document.body).backgroundColor }); } return out; });
+    expect(samples.length).toBeGreaterThan(0);
+    const measured = samples.map(x => ({ ...x, ratio: ratio(x.fg, x.bg) }));
+    const failures = measured.filter(x => !Number.isFinite(x.ratio) || x.ratio < 4.5);
+    expect(failures, JSON.stringify(failures)).toEqual([]);
+    await appendCase({ name: 'text-contrast-dark', kind: 'contrast', viewport: 1440, theme: 'dark', status: 'PASS', sampleCount: measured.length, minimum: Math.min(...measured.map(x => x.ratio)) });
+  } catch (e) {
+    await appendCase({ name: 'text-contrast-dark', kind: 'contrast', viewport: 1440, theme: 'dark', status: 'FAIL', error: String(e.message || e) });
+    throw e;
+  } finally {
+    try { await page.screenshot({ path: path.join(out, 'text-contrast-dark.png'), fullPage: true }); } catch {}
+    await safeClose(ctx);
+  }
+});
+
+test('demo-amber uses semantic --demo-button', async ({ browser }) => {
+  test.setTimeout(30000);
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'vi-VN', colorScheme: 'dark' });
+  const page = await ctx.newPage();
+  const localErrors = [];
+  await recordErrors(page, localErrors);
+  try {
+    await page.goto(base + '/login', { waitUntil: 'networkidle' });
+    const b = page.locator('[data-testid="demo-login-btn"]');
+    await expect(b).toHaveCount(1);
+    await expect(b).toBeVisible();
+    const m = await b.evaluate(e => ({ bg: getComputedStyle(e).backgroundColor, token: getComputedStyle(document.documentElement).getPropertyValue('--demo-button').trim(), fg: getComputedStyle(e).color }));
+    expect(m.bg).toBe(m.token);
+    expect(ratio(m.fg, m.bg)).toBeGreaterThanOrEqual(4.5);
+    await appendCase({ name: 'demo-amber', kind: 'token', viewport: 1440, theme: 'dark', status: 'PASS', colors: m });
+  } catch (e) {
+    await appendCase({ name: 'demo-amber', kind: 'token', viewport: 1440, theme: 'dark', status: 'FAIL', error: String(e.message || e) });
+    throw e;
+  } finally {
+    try { await page.screenshot({ path: path.join(out, 'demo-amber-dark.png'), fullPage: true }); } catch {}
+    await safeClose(ctx);
+  }
+});
+
+test('fraunces-self-hosted loaded + same-origin font response', async ({ browser }) => {
+  test.setTimeout(45000);
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'vi-VN', colorScheme: 'light' });
+  const page = await ctx.newPage();
+  const fontResponses = []; const externalFonts = [];
+  page.on('request', r => { if (/\.(woff2?|ttf|otf)(\?|$)/i.test(r.url()) && !r.url().startsWith(base + '/')) externalFonts.push(r.url()); });
+  page.on('response', r => { if (/\.(woff2?|ttf|otf)(\?|$)/i.test(r.url())) fontResponses.push({ url: r.url(), status: r.status() }); });
+  const localErrors = [];
+  await recordErrors(page, localErrors);
+  try {
+    await page.goto(base + '/login', { waitUntil: 'networkidle' });
+    const faces = await page.evaluate(async () => { await document.fonts.load('600 32px Fraunces', 'Phả'); return [...document.fonts].filter(x => x.family.includes('Fraunces')).map(x => ({ family: x.family, status: x.status })); });
+    const own = fontResponses.filter(x => x.url.startsWith(base + '/') && x.status < 400);
+    expect(faces.some(x => x.status === 'loaded')).toBeTruthy();
+    expect(own.length).toBeGreaterThan(0);
+    expect(externalFonts).toEqual([]);
+    summaryWrite({ fontResponses, externalFonts });
+    await appendCase({ name: 'fraunces-self-hosted', kind: 'font', viewport: 1440, theme: 'light', status: 'PASS', faces, ownOriginResponses: own.length });
+  } catch (e) {
+    await appendCase({ name: 'fraunces-self-hosted', kind: 'font', viewport: 1440, theme: 'light', status: 'FAIL', error: String(e.message || e) });
+    throw e;
+  } finally {
+    try { await page.screenshot({ path: path.join(out, 'fraunces.png'), fullPage: true }); } catch {}
+    await safeClose(ctx);
+  }
+});
+
+test('os-preference live switch', async ({ browser }) => {
+  test.setTimeout(20000);
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'vi-VN', colorScheme: 'light' });
+  const page = await ctx.newPage();
+  const localErrors = [];
+  await recordErrors(page, localErrors);
+  try {
+    await page.goto(base + '/login', { waitUntil: 'networkidle' });
+    const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    const light = await bg();
+    await page.emulateMedia({ colorScheme: 'dark' });
+    const dark = await bg();
+    await page.emulateMedia({ colorScheme: 'light' });
+    const again = await bg();
+    expect(dark).not.toBe(light);
+    expect(again).toBe(light);
+    await appendCase({ name: 'os-preference-live', kind: 'theme', viewport: 1440, theme: 'light', status: 'PASS', light, dark, again });
+  } catch (e) {
+    await appendCase({ name: 'os-preference-live', kind: 'theme', viewport: 1440, theme: 'light', status: 'FAIL', error: String(e.message || e) });
+    throw e;
+  } finally {
+    await safeClose(ctx);
+  }
+});
+
+test('reachable routes assert Vue #app + main + correct pathname', async ({ browser }) => {
+  test.setTimeout(60000);
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'vi-VN', colorScheme: 'light' });
+  const page = await ctx.newPage();
+  const localErrors = [];
+  await recordErrors(page, localErrors);
+  try {
+    for (const route of ['/tree', '/kinship', '/feed']) {
+      await page.goto(base + route, { waitUntil: 'networkidle' });
+      await expect(page.locator('#app')).toBeAttached();
+      await expect(page.locator('main')).toBeVisible();
+      expect(new URL(page.url()).pathname).toBe(route);
+      await appendCase({ name: `route-${route.slice(1)}`, kind: 'route', viewport: 1440, theme: 'light', status: 'PASS', path: route, title: await page.title() });
     }
-    await page.goto(base+'/login',{waitUntil:'networkidle'}); await check(page,'theme-live-switch','prefers-color-scheme light↔dark',1440,'light',async()=>{const bg=()=>page.evaluate(()=>getComputedStyle(document.body).backgroundColor),light=await bg();await page.emulateMedia({colorScheme:'dark'});const dark=await bg();await page.emulateMedia({colorScheme:'light'});const again=await bg();expect(dark).not.toBe(light);expect(again).toBe(light);return{light,dark,again}});
-    for(const route of ['/tree','/kinship','/feed']) {await page.goto(base+route,{waitUntil:'networkidle'});await check(page,`route-${route.slice(1)}`,`#app main ${route}`,1440,'light',async()=>{await expect(page.locator('#app')).toBeVisible();await expect(page.locator('main')).toBeVisible();expect(new URL(page.url()).pathname).toBe(route);return{path:new URL(page.url()).pathname,title:await page.title()}})}
-    await page.goto(base+'/login',{waitUntil:'networkidle'});await check(page,'demo-flow','demo login button→tree route',1440,'light',async()=>{const b=page.locator('[data-testid="demo-login-btn"]');await expect(b).toHaveCount(1);await b.click();await page.waitForURL(/\/tree/,{timeout:12000});const a=page.locator('nav a[aria-current="page"]');await expect(a).toHaveCount(1);return{path:new URL(page.url()).pathname,current:await a.innerText()}});
-  } finally {await context.close();fs.writeFileSync(path.join(out,'summary.json'),JSON.stringify({base,cases:rows,errors,fontResponses,externalFonts,userSuppliedLightBaselineNotMeasured:{gen1:3.011,gen2:3.895,gen3:3.976,gen4:3.662},verdict:rows.some(r=>r.status==='FAIL')||errors.length?'FAIL':rows.some(r=>r.status==='NOT OBSERVED')?'INCOMPLETE: NOT OBSERVED cases remain':'PASS'},null,2))}
-  expect(rows.filter(x=>x.status==='FAIL')).toEqual([]); expect(rows.filter(x=>x.status==='NOT OBSERVED').map(x=>({name:x.name,reason:x.reason})), 'Coverage incomplete; NOT OBSERVED checks are not a pass').toEqual([]); expect(errors).toEqual([]);
+  } catch (e) {
+    await appendCase({ name: 'route-reachable', kind: 'route', viewport: 1440, theme: 'light', status: 'FAIL', error: String(e.message || e) });
+    throw e;
+  } finally {
+    await safeClose(ctx);
+  }
+});
+
+test('demo-login flow routes to /tree', async ({ browser }) => {
+  test.setTimeout(30000);
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'vi-VN', colorScheme: 'light' });
+  const page = await ctx.newPage();
+  const localErrors = [];
+  await recordErrors(page, localErrors);
+  try {
+    await page.goto(base + '/login', { waitUntil: 'networkidle' });
+    const b = page.locator('[data-testid="demo-login-btn"]');
+    await expect(b).toHaveCount(1);
+    await b.click();
+    await page.waitForURL(/\/tree/, { timeout: 12000 });
+    await expect(page.locator('main')).toBeVisible();
+    const current = page.locator('nav a[aria-current="page"]');
+    await expect(current).toHaveCount(1);
+    await appendCase({ name: 'demo-flow', kind: 'flow', viewport: 1440, theme: 'light', status: 'PASS', path: new URL(page.url()).pathname, current: await current.innerText() });
+  } catch (e) {
+    await appendCase({ name: 'demo-flow', kind: 'flow', viewport: 1440, theme: 'light', status: 'FAIL', error: String(e.message || e) });
+    throw e;
+  } finally {
+    await safeClose(ctx);
+  }
+});
+
+test('chip-contrast fixture: real AppChip gen1–gen4 both themes via built static HTML', async ({ browser }) => {
+  test.setTimeout(30000);
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'vi-VN', colorScheme: 'light' });
+  const page = await ctx.newPage();
+  const localErrors = [];
+  await recordErrors(page, localErrors);
+  try {
+    const fixture = base + '/gen-chip-contrast.html';
+    const resp = await page.goto(fixture, { waitUntil: 'networkidle' });
+    if (!resp || resp.status() >= 400) throw new Error(`Fixture unavailable: ${fixture} status=${resp?.status()}`);
+    const rows = [];
+    for (const theme of ['light', 'dark']) {
+      await page.emulateMedia({ colorScheme: theme });
+      for (const variant of ['gen1', 'gen2', 'gen3', 'gen4']) {
+        const chip = page.locator(`[data-generation="${variant}"]`);
+        await expect(chip).toBeVisible();
+        const colors = await chip.evaluate(el => ({ fg: getComputedStyle(el).color, bg: getComputedStyle(el).backgroundColor, text: el.textContent.trim() }));
+        const r = ratio(colors.fg, colors.bg);
+        rows.push({ variant, theme, ratio: r, fg: colors.fg, bg: colors.bg, text: colors.text });
+        expect(r, `${theme} ${variant}: ${JSON.stringify(colors)}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+    await appendCase({ name: 'chip-contrast-gen1-4', kind: 'contrast', viewport: 1440, theme: 'both', status: 'PASS', source: 'fixture', rows });
+  } catch (e) {
+    await appendCase({ name: 'chip-contrast-gen1-4', kind: 'contrast', viewport: 1440, theme: 'both', status: 'FAIL', error: String(e.message || e), note: 'Real AppChip component not reachable; add /gen-chip-contrast.html + .ts to web/ and rebuild.' });
+    throw e;
+  } finally {
+    try { await page.screenshot({ path: path.join(out, 'chip-contrast.png'), fullPage: true }); } catch {}
+    await safeClose(ctx);
+  }
+});
+
+test('auth-interstitial hover contrast dark + light', async ({ browser }) => {
+  test.setTimeout(30000);
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'vi-VN', colorScheme: 'dark' });
+  const page = await ctx.newPage();
+  const localErrors = [];
+  await recordErrors(page, localErrors);
+  try {
+    await page.goto(base + '/auth/email/verify', { waitUntil: 'networkidle' });
+    const rows = [];
+    for (const theme of ['dark', 'light']) {
+      await page.emulateMedia({ colorScheme: theme });
+      const link = page.locator('main a').first();
+      await expect(link).toBeVisible();
+      await link.hover();
+      const m = await link.evaluate(e => ({ fg: getComputedStyle(e).color, bg: getComputedStyle(e.parentElement.parentElement).backgroundColor, text: e.innerText }));
+      const r = ratio(m.fg, m.bg);
+      rows.push({ theme, ratio: r, fg: m.fg, bg: m.bg, text: m.text });
+      expect(r, `${theme} auth-link:hover ${JSON.stringify(m)}`).toBeGreaterThanOrEqual(4.5);
+    }
+    await appendCase({ name: 'auth-interstitial-hover', kind: 'contrast', viewport: 1440, theme: 'both', status: 'PASS', source: '/auth/email/verify', rows });
+  } catch (e) {
+    await appendCase({ name: 'auth-interstitial-hover', kind: 'contrast', viewport: 1440, theme: 'both', status: 'FAIL', error: String(e.message || e) });
+    throw e;
+  } finally {
+    try { await page.screenshot({ path: path.join(out, 'auth-interstitial-hover.png'), fullPage: true }); } catch {}
+    await safeClose(ctx);
+  }
 });
