@@ -167,11 +167,11 @@ test('keyboard-focus + functional-nontext contrast on /login', async ({ browser 
     await expect(focus).toHaveCount(1);
     const focusInfo = await focus.evaluate(e => ({ tag: e.tagName, outline: getComputedStyle(e).outlineStyle, outlineWidth: getComputedStyle(e).outlineWidth, shadow: getComputedStyle(e).boxShadow }));
     expect(focusInfo.outline !== 'none' || focusInfo.shadow !== 'none').toBeTruthy();
-    const samples = await page.evaluate((evaluatorSrc) => { const ev = eval(evaluatorSrc); return [...document.querySelectorAll('main button,main a,nav a,main input')].filter(e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden').map(e => ev.measure(e)); }, CONTRAST_EVALUATOR);
+    const samples = await page.evaluate((evaluatorSrc) => { const ev = eval(evaluatorSrc); return [...document.querySelectorAll('main button,main a,nav a,main input')].filter(e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden').map(e => ({ tag: e.tagName, text: (e.innerText||'').trim().slice(0,70), ...ev.measure(e) })); }, CONTRAST_EVALUATOR);
     expect(samples.length).toBeGreaterThan(0);
     const failures = samples.filter(x => !Number.isFinite(x.ratio) || x.ratio < 3);
     expect(failures, JSON.stringify(failures)).toEqual([]);
-    await appendCase({ name: 'focus-nontext', kind: 'contrast', viewport: 1440, theme: 'light', status: 'PASS', focus: focusInfo, functionalSamples: samples.length, minimum: Math.min(...samples.map(x => x.ratio)) });
+    await appendCase({ name: 'focus-nontext', kind: 'contrast', viewport: 1440, theme: 'light', status: 'PASS', focus: focusInfo, functionalSamples: samples.length, minimum: Math.min(...samples.map(x => x.ratio)), rows: samples });
   } catch (e) {
     await appendCase({ name: 'focus-nontext', kind: 'contrast', viewport: 1440, theme: 'light', status: 'FAIL', error: String(e.message || e) });
     throw e;
@@ -188,11 +188,11 @@ test('text-contrast sample on /login dark', async ({ browser }) => {
   await recordErrors(page);
   try {
     await page.goto(base + '/login', { waitUntil: 'networkidle' });
-    const samples = await page.evaluate((evaluatorSrc) => { const ev = eval(evaluatorSrc); const out = []; const walk = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT); while (walk.nextNode()) { const n = walk.currentNode, e = n.parentElement; if (!n.textContent.trim() || !e.getClientRects().length) continue; const s = getComputedStyle(e); if (s.visibility === 'hidden' || +s.opacity === 0) continue; out.push({ text: n.textContent.trim().slice(0,70), ...ev.measure(e) }); } return out; }, CONTRAST_EVALUATOR);
+    const samples = await page.evaluate((evaluatorSrc) => { const ev = eval(evaluatorSrc); const out = []; const walk = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT); while (walk.nextNode()) { const n = walk.currentNode, e = n.parentElement; if (!n.textContent.trim() || !e.getClientRects().length) continue; const s = getComputedStyle(e); if (s.visibility === 'hidden' || +s.opacity === 0) continue; out.push({ text: n.textContent.trim().slice(0,70), parentTag: e.tagName, parentClass: e.className || '', ...ev.measure(e) }); } return out; }, CONTRAST_EVALUATOR);
     expect(samples.length).toBeGreaterThan(0);
     const failures = samples.filter(x => !Number.isFinite(x.ratio) || x.ratio < 4.5);
     expect(failures, JSON.stringify(failures)).toEqual([]);
-    await appendCase({ name: 'text-contrast-dark', kind: 'contrast', viewport: 1440, theme: 'dark', status: 'PASS', sampleCount: samples.length, minimum: Math.min(...samples.map(x => x.ratio)) });
+    await appendCase({ name: 'text-contrast-dark', kind: 'contrast', viewport: 1440, theme: 'dark', status: 'PASS', sampleCount: samples.length, minimum: Math.min(...samples.map(x => x.ratio)), rows: samples });
   } catch (e) {
     await appendCase({ name: 'text-contrast-dark', kind: 'contrast', viewport: 1440, theme: 'dark', status: 'FAIL', error: String(e.message || e) });
     throw e;
@@ -364,17 +364,22 @@ test('auth-interstitial hover contrast both themes', async ({ browser }) => {
   await recordErrors(page);
   try {
     await page.goto(base + '/auth/email/verify', { waitUntil: 'networkidle' });
-    const rows = []; const failures = [];
+    const rows = []; const failures = []; const stateProofFailures = [];
     for (const theme of ['dark', 'light']) {
       await page.emulateMedia({ colorScheme: theme });
       const link = page.locator('main a').first();
       await expect(link).toBeVisible();
+      const before = await link.evaluate((el, evaluatorSrc) => { const ev = eval(evaluatorSrc); const m = ev.measure(el); return { fg: getComputedStyle(el).color, bg: getComputedStyle(el.parentElement.parentElement).backgroundColor, fgRgb: m.fgRgb, bgRgb: m.bgRgb, ratio: m.ratio, ancestors: m.ancestors }; }, CONTRAST_EVALUATOR);
       await link.hover();
-      const measured = await link.evaluate((el, evaluatorSrc) => { const ev = eval(evaluatorSrc); return ev.measure(el); }, CONTRAST_EVALUATOR);
-      const row = { theme, ratio: measured.ratio, fg: measured.fg, bg: measured.bg, fgRgb: measured.fgRgb, bgRgb: measured.bgRgb, ancestors: measured.ancestors };
+      await page.waitForTimeout(120);
+      const after = await link.evaluate((el, evaluatorSrc) => { const ev = eval(evaluatorSrc); const m = ev.measure(el); return { fg: getComputedStyle(el).color, bg: getComputedStyle(el.parentElement.parentElement).backgroundColor, fgRgb: m.fgRgb, bgRgb: m.bgRgb, ratio: m.ratio, ancestors: m.ancestors }; }, CONTRAST_EVALUATOR);
+      const changed = before.fg !== after.fg || before.bg !== after.bg || JSON.stringify(before.fgRgb) !== JSON.stringify(after.fgRgb) || JSON.stringify(before.bgRgb) !== JSON.stringify(after.bgRgb);
+      const row = { theme, stateApplied: changed, before, after };
       rows.push(row);
-      if (!Number.isFinite(measured.ratio) || measured.ratio < 4.5) failures.push(row);
+      if (!changed) stateProofFailures.push({ theme, before, after });
+      if (!Number.isFinite(after.ratio) || after.ratio < 4.5) failures.push({ theme, ratio: after.ratio, fg: after.fg, bg: after.bg });
     }
+    expect(stateProofFailures, JSON.stringify(stateProofFailures)).toEqual([]);
     expect(failures, JSON.stringify(failures)).toEqual([]);
     await appendCase({ name: 'auth-interstitial-hover', kind: 'contrast', viewport: 1440, theme: 'both', status: 'PASS', source: '/auth/email/verify', rows });
   } catch (e) {
