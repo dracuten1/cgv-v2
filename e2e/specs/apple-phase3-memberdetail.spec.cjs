@@ -187,21 +187,9 @@ function monitor(page) {
 // ---- REAL demo login ('Dùng thử ngay' → POST /api/v1/auth/demo → /tree).
 async function demoLogin(browser, w = 1440, h = 900, theme = 'light') {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, locale: 'vi-VN', colorScheme: theme });
-  await ctx.route('**/api/v1/members/*', async (route) => {
-    const id = route.request().url().split('/').pop().split('?')[0];
-    if (route.request().method() === 'GET' && [MBR?.rootId, MBR?.midId].includes(id)) {
-      const member = id === MBR.rootId ? MBR.root : MBR.mid;
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
-        posts: [{ id: 'staged-post-1', content: 'Bài viết thử nghiệm', created_at: new Date().toISOString(), author: { id: 'staged-author', display_name: 'Người đăng' } }],
-      }) });
-    } else await route.continue();
-  });
-  await ctx.route('**/api/v1/members/*', async (route) => {
-    const id = route.request().url().split('/').pop().split('?')[0];
-    const member = id === MBR.rootId ? MBR.root : (id === MBR.midId ? MBR.mid : null);
-    if (route.request().method() === 'GET' && member) await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...member, family_name: 'Gia phả họ Nguyễn Văn', relations: member.relations || MBR.rootRelations, posts: [] }) });
-    else await route.continue();
-  });
+  // Member-detail fixtures are installed by each test that needs a successful
+  // detail response. Keep demoLogin focused on authentication; a broad route here
+  // would shadow or race those per-test staged MemberDetailResponse fixtures.
   const page = await ctx.newPage();
   await page.goto(base + '/login', { waitUntil: 'domcontentloaded' });
   const btn = page.locator('[data-testid="demo-login-btn"]');
@@ -249,7 +237,7 @@ async function discoverMembers(browser) {
   };
   mid.relations = sampleRelations;
   MBR = { rootId: root.id, root: { ...root, full_name: ROOT_NAME, generation_index: 1 },
-    rootRelations: { parents: [], spouses: [], siblings: [], children: [] },
+    rootRelations: { parents: [], spouses: [], siblings: [], children: [{ ...root, id: 'stage-root-child', full_name: 'Nguyễn Văn Bình', generation_index: 2 }] },
     midId: mid.id, mid: { ...mid, relations: sampleRelations } };
   appendRecord({ type: 'case', case: { title: 'LIVE_ENDPOINT_KNOWN_DEFECT', status: 'recorded',
     tag: 'KNOWN-DEFECT', endpoint: '/api/v1/members/:id', candidateIds: candidates.slice(0, 3).map(x => x.id),
