@@ -149,15 +149,15 @@
         </div>
       </div>
 
-      <!-- Demo panel — amber per INV-04 (never terracotta) -->
-      <div class="rounded-xl border border-amber-200 bg-amber-50/60 p-4">
+      <!-- Demo panel — amber per INV-04 (never terracotta); semantic demo tokens re-theme for AA in both schemes -->
+      <div class="rounded-xl border border-demo-border bg-demo-soft p-4">
         <div class="flex items-start gap-3">
           <span class="w-9 h-9 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
             <IconSparkles class="w-5 h-5" />
           </span>
           <div class="min-w-0">
-            <p class="text-sm font-semibold text-amber-900">Dùng thử ngay</p>
-            <p class="text-xs text-amber-800/90 mt-0.5">
+            <p class="text-sm font-semibold text-demo-deep">Dùng thử ngay</p>
+            <p class="text-xs text-demo-deep mt-0.5">
               Truy cập tức thì với gia phả mẫu Nguyễn Văn An, không cần tạo tài khoản.
             </p>
           </div>

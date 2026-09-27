@@ -75,10 +75,12 @@ describe('LoginView.vue', () => {
       },
     });
 
-    // Amber panel with sparkles icon (mockup 01 / spec §4.6)
-    const panel = wrapper.find('.bg-amber-50\\/60');
+    // Amber panel with sparkles icon (mockup 01 / spec §4.6) — semantic demo
+    // tokens (INV-04: amber family only, AA in both color schemes via tokens)
+    const panel = wrapper.find('.bg-demo-soft');
     expect(panel.exists()).toBe(true);
-    expect(panel.classes()).toContain('border-amber-200');
+    expect(panel.classes()).toContain('border-demo-border');
+    expect(panel.classes()).not.toContain('bg-amber-50\\/60');
 
     const demoBtn = wrapper.find('[data-testid="demo-login-btn"]');
     expect(demoBtn.exists()).toBe(true);
