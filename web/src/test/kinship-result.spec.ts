@@ -119,4 +119,72 @@ describe('KinshipResult.vue (INV-05 structural contract & rendering)', () => {
     // Gender micro-badges render for known members
     expect(wrapper.text()).toContain('Nam');
   });
+
+  // --- Apple Phase 3 restyle (additive) ---
+
+  it('Phase 3: kinship term renders in the accent text token on the card surface', () => {
+    const wrapper = mount(KinshipResultComponent, {
+      props: { result: mockResult, fromName: 'Nguyễn Văn An', toName: 'Nguyễn Văn Bình' },
+    });
+
+    // Root pane is the semantic card surface
+    const root = wrapper.find('.bg-card.rounded-app-xl.shadow-e1');
+    expect(root.exists()).toBe(true);
+    expect(root.classes()).toContain('border-hairline');
+
+    // Term block: accent text token + INV-02 heading line-height floor
+    const termBlock = wrapper.get('[data-testid="kinship-term"]').element.parentElement as HTMLElement;
+    expect(termBlock.classList.contains('text-accent-fg')).toBe(true);
+    expect(termBlock.classList.contains('leading-[1.45]')).toBe(true);
+
+    // Grammar line on secondary ink, connective on tertiary ink
+    const grammar = wrapper.get('p.mt-2');
+    expect(grammar.classes()).toContain('text-ink-2');
+    expect(grammar.get('span').classes()).toContain('text-ink-3');
+  });
+
+  it('Phase 3: timeline steps use semantic card/well surfaces with AA step headings and card badges', () => {
+    const wrapper = mount(KinshipResultComponent, {
+      props: {
+        result: mockResult,
+        memberMap: {
+          'm-1': {
+            id: 'm-1',
+            family_id: 'f1',
+            full_name: 'Nguyễn Văn An',
+            gender: 'male',
+            generation_index: 1,
+            is_living: false,
+            created_at: '2026-01-01T00:00:00Z',
+          },
+        },
+      },
+      global: {
+        stubs: { RouterLink: true },
+      },
+    });
+
+    const stepCards = wrapper.findAll('[data-testid^="kinship-step-"]');
+    expect(stepCards.length).toBe(3);
+
+    // Intermediate steps: well surface, neutral hairline border, accent heading
+    const middleCard = stepCards[1].find('.rounded-app-lg');
+    expect(middleCard.classes()).toContain('bg-well');
+    expect(middleCard.classes()).toContain('border-hairline');
+    expect(stepCards[0].find('.text-accent-fg').exists()).toBe(true);
+
+    // Endpoint step: card surface + success border/heading
+    const endpointCard = stepCards[2].find('.rounded-app-lg');
+    expect(endpointCard.classes()).toContain('bg-card');
+    expect(endpointCard.classes()).toContain('border-success/40');
+    expect(endpointCard.classes()).toContain('shadow-e1');
+    expect(stepCards[2].find('.text-success-fg').exists()).toBe(true);
+
+    // Sequence badges are card-surfaced with primary ink (AA), not white-on-color
+    const badge = stepCards[0].find('span.rounded-full.bg-card');
+    expect(badge.exists()).toBe(true);
+    expect(badge.text().trim()).toBe('1');
+    expect(badge.classes()).toContain('text-ink-1');
+    expect(stepCards[2].find('span.rounded-full.bg-card').classes()).toContain('border-success');
+  });
 });

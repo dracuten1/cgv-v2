@@ -204,6 +204,27 @@ describe('FeedView', () => {
     expect(loadMore.text()).toContain('Tải thêm');
   });
 
+  it('exposes the exact accessible load-more label "Tải thêm bài viết" (feed.html mockup contract)', async () => {
+    const auth = useAuthStore();
+    auth.user = testUser;
+    auth.status = 'authenticated';
+
+    mockedFeedApi.list.mockResolvedValue({
+      posts: [makePost()],
+      next_cursor: { created_at: '2026-09-21T10:00:00Z', id: 'p1' },
+    });
+
+    const wrapper = mount(FeedView, { global: { plugins: [pinia], stubs: { RouterLink: true } } });
+    await flushPromises();
+    await flushPromises();
+
+    const loadMore = wrapper.find('[data-testid="load-more"]');
+    expect(loadMore.exists()).toBe(true);
+    // Accessible name = the button's full text content (no aria-label override)
+    expect(loadMore.attributes('aria-label')).toBeUndefined();
+    expect(loadMore.text()).toBe('Tải thêm bài viết');
+  });
+
   it('shows a Vietnamese error state when the feed request fails', async () => {
     const auth = useAuthStore();
     auth.user = testUser;
@@ -389,5 +410,151 @@ describe('FeedView', () => {
     expect(form.find('button[type="submit"]').text()).toContain('Đăng bài');
     // Composer resets after a successful post
     expect((form.find('textarea').element as HTMLTextAreaElement).value).toBe('');
+  });
+
+  // ---- Phase 3 Quiet Clarity restyle (feed.html) — additive contract cases ----
+
+  it('renders the Quiet Clarity header: accent eyebrow, ink title, visible family selector', async () => {
+    const auth = useAuthStore();
+    auth.user = testUser;
+    auth.status = 'authenticated';
+
+    mockedFeedApi.list.mockResolvedValue({ posts: [], next_cursor: null });
+
+    const wrapper = mount(FeedView, { global: { plugins: [pinia], stubs: { RouterLink: true } } });
+    await flushPromises();
+    await flushPromises();
+
+    // Eyebrow from the mockup feed-head
+    expect(wrapper.text()).toContain('Chuyện nhà');
+
+    const h1 = wrapper.find('h1');
+    expect(h1.text()).toBe('Bảng tin dòng họ');
+    expect(h1.classes()).toContain('text-ink-1');
+    expect(h1.classes()).toContain('leading-[1.45]');
+
+    // Family selector keeps its aria contract and gains the mockup's visible note label
+    const select = wrapper.find('select');
+    expect(select.exists()).toBe(true);
+    // aria-label falls through AppSelect onto its root wrapper
+    expect(wrapper.find('[aria-label="Chọn dòng họ"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain('Dòng họ');
+  });
+
+  it('styles the composer on the semantic card surface and manages image URL chips', async () => {
+    const auth = useAuthStore();
+    auth.user = testUser;
+    auth.status = 'authenticated';
+
+    mockedFeedApi.list.mockResolvedValue({ posts: [], next_cursor: null });
+
+    const wrapper = mount(FeedView, { global: { plugins: [pinia], stubs: { RouterLink: true } } });
+    await flushPromises();
+    await flushPromises();
+
+    const form = wrapper.find('[data-testid="composer-form"]');
+    // Card recipe from the design system (surface-card + hairline + r-xl + shadow-1)
+    expect(form.classes()).toContain('bg-card');
+    expect(form.classes()).toContain('border-hairline');
+    expect(form.classes()).toContain('rounded-app-xl');
+    expect(form.classes()).toContain('shadow-e1');
+
+    // Image URL chip: add via the URL input, remove via the chip's X button
+    const urlInput = form.find('input[type="url"]');
+    expect(urlInput.exists()).toBe(true);
+    await urlInput.setValue('https://example.com/anh.jpg');
+    await urlInput.trigger('keydown.enter');
+
+    // The chip's outer pill is the first rounded-full span (DFS order)
+    const chip = form.get('span.rounded-full');
+    expect(chip.classes()).toContain('bg-well');
+    expect(chip.classes()).toContain('text-ink-2');
+    expect(form.find('span[title="https://example.com/anh.jpg"]').exists()).toBe(true);
+
+    // Dedupe: adding the same URL twice keeps one chip
+    await urlInput.setValue('https://example.com/anh.jpg');
+    await urlInput.trigger('keydown.enter');
+    expect(form.findAll('span[title="https://example.com/anh.jpg"]')).toHaveLength(1);
+
+    // Remove the chip via its labeled button
+    const removeButton = chip.find('button');
+    expect(removeButton.attributes('aria-label')).toBe('Xóa ảnh 1');
+    await removeButton.trigger('click');
+    expect(form.findAll('span[title="https://example.com/anh.jpg"]')).toHaveLength(0);
+  });
+
+  it('keeps the anonymous banner on the warm tint surface with the login affordance', async () => {
+    const auth = useAuthStore();
+    auth.user = null;
+    auth.status = 'anonymous';
+
+    mockedFeedApi.list.mockResolvedValue({ posts: [], next_cursor: null });
+
+    const wrapper = mount(FeedView, { global: { plugins: [pinia], stubs: { RouterLink: true } } });
+    await flushPromises();
+    await flushPromises();
+
+    const hint = wrapper.find('[data-testid="anonymous-hint"]');
+    expect(hint.classes()).toContain('bg-terracotta-soft');
+    expect(hint.classes()).toContain('border-accent-border');
+    expect(hint.classes()).toContain('rounded-app-xl');
+    // Banner copy carries the accent foreground (AA on the tint), not slate
+    expect(hint.find('p').classes()).toContain('text-accent-fg');
+    // Composer must not render for anonymous users
+    expect(wrapper.find('[data-testid="composer-form"]').exists()).toBe(false);
+  });
+
+  it('renders loading and error states on semantic surfaces with announced alerts', async () => {
+    const auth = useAuthStore();
+    auth.user = testUser;
+    auth.status = 'authenticated';
+
+    mockedFeedApi.list.mockRejectedValue(
+      Object.assign(new Error('Máy chủ gặp sự cố. Vui lòng thử lại sau.'), {
+        status: 500,
+        code: 'HTTP_500',
+      })
+    );
+
+    const wrapper = mount(FeedView, { global: { plugins: [pinia], stubs: { RouterLink: true } } });
+    await flushPromises();
+    await flushPromises();
+
+    const errorBanner = wrapper.find('[data-testid="feed-error"]');
+    expect(errorBanner.exists()).toBe(true);
+    // state-card--error treatment: card surface + danger-fg border/heading
+    expect(errorBanner.classes()).toContain('bg-card');
+    expect(errorBanner.classes()).toContain('border-danger-fg');
+    expect(errorBanner.find('p').classes()).toContain('text-danger-fg');
+    // Errors are announced
+    expect(errorBanner.attributes('role')).toBe('alert');
+  });
+
+  it('styles the loading skeleton with warm well placeholders and a status role', async () => {
+    const auth = useAuthStore();
+    auth.user = testUser;
+    auth.status = 'authenticated';
+
+    let resolveList!: (v: FeedListResponse) => void;
+    mockedFeedApi.list.mockImplementation(
+      () => new Promise<FeedListResponse>((res) => (resolveList = res))
+    );
+
+    const wrapper = mount(FeedView, { global: { plugins: [pinia], stubs: { RouterLink: true } } });
+    await flushPromises();
+
+    const skeleton = wrapper.find('[data-testid="feed-loading"]');
+    expect(skeleton.attributes('role')).toBe('status');
+    const card = skeleton.find('.animate-pulse');
+    expect(card.exists()).toBe(true);
+    expect(card.classes()).toContain('bg-card');
+    expect(card.classes()).toContain('rounded-app-xl');
+    // Skeleton bars sit on the recessed well, never stock slate
+    expect(card.find('.rounded.bg-well').exists()).toBe(true);
+
+    resolveList({ posts: [], next_cursor: null });
+    await flushPromises();
+    await flushPromises();
+    expect(wrapper.find('[data-testid="feed-loading"]').exists()).toBe(false);
   });
 });

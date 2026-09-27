@@ -1,19 +1,29 @@
 <template>
-  <div class="p-6 max-w-3xl mx-auto">
+  <div class="mx-auto w-full max-w-[760px] px-4 pb-10 pt-6 md:px-6 md:pt-[38px]">
     <!-- PWA install banner (top) -->
     <InstallPrompt />
 
-    <!-- Header: title + family selector + push toggle -->
-    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
+    <!-- Header: eyebrow + title + family selector + push toggle (feed.html feed-head) -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold font-display text-slate-800">Bảng tin dòng họ</h1>
-        <p class="text-sm text-slate-500 mt-1">Những câu chuyện mới nhất của gia đình.</p>
+        <p class="mb-1 text-xs font-semibold leading-[1.45] tracking-[0.04em] text-accent-fg">
+          Chuyện nhà
+        </p>
+        <h1
+          class="text-2xl font-bold leading-[1.45] tracking-[-0.019em] text-ink-1 md:text-[28px]"
+        >
+          Bảng tin dòng họ
+        </h1>
+        <p class="mt-1.5 text-sm leading-[1.6] text-ink-2">
+          Những câu chuyện mới nhất của gia đình.
+        </p>
       </div>
       <div class="flex items-center gap-3">
-        <div v-if="families.length > 1" class="w-48">
+        <div v-if="families.length > 1" class="w-44">
           <AppSelect
             v-model="selectedFamilyId"
             :options="familyOptions"
+            label="Dòng họ"
             aria-label="Chọn dòng họ"
             :disabled="loadingFamilies"
             @update:model-value="onFamilyChange"
@@ -23,10 +33,10 @@
       </div>
     </div>
 
-    <!-- Composer (authenticated) — mockup 06 / spec §6.6 -->
+    <!-- Composer (authenticated) — mockup feed.html .composer -->
     <form
       v-if="authStore.isAuthenticated"
-      class="bg-white rounded-xl shadow-xs border border-slate-200 p-4 mb-6"
+      class="mb-6 rounded-app-xl border border-hairline bg-card p-[18px] shadow-e1 md:p-[22px]"
       data-testid="composer-form"
       :aria-busy="posting ? 'true' : undefined"
       @submit.prevent="submitPost"
@@ -46,14 +56,14 @@
       <!-- Image URL adder (no upload endpoint — images are JSONB URL arrays) -->
       <div class="mt-3 flex items-center gap-2">
         <div
-          class="flex-1 flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-cream-muted/60 px-3 py-1.5 hover:border-slate-400 transition-colors focus-within:ring-2 focus-within:ring-terracotta focus-within:border-transparent"
+          class="flex-1 flex items-center gap-2 rounded-app-md border border-dashed border-hairline-strong bg-well/60 px-3 py-1.5 transition-colors hover:border-ink-3 focus-within:border-transparent focus-within:ring-2 focus-within:ring-accent"
         >
-          <IconLink class="w-4 h-4 text-slate-400 shrink-0" />
+          <IconLink class="w-4 h-4 shrink-0 text-ink-3" />
           <input
             v-model="imageUrl"
             type="url"
             placeholder="Dán URL ảnh (https://…)"
-            class="w-full bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
+            class="w-full bg-transparent text-sm text-ink-1 placeholder:text-ink-3 focus:outline-none"
             @keydown.enter.prevent="addImage"
           />
         </div>
@@ -66,39 +76,39 @@
       </div>
 
       <!-- Queued image chips -->
-      <div v-if="images.length" class="flex flex-wrap gap-2 mt-3">
+      <div v-if="images.length" class="mt-3 flex flex-wrap gap-2">
         <span
           v-for="(img, index) in images"
           :key="`${img}-${index}`"
-          class="inline-flex items-center gap-2 pl-1 pr-2.5 py-1 text-xs rounded-full bg-cream-muted text-slate-700 border border-slate-200 max-w-full"
+          class="inline-flex max-w-full items-center gap-2 rounded-full border border-hairline bg-well py-1 pl-1 pr-2.5 text-xs leading-[1.45] text-ink-2"
         >
           <span
-            class="w-6 h-6 rounded-full overflow-hidden border border-slate-200 shrink-0 bg-gen-2-soft text-gen-2 flex items-center justify-center"
+            class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-hairline bg-well text-ink-3"
             aria-hidden="true"
           >
-            <IconPhoto class="w-3.5 h-3.5" />
+            <IconPhoto class="h-3.5 w-3.5" />
           </span>
-          <span class="truncate max-w-[180px]" :title="img">{{ img }}</span>
+          <span class="max-w-[180px] truncate" :title="img">{{ img }}</span>
           <button
             type="button"
-            class="w-4 h-4 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-1"
+            class="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full text-ink-3 transition-colors hover:text-danger-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
             :aria-label="`Xóa ảnh ${index + 1}`"
             @click="removeImage(index)"
           >
-            <IconXMark class="w-3 h-3" />
+            <IconXMark class="h-3 w-3" />
           </button>
         </span>
       </div>
 
-      <!-- Footer: helper + char budget + submit -->
-      <div class="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-slate-100">
-        <p class="text-xs text-slate-400">Bài viết hiển thị cho cả gia đình</p>
+      <!-- Footer: helper + char budget + submit (composer__footer) -->
+      <div class="mt-3.5 flex items-center justify-between gap-3 border-t border-hairline pt-3.5">
+        <p class="text-xs leading-[1.45] text-ink-3">Bài viết hiển thị cho cả gia đình</p>
         <div class="flex items-center gap-3">
           <span
             data-testid="composer-char-counter"
             :class="[
-              'text-xs leading-relaxed tabular-nums',
-              overLimit ? 'text-red-600 font-medium' : 'text-slate-400',
+              'text-xs leading-[1.45] tabular-nums',
+              overLimit ? 'text-red-600 font-medium' : 'text-ink-3',
             ]"
             aria-live="polite"
           >
@@ -114,48 +124,68 @@
       </div>
     </form>
 
-    <!-- Anonymous hint (reads are public, posting requires auth) — warm banner per §4.10 -->
+    <!-- Anonymous hint (reads are public, posting requires auth) — terracotta banner per §8.1 -->
     <div
       v-else
-      class="bg-terracotta-soft rounded-xl border border-terracotta-border p-5 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+      class="mb-6 flex flex-col justify-between gap-3 rounded-app-xl border border-accent-border bg-terracotta-soft p-4 sm:flex-row sm:items-center md:p-5"
       data-testid="anonymous-hint"
     >
-      <p class="text-sm text-terracotta-dark">Đăng nhập để đăng bài viết.</p>
-      <RouterLink to="/login" data-testid="login-cta">
+      <div>
+        <p class="text-sm leading-[1.6] text-accent-fg">Đăng nhập để đăng bài viết.</p>
+        <p class="mt-0.5 text-xs leading-[1.45] text-ink-2">
+          Bạn có thể đọc bảng tin — đăng nhập để kể chuyện cùng gia đình.
+        </p>
+      </div>
+      <RouterLink to="/login" data-testid="login-cta" class="shrink-0">
         <AppButton size="sm">Đăng nhập</AppButton>
       </RouterLink>
     </div>
 
     <!-- Families loading / error -->
-    <p v-if="familyError" class="text-sm text-red-600 mb-4" data-testid="family-error">
+    <p
+      v-if="familyError"
+      class="mb-4 text-sm leading-[1.6] text-danger-fg"
+      data-testid="family-error"
+      role="alert"
+    >
       {{ familyError }}
     </p>
 
-    <!-- Feed loading state -->
-    <div v-if="feedStore.loading && !feedStore.posts.length" class="space-y-3" data-testid="feed-loading">
-      <div v-for="n in 3" :key="n" class="bg-white rounded-xl border border-slate-200 p-5 animate-pulse">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-full bg-cream-muted"></div>
+    <!-- Feed loading state — 3-card pulsing skeleton (feed.html state-card--loading) -->
+    <div
+      v-if="feedStore.loading && !feedStore.posts.length"
+      class="space-y-4"
+      data-testid="feed-loading"
+      role="status"
+    >
+      <div
+        v-for="n in 3"
+        :key="n"
+        class="animate-pulse rounded-app-xl border border-hairline bg-card p-5 shadow-e1"
+      >
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-full bg-well"></div>
           <div class="flex-1 space-y-2">
-            <div class="h-3 bg-cream-muted rounded w-1/3"></div>
-            <div class="h-2 bg-cream-muted rounded w-1/4"></div>
+            <div class="h-3 w-1/3 rounded bg-well"></div>
+            <div class="h-2 w-1/4 rounded bg-well"></div>
           </div>
         </div>
         <div class="mt-4 space-y-2">
-          <div class="h-3 bg-cream-muted rounded w-full"></div>
-          <div class="h-3 bg-cream-muted rounded w-2/3"></div>
+          <div class="h-3 w-full rounded bg-well"></div>
+          <div class="h-3 w-2/3 rounded bg-well"></div>
         </div>
       </div>
-      <p class="text-center text-sm text-slate-500">Đang tải bài viết…</p>
+      <p class="text-center text-sm leading-[1.6] text-ink-3">Đang tải bài viết…</p>
     </div>
 
-    <!-- Feed error state -->
+    <!-- Feed error state — card + danger-fg border/heading (feed.html state-card--error) -->
     <div
       v-else-if="feedStore.error && !feedStore.posts.length"
-      class="bg-red-50 border border-red-200 rounded-xl p-5 text-center mb-4"
+      class="mb-4 rounded-app-xl border border-danger-fg bg-card p-5 text-center shadow-e1"
       data-testid="feed-error"
+      role="alert"
     >
-      <p class="text-sm text-red-700">{{ feedStore.error }}</p>
+      <p class="text-sm font-medium leading-[1.6] text-danger-fg">{{ feedStore.error }}</p>
       <AppButton variant="outline" size="sm" class="mt-3" @click="retryFetch">Thử lại</AppButton>
     </div>
 
@@ -172,13 +202,23 @@
       <PostCard v-for="post in feedStore.posts" :key="post.id" :post="post" />
 
       <!-- Feed-level error while paging -->
-      <p v-if="feedStore.error" class="text-sm text-red-600 text-center" data-testid="feed-page-error">
+      <p
+        v-if="feedStore.error"
+        class="text-center text-sm leading-[1.6] text-danger-fg"
+        data-testid="feed-page-error"
+        role="alert"
+      >
         {{ feedStore.error }}
       </p>
 
       <div v-if="feedStore.nextCursor" class="flex justify-center pt-2">
-        <AppButton variant="outline" :loading="feedStore.loading" data-testid="load-more" @click="feedStore.loadMore()">
-          {{ feedStore.loading ? 'Đang tải…' : 'Tải thêm' }}
+        <AppButton
+          variant="outline"
+          :loading="feedStore.loading"
+          data-testid="load-more"
+          @click="feedStore.loadMore()"
+        >
+          {{ feedStore.loading ? 'Đang tải…' : 'Tải thêm bài viết' }}
         </AppButton>
       </div>
     </div>
@@ -316,3 +356,16 @@ async function submitPost(): Promise<void> {
   }
 }
 </script>
+
+<style scoped>
+/*
+  Compatibility remap (Phase-1 retained-class pattern): the over-budget
+  counter's legacy class string `text-red-600` is pinned by feed-view.spec.ts
+  and must stay in the DOM. Its stock value #DC2626 is 4.83:1 on the light
+  card but only ~3.1:1 on the dark card, so remap the pinned class to the
+  semantic AA danger token (light #B82C34 / dark #FF817B) — both ≥4.5:1.
+*/
+.text-red-600 {
+  color: var(--danger-fg);
+}
+</style>

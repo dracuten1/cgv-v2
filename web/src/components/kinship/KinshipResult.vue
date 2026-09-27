@@ -1,15 +1,15 @@
 <template>
-  <div v-if="hasResult" class="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-6">
+  <div v-if="hasResult" class="bg-card rounded-app-xl border border-hairline p-6 shadow-e1 space-y-6">
     <!-- Main Result Header -->
-    <div class="text-center py-4 border-b border-slate-100">
-      <div class="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2" style="line-height: 1.45">
+    <div class="text-center py-4 border-b border-hairline">
+      <div class="text-xs uppercase tracking-wider font-semibold text-ink-3 mb-2 leading-[1.45]">
         Xưng hô gia tộc
       </div>
-      <div class="text-4xl sm:text-[2.75rem] font-bold font-display text-terracotta" style="line-height: 1.45">
+      <div class="text-[30px] font-bold text-accent-fg leading-[1.45] tracking-[-0.02em]">
         <span data-testid="kinship-term" class="kinship-term-quoted">{{ result.term }}</span>
       </div>
-      <p v-if="grammarContext" class="mt-2 text-sm text-slate-500">
-        {{ fromLabel }} <span class="text-slate-400">gọi</span> {{ toLabel }}
+      <p v-if="grammarContext" class="mt-2 text-sm text-ink-2 leading-relaxed">
+        {{ fromLabel }} <span class="text-ink-3">gọi</span> {{ toLabel }}
       </p>
     </div>
 
@@ -30,14 +30,14 @@
     </div>
 
     <!-- Path timeline with rich avatars and generation coding (spec §6.4 / mockup 04) -->
-    <div v-if="stepItems.length > 0" class="pt-4 border-t border-slate-100">
-      <h3 class="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
-        <IconArrowRight class="w-4 h-4 text-terracotta" />
+    <div v-if="stepItems.length > 0" class="pt-4 border-t border-hairline">
+      <h3 class="text-sm font-semibold text-ink-1 mb-4 flex items-center gap-2 leading-[1.45]">
+        <IconArrowRight class="w-4 h-4 text-accent-fg" />
         <span>Đường dẫn quan hệ qua các đời</span>
       </h3>
 
       <div
-        class="relative pl-8 space-y-5 before:absolute before:left-[19px] before:top-6 before:bottom-6 before:w-0.5 before:bg-slate-200"
+        class="relative pl-8 space-y-5 before:absolute before:left-[19px] before:top-6 before:bottom-6 before:w-0.5 before:bg-hairline-strong"
       >
         <div
           v-for="(step, idx) in stepItems"
@@ -47,8 +47,8 @@
         >
           <!-- Timeline avatar node with sequence index badge -->
           <div
-            class="absolute -left-8 top-0 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-xs"
-            :class="step.isEndpoint ? 'border-2 border-emerald-500' : 'border-2'"
+            class="absolute -left-8 top-0 w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-e1"
+            :class="step.isEndpoint ? 'border-2 border-success' : 'border-2'"
             :style="step.isEndpoint ? {} : { borderColor: `var(${genAccentVar(step.generation)})` }"
           >
             <AppAvatar
@@ -59,10 +59,10 @@
             />
             <span
               :class="[
-                'absolute -top-1 -left-1 w-4 h-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center border border-white',
-                step.isEndpoint ? 'bg-emerald-500' : '',
+                'absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-card text-ink-1 text-[10px] font-semibold flex items-center justify-center border leading-[1.45]',
+                step.isEndpoint ? 'border-success' : 'border-hairline-strong',
               ]"
-              :style="step.isEndpoint ? { lineHeight: '1.45' } : { backgroundColor: `var(${genAccentVar(step.generation)})`, lineHeight: '1.45' }"
+              :style="step.isEndpoint ? {} : { borderColor: `var(${genAccentVar(step.generation)})` }"
             >
               {{ idx + 1 }}
             </span>
@@ -71,19 +71,19 @@
           <!-- Step Content Card -->
           <div
             :class="[
-              'rounded-lg p-3 border transition-colors',
+              'rounded-app-lg p-3 border transition-colors',
               step.isEndpoint
-                ? 'bg-white border-emerald-300 shadow-xs'
-                : 'bg-cream-muted border-slate-200/80 hover:border-slate-300',
+                ? 'bg-card border-success/40 shadow-e1'
+                : 'bg-well border-hairline hover:border-hairline-strong',
             ]"
           >
             <div class="flex items-center justify-between gap-2 mb-1">
               <span
                 :class="[
                   'text-xs font-semibold uppercase tracking-wide',
-                  step.isEndpoint ? 'text-emerald-700' : 'text-terracotta-dark',
+                  step.isEndpoint ? 'text-success-fg' : 'text-accent-fg',
                 ]"
-                style="line-height: 1.45"
+                class="leading-[1.45]"
               >
                 {{ step.heading }}
               </span>
@@ -99,11 +99,11 @@
               </span>
             </div>
 
-            <div class="text-sm font-medium font-display text-slate-800" style="line-height: 1.45">
+            <div class="text-sm font-medium text-ink-1 leading-[1.45]">
               {{ step.name }}
             </div>
 
-            <div v-if="step.subtitle" class="text-xs text-slate-500 mt-0.5">
+            <div v-if="step.subtitle" class="text-xs text-ink-2 mt-0.5 leading-relaxed">
               {{ step.subtitle }}
             </div>
           </div>

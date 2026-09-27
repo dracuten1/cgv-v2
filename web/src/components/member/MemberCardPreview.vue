@@ -1,15 +1,15 @@
 <template>
   <div
-    class="member-card-preview rounded-xl border bg-white p-4 flex items-center space-x-3 shadow-sm"
-    :style="{ borderLeftWidth: '5px', borderLeftColor: `var(${accentVar}, #C85A32)` }"
+    class="member-card-preview rounded-app-xl border border-black/10 dark:border-white/10 bg-card p-4 flex items-center space-x-3 shadow-e1"
+    :style="{ borderLeftWidth: '5px', borderLeftColor: `var(${accentVar})` }"
     data-testid="member-card-preview"
   >
     <!-- Initials circle (enlarged) -->
     <div
       class="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center font-display font-bold text-lg uppercase"
       :style="{
-        backgroundColor: `var(${softAccentVar}, #F9EAE1)`,
-        color: `var(${accentVar}, #983F1E)`,
+        backgroundColor: `var(${softAccentVar})`,
+        color: `var(${accentFgVar})`,
       }"
       data-testid="preview-initials"
     >
@@ -17,7 +17,7 @@
     </div>
 
     <div class="min-w-0 flex-1">
-      <p class="text-base font-bold text-slate-800 font-display truncate" style="line-height: 1.45;" data-testid="preview-name">
+      <p class="text-base font-bold text-ink-1 font-display truncate" style="line-height: 1.6;" data-testid="preview-name">
         {{ fullName || 'Họ và tên' }}
       </p>
       <div class="mt-1.5 flex items-center flex-wrap gap-2">
@@ -26,15 +26,15 @@
           :class="[
             'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
             uiGender === 'Nam'
-              ? 'bg-sky-50 text-sky-700 border border-sky-200'
-              : 'bg-rose-50 text-rose-700 border border-rose-200',
+              ? 'bg-well text-ink-2 border border-black/10 dark:border-white/10'
+              : 'bg-well text-ink-2 border border-black/10 dark:border-white/10',
           ]"
           data-testid="preview-gender"
         >
           {{ uiGender }}
         </span>
         <span
-          class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200"
+          class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-well text-ink-2 border border-black/10 dark:border-white/10"
           data-testid="preview-generation"
         >
           {{ generationLabel }}
@@ -42,14 +42,14 @@
         <span
           :class="[
             'text-xs font-medium',
-            isLiving ? 'text-emerald-700' : 'text-slate-500',
+            isLiving ? 'text-success-fg' : 'text-ink-3',
           ]"
           data-testid="preview-living"
         >
           {{ isLiving ? 'Đang sống' : 'Đã mất' }}
         </span>
       </div>
-      <p v-if="yearsText" class="mt-1 text-xs text-slate-500 font-mono" data-testid="preview-years">
+      <p v-if="yearsText" class="mt-1 text-xs text-ink-3 font-mono" data-testid="preview-years">
         {{ yearsText }}
       </p>
     </div>
@@ -83,6 +83,7 @@ const props = withDefaults(defineProps<Props>(), {
 const uiGender = computed(() => toUiGender(props.gender));
 const accentVar = computed(() => genAccentVar(props.generationIndex));
 const softAccentVar = computed(() => genSoftVar(props.generationIndex));
+const accentFgVar = computed(() => `--gen-${Math.min(4, Math.max(1, props.generationIndex))}-fg`);
 const initials = computed(() => getInitials(props.fullName));
 const yearsText = computed(() => getYearsText(props.birthDate, props.deathDate, props.isLiving));
 const generationLabel = computed(() => `Đời thứ ${props.generationIndex}`);

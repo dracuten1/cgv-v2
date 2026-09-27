@@ -1,46 +1,51 @@
 <template>
+  <!-- Install banner — card surface + accent icon disc (design-system §4/§8.1 PWA banner) -->
   <div
     v-if="visible"
-    class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl shadow-xs border border-terracotta-border p-4 mb-4"
+    class="mb-6 flex flex-col justify-between gap-3 rounded-app-xl border border-hairline bg-card p-4 shadow-e1 sm:flex-row sm:items-center md:p-5"
     data-testid="install-prompt"
     role="region"
     aria-label="Cài đặt ứng dụng"
   >
-    <div class="flex items-center space-x-3">
+    <div class="flex items-center gap-3">
       <div
-        class="w-10 h-10 rounded-lg bg-terracotta-soft text-terracotta flex items-center justify-center shrink-0"
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-app-lg bg-accent-soft text-accent-fg"
         aria-hidden="true"
       >
-        <IconArrowDownTray class="w-5 h-5" />
+        <IconArrowDownTray class="h-5 w-5" />
       </div>
       <div>
-        <p class="text-sm font-semibold text-slate-800">Cài đặt Cây Gia Phả</p>
-        <p class="text-xs text-slate-500">Thêm ứng dụng vào màn hình chính để truy cập nhanh hơn.</p>
+        <p class="text-sm font-semibold leading-[1.45] text-ink-1">Cài đặt Cây Gia Phả</p>
+        <p class="text-xs leading-[1.6] text-ink-3">
+          Thêm ứng dụng vào màn hình chính để truy cập nhanh hơn.
+        </p>
       </div>
     </div>
-    <div class="flex items-center space-x-2 shrink-0">
-      <button
+    <div class="flex shrink-0 items-center gap-2">
+      <AppButton
         type="button"
+        size="sm"
         data-testid="install-button"
-        class="px-4 py-1.5 text-sm font-medium rounded-lg bg-terracotta text-white hover:bg-terracotta-hover transition-colors"
         @click="install"
       >
         Cài đặt
-      </button>
-      <button
+      </AppButton>
+      <AppButton
         type="button"
+        variant="ghost"
+        size="sm"
         data-testid="install-dismiss"
-        class="px-3 py-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors"
         @click="dismiss"
       >
         Để sau
-      </button>
+      </AppButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
+import AppButton from '@/components/ui/AppButton.vue';
 import { IconArrowDownTray } from '@/components/icons';
 
 /** Minimal shape of the non-standard beforeinstallprompt event. */

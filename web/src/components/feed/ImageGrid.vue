@@ -6,14 +6,14 @@
       :href="image"
       target="_blank"
       rel="noopener noreferrer"
-      class="block overflow-hidden rounded-lg bg-cream-muted aspect-square"
+      class="block aspect-square overflow-hidden rounded-app-md border border-hairline bg-well focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card"
       @click.stop
     >
       <img
         :src="image"
         alt="Ảnh bài viết"
         loading="lazy"
-        class="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+        class="h-full w-full object-cover transition-transform duration-[140ms] hover:scale-105"
       />
     </a>
   </div>

@@ -5,14 +5,14 @@
   <!-- Supported browser but server has no VAPID key configured -->
   <span
     v-else-if="!store.hasVapidKey"
-    class="text-xs text-slate-400"
+    class="text-xs leading-[1.45] text-ink-3"
     data-testid="notification-unconfigured"
   >
     Chưa cấu hình thông báo.
   </span>
 
-  <!-- Opt-in toggle -->
-  <div v-else class="flex items-center space-x-2">
+  <!-- Opt-in toggle — switch track on = accent-button fill, off = recessed canvas -->
+  <div v-else class="flex items-center gap-2">
     <button
       type="button"
       role="switch"
@@ -20,20 +20,20 @@
       :disabled="store.loading"
       data-testid="notification-toggle"
       :class="[
-        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta',
-        store.isSubscribed ? 'bg-terracotta' : 'bg-slate-300',
-        store.loading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-[140ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent',
+        store.isSubscribed ? 'bg-accent-button' : 'border border-hairline-strong bg-canvas-deep',
+        store.loading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer active:scale-[0.98]',
       ]"
       @click="onToggle"
     >
       <span
         :class="[
-          'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+          'inline-block h-4 w-4 transform rounded-full bg-white shadow-e1 transition-transform duration-[140ms]',
           store.isSubscribed ? 'translate-x-6' : 'translate-x-1',
         ]"
       ></span>
     </button>
-    <span class="text-xs text-slate-600 select-none">
+    <span class="select-none text-xs leading-[1.45] text-ink-2">
       {{ store.isSubscribed ? 'Đang nhận thông báo' : 'Nhận thông báo' }}
     </span>
   </div>

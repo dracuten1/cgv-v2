@@ -250,4 +250,64 @@ describe('KinshipView (mockup 04 / spec §6.4 — AppCombobox pickers)', () => {
     expect(store.fromMemberId).toBeNull();
     expect(store.toMemberId).toBeNull();
   });
+
+  // --- Apple Phase 3 restyle (additive) ---
+
+  it('Phase 3: form card, swap buttons, dialect select and action note use Quiet Clarity semantic tokens', async () => {
+    const wrapper = await mountView();
+
+    const card = wrapper.find('.bg-card.rounded-app-xl');
+    expect(card.exists()).toBe(true);
+    expect(card.classes()).toContain('border-hairline');
+    expect(card.classes()).toContain('shadow-e1');
+
+    const swapDesktop = wrapper.find('[data-testid="swap-pickers-desktop"]');
+    expect(swapDesktop.classes()).toContain('bg-card');
+    expect(swapDesktop.classes()).toContain('border-hairline-strong');
+    expect(swapDesktop.classes()).toContain('text-ink-2');
+    expect(swapDesktop.classes()).toContain('hover:bg-well');
+    const swapMobile = wrapper.find('[data-testid="swap-pickers-mobile"]');
+    expect(swapMobile.classes()).toContain('hover:bg-well');
+    expect(swapMobile.classes()).toContain('hover:text-ink-1');
+
+    // Terminology note beside the primary action (mockup kinship.html)
+    expect(wrapper.text()).toContain('Kết quả dùng đúng thuật ngữ tiếng Việt theo dòng họ.');
+
+    // Dialect semantics preserved: native AppSelect, Bắc/Trung/Nam values intact
+    const selects = wrapper.findAllComponents({ name: 'AppSelect' });
+    expect(selects.length).toBe(1);
+    const options = selects[0].props('options') as Array<{ value: string; label: string }>;
+    expect(options.map((o) => o.value)).toEqual(['bac', 'trung', 'nam']);
+    expect(options[0].label).toContain('Miền Bắc');
+  });
+
+  it('Phase 3: in-flight state keeps the primary submit disabled with spinner while store is loading', async () => {
+    const wrapper = await mountView();
+    const store = useKinshipStore();
+    store.fromMemberId = seedMembers[0].id;
+    store.toMemberId = seedMembers[1].id;
+    await flushPromises();
+
+    store.loading = true;
+    await flushPromises();
+
+    const calc = wrapper.find('[data-testid="calculate-btn"]');
+    expect(calc.attributes('disabled')).toBeDefined();
+    expect(calc.find('svg.animate-spin').exists()).toBe(true);
+
+    store.loading = false;
+    await flushPromises();
+    expect(calc.attributes('disabled')).toBeUndefined();
+  });
+
+  it('Phase 3: member-list failure renders the semantic danger banner (AA text token)', async () => {
+    mockedList.mockRejectedValueOnce(new Error('boom'));
+    const wrapper = await mountView();
+
+    const banner = wrapper.find('[data-testid="members-error"]');
+    expect(banner.exists()).toBe(true);
+    expect(banner.classes()).toContain('bg-danger-soft');
+    expect(banner.classes()).toContain('border-danger/25');
+    expect(banner.classes()).toContain('text-danger-fg');
+  });
 });

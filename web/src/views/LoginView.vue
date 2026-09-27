@@ -149,7 +149,7 @@
                 </svg>
               </template>
               <template v-else-if="provider.id === 'zalo'">
-                <span class="text-[#0068FF] font-bold text-sm tracking-tighter">Z</span>
+                <span class="text-[#0068FF] dark:text-[#74ABFF] font-bold text-sm tracking-tighter">Z</span>
               </template>
               <template v-else>
                 <IconEnvelope class="w-4 h-4" />

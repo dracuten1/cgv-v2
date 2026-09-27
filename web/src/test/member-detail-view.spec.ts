@@ -122,6 +122,85 @@ beforeEach(() => {
 });
 
 describe('MemberDetailView', () => {
+  it('hero renders member identity, generation, status, and years', async () => {
+    const wrapper = await mountDetail();
+    await flushPromises();
+    expect(wrapper.find('[data-testid="member-hero-avatar"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="member-name"]').text()).toBe('Nguyễn Văn An');
+    expect(wrapper.find('[data-testid="member-generation-badge"]').text()).toContain('Đời thứ 1');
+    expect(wrapper.find('[data-testid="member-living-status"]').text()).toBe('Đã mất');
+    expect(wrapper.text()).toContain('1930 – 2001');
+  });
+
+  it('preserves tab roles, selected semantics and keyboard focus contract', async () => {
+    const wrapper = await mountDetail();
+    await flushPromises();
+    const tabs = wrapper.findAll('[data-testid="member-tabs"] [role="tab"]');
+    expect(tabs).toHaveLength(3);
+    expect(wrapper.find('[data-testid="member-tabs"]').attributes('role')).toBe('tablist');
+    expect(tabs.map((tab) => tab.attributes('aria-selected'))).toEqual(['true', 'false', 'false']);
+    for (const tab of tabs) {
+      expect(tab.attributes('type')).toBe('button');
+      expect(tab.classes()).toContain('focus-visible:ring-2');
+    }
+    await tabs[1].trigger('keydown', { key: 'Enter' });
+    expect(wrapper.findAll('[data-testid="member-tabs"] [role="tab"]').map((tab) => tab.attributes('aria-selected'))).toEqual(['true', 'false', 'false']);
+    await tabs[1].trigger('click');
+    expect(wrapper.findAll('[data-testid="member-tabs"] [role="tab"]').map((tab) => tab.attributes('aria-selected'))).toEqual(['false', 'true', 'false']);
+  });
+
+  it('renders all four relation group headings and linked member rows', async () => {
+    const wrapper = await mountDetail();
+    await flushPromises();
+    await wrapper.find('[data-testid="tab-relations"]').trigger('click');
+    const panel = wrapper.find('[data-testid="tab-panel-relations"]');
+    for (const label of ['Cha mẹ', 'Vợ chồng', 'Anh chị em', 'Con cái']) expect(panel.text()).toContain(label);
+    expect(wrapper.find('[data-testid="relation-spouse-1"]').attributes('href')).toBe('/members/spouse-1');
+    expect(wrapper.find('[data-testid="relation-child-1"]').attributes('href')).toBe('/members/child-1');
+  });
+
+  it('renders PostCard in the posts tab', async () => {
+    const wrapper = await mountDetail();
+    await flushPromises();
+    await wrapper.find('[data-testid="tab-posts"]').trigger('click');
+    expect(wrapper.find('[data-testid="tab-panel-posts"] article').exists()).toBe(true);
+  });
+
+  it('retains loading skeleton test id', async () => {
+    mockedGetMember.mockImplementation(() => new Promise(() => {}));
+    const wrapper = await mountDetail();
+    await flushPromises();
+    expect(wrapper.find('[data-testid="member-loading"]').exists()).toBe(true);
+  });
+
+  it('uses EmptyState for not-found member', async () => {
+    mockedGetMember.mockRejectedValue(new Error('missing'));
+    const wrapper = await mountDetail();
+    await flushPromises();
+    expect(wrapper.findComponent({ name: 'EmptyState' }).exists()).toBe(true);
+    expect(wrapper.text()).toContain('Không tìm thấy thành viên');
+  });
+
+  it('preserves anonymous edit hint and hides mutation actions', async () => {
+    const wrapper = await mountDetail();
+    await flushPromises();
+    expect(wrapper.find('[data-testid="member-auth-hint"]').text()).toContain('Đăng nhập để chỉnh sửa');
+    expect(wrapper.find('[data-testid="member-edit"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="member-delete"]').exists()).toBe(false);
+  });
+
+  it('delete confirmation retains child reassignment warning', async () => {
+    const { useAuthStore } = await import('@/stores/auth');
+    const auth = useAuthStore();
+    auth.user = { id: 'user-1', display_name: 'Tester', is_demo: false, member_id: null, created_at: '2026-01-01T00:00:00Z' };
+    auth.status = 'authenticated';
+    const wrapper = await mountDetail();
+    await flushPromises();
+    await wrapper.find('[data-testid="member-delete"]').trigger('click');
+    expect(wrapper.text()).toContain('Con của thành viên này sẽ được gán lại cho vợ/chồng còn sống');
+    expect(wrapper.text()).toContain('Chỉ số đời của các thành viên liên quan được giữ nguyên.');
+  });
+
   it('fetches the member on mount and renders header with generation badge', async () => {
     const wrapper = await mountDetail();
     await flushPromises();

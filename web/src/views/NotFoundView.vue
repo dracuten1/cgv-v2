@@ -3,7 +3,7 @@
     <!-- Ghost heritage decorations (mockup 03) -->
     <div
       aria-hidden="true"
-      class="absolute -left-14 -bottom-20 font-display font-bold text-[18rem] leading-[1] text-terracotta opacity-[0.04] select-none pointer-events-none"
+      class="absolute -left-14 -bottom-20 font-display font-bold text-[18rem] leading-[1] text-accent opacity-[0.04] select-none pointer-events-none"
     >
       Phả
     </div>
@@ -14,23 +14,23 @@
     </div>
 
     <div class="relative max-w-md text-center px-4" data-testid="not-found">
-      <!-- Icon disc: lost-branch illustration -->
+      <!-- Icon disc: terracotta-soft (pinned) with accent-fg glyph -->
       <div class="mx-auto w-20 h-20 rounded-full bg-terracotta-soft flex items-center justify-center mb-6">
-        <IconExclamationCircle class="w-11 h-11 text-terracotta" stroke-width="1.5" />
+        <IconExclamationCircle class="w-11 h-11 text-accent-fg" stroke-width="1.5" />
       </div>
 
-      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-terracotta mb-2" style="line-height: 1.45">
-        Lỗi 404
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-accent-fg leading-[1.45]">
+        Đường dẫn không tồn tại
       </p>
       <p
-        class="font-display font-bold text-terracotta text-7xl sm:text-8xl"
+        class="font-display font-bold text-terracotta dark:text-accent-fg text-7xl sm:text-8xl tracking-[-0.04em]"
         style="line-height: 1.05"
         aria-hidden="true"
       >
         404
       </p>
-      <h1 class="mt-4 text-2xl font-bold font-display text-slate-800">Không tìm thấy trang</h1>
-      <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+      <h1 class="mt-4 text-2xl font-bold text-ink-1 leading-[1.45]">Không tìm thấy trang</h1>
+      <p class="mt-2 text-sm text-ink-2 leading-relaxed">
         Đường dẫn bạn yêu cầu không tồn tại hoặc đã được chuyển dời — như một nhánh đã lìa khỏi cây
         phả hệ.
       </p>
@@ -48,7 +48,7 @@
           </span>
         </AppButton>
         <AppButton
-          variant="ghost"
+          variant="secondary"
           size="lg"
           to="/kinship"
           data-testid="not-found-kinship"
@@ -60,11 +60,11 @@
         </AppButton>
       </div>
 
-      <p class="mt-6 text-xs text-slate-400">
+      <p class="mt-6 text-xs text-ink-3 leading-relaxed">
         Hoặc
         <button
           type="button"
-          class="text-terracotta hover:text-terracotta-hover hover:underline cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-1"
+          class="text-accent-fg hover:underline cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-canvas"
           @click="router.back()"
         >
           quay lại trang trước

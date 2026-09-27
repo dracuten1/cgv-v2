@@ -1,18 +1,21 @@
 <template>
   <div class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
-    <!-- Header -->
-    <div class="text-center sm:text-left pb-4 border-b border-slate-200">
-      <h1 class="text-2xl sm:text-3xl font-bold font-display text-slate-800">
+    <!-- Page head (mockup kinship.html: eyebrow + page title + sub) -->
+    <div class="pb-5 border-b border-hairline">
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-accent-fg leading-[1.45]">
+        Công cụ
+      </p>
+      <h1 class="mt-1.5 text-2xl sm:text-[28px] font-bold text-ink-1 leading-[1.45] tracking-[-0.019em]">
         Tính quan hệ họ hàng
       </h1>
-      <p class="text-slate-500 text-sm mt-1">
+      <p class="text-ink-2 text-sm mt-1.5 leading-relaxed">
         Xác định danh xưng gia tộc chính xác theo chuẩn văn hóa Việt Nam
       </p>
     </div>
 
     <!-- Quick-demo Chip (demo entry point → amber per INV-04) -->
     <div class="flex items-center gap-2 flex-wrap">
-      <span class="text-xs text-slate-500 font-medium">Lối tắt thử nghiệm:</span>
+      <span class="text-xs text-ink-3 font-medium leading-[1.45]">Lối tắt thử nghiệm:</span>
       <button
         type="button"
         class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 transition-colors cursor-pointer"
@@ -27,19 +30,19 @@
     <!-- Member list failure: pickers stay empty, say why (never silent) -->
     <div
       v-if="membersError"
-      class="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
+      class="p-4 bg-danger-soft border border-danger/25 rounded-app-lg text-sm text-danger-fg leading-relaxed"
       data-testid="members-error"
     >
       {{ membersError }}
     </div>
 
     <!-- Main Calculator Form Card -->
-    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-6">
+    <div class="bg-card rounded-app-xl border border-hairline p-6 shadow-e1 space-y-6">
       <div class="relative grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Swap direction button (desktop: centered between the two pickers) -->
         <button
           type="button"
-          class="hidden md:flex absolute left-1/2 top-9 -translate-x-1/2 z-20 w-8 h-8 items-center justify-center rounded-full bg-white border border-slate-300 text-slate-500 shadow-sm hover:text-terracotta hover:border-terracotta focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta transition-colors cursor-pointer"
+          class="hidden md:flex absolute left-1/2 top-9 -translate-x-1/2 z-20 w-8 h-8 items-center justify-center rounded-full bg-card border border-hairline-strong text-ink-2 shadow-e1 hover:bg-well hover:text-ink-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent focus-visible:ring-offset-card transition-colors cursor-pointer"
           aria-label="Đổi vị trí hai người"
           data-testid="swap-pickers-desktop"
           @click="swapSelections"
@@ -50,8 +53,8 @@
 
         <!-- Person 1 Picker -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-slate-700">
-            Người thứ nhất (Người gọi / Bắt đầu) <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-1 leading-[1.45]">
+            Người thứ nhất (Người gọi / Bắt đầu) <span class="text-danger-fg">*</span>
           </label>
           <AppCombobox
             v-model="kinshipStore.fromMemberId"
@@ -65,8 +68,8 @@
 
         <!-- Person 2 Picker -->
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-slate-700">
-            Người thứ hai (Người được gọi / Cần tính) <span class="text-red-500">*</span>
+          <label class="block text-sm font-medium text-ink-1 leading-[1.45]">
+            Người thứ hai (Người được gọi / Cần tính) <span class="text-danger-fg">*</span>
           </label>
           <AppCombobox
             v-model="kinshipStore.toMemberId"
@@ -83,7 +86,7 @@
       <div class="flex md:hidden justify-center -mt-2">
         <button
           type="button"
-          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-300 text-xs font-medium text-slate-500 shadow-sm hover:text-terracotta hover:border-terracotta focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta transition-colors cursor-pointer"
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-hairline-strong text-xs font-medium text-ink-2 shadow-e1 hover:bg-well hover:text-ink-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent focus-visible:ring-offset-card transition-colors cursor-pointer"
           aria-label="Đổi vị trí hai người"
           data-testid="swap-pickers-mobile"
           @click="swapSelections"
@@ -94,7 +97,7 @@
         </button>
       </div>
 
-      <!-- Dialect AppSelect -->
+      <!-- Dialect AppSelect (semantics preserved; native select, frozen component) -->
       <div class="pt-2 max-w-xs">
         <AppSelect
           v-model="kinshipStore.dialect"
@@ -107,8 +110,12 @@
         />
       </div>
 
-      <!-- Action Buttons -->
-      <div class="flex items-center gap-3 pt-4 border-t border-slate-100">
+      <!-- Action row: mockup places the terminology note beside the primary action -->
+      <div class="flex items-center justify-between flex-wrap gap-3 pt-4 border-t border-hairline">
+        <p class="text-xs text-ink-3 leading-relaxed">
+          Kết quả dùng đúng thuật ngữ tiếng Việt theo dòng họ.
+        </p>
+        <div class="flex items-center gap-3">
         <AppButton
           variant="primary"
           size="md"
@@ -128,12 +135,13 @@
         >
           Chọn lại
         </AppButton>
+        </div>
       </div>
 
       <!-- Error notification -->
       <div
         v-if="kinshipStore.error"
-        class="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
+        class="p-4 bg-danger-soft border border-danger/25 rounded-app-lg text-sm text-danger-fg leading-relaxed"
         data-testid="kinship-error"
       >
         {{ kinshipStore.error }}
@@ -141,19 +149,20 @@
     </div>
 
     <!-- Initial prompt: guidance before both people are chosen -->
+    <!-- bg-cream-muted = retained Phase 1 legacy alias, remapped to surface-well for dark (measured AA both themes) -->
     <div
       v-if="!bothSelected && !kinshipStore.result"
-      class="bg-cream-muted/60 rounded-xl border border-dashed border-slate-300 p-6 flex items-start gap-4"
+      class="bg-cream-muted/60 rounded-app-xl border border-dashed border-hairline-strong p-6 flex items-start gap-4"
       data-testid="kinship-initial-prompt"
     >
-      <div class="w-10 h-10 rounded-full bg-terracotta-soft text-terracotta flex items-center justify-center shrink-0">
+      <div class="w-10 h-10 rounded-full bg-accent-soft text-accent-fg flex items-center justify-center shrink-0">
         <IconSparkles class="w-5 h-5" />
       </div>
       <div class="text-left">
-        <h2 class="text-base font-semibold font-display text-slate-800" style="line-height: 1.45">
+        <h2 class="text-base font-semibold text-ink-1 leading-[1.45]">
           Chọn hai người để tính quan hệ
         </h2>
-        <p class="text-sm text-slate-500 mt-1 leading-relaxed">
+        <p class="text-sm text-ink-2 mt-1 leading-relaxed">
           Chọn người gọi và người được gọi ở hai ô phía trên, rồi bấm “Tính quan hệ” để xem danh xưng
           chuẩn theo từng chi họ.
         </p>
@@ -163,17 +172,17 @@
     <!-- Unrelated result: engine returns the fallback term when no relation is in the graph -->
     <div
       v-else-if="kinshipStore.result && isUnrelated"
-      class="bg-terracotta-soft rounded-xl border border-terracotta-border p-6 flex items-start gap-4"
+      class="bg-terracotta-soft rounded-app-xl border border-accent-border p-6 flex items-start gap-4"
       data-testid="kinship-unrelated"
     >
-      <div class="w-10 h-10 rounded-full bg-white text-terracotta flex items-center justify-center shrink-0 shadow-xs">
+      <div class="w-10 h-10 rounded-full bg-card text-accent-fg flex items-center justify-center shrink-0 shadow-e1">
         <IconExclamationCircle class="w-5 h-5" />
       </div>
       <div class="text-left">
-        <h2 class="text-base font-semibold font-display text-slate-800" style="line-height: 1.45">
+        <h2 class="text-base font-semibold text-ink-1 leading-[1.45]">
           Không tìm thấy quan hệ họ hàng
         </h2>
-        <p class="text-sm text-slate-600 mt-1 leading-relaxed">
+        <p class="text-sm text-ink-2 mt-1 leading-relaxed">
           Hai người này không có quan hệ trong phạm vi tra cứu hoặc thuộc hai nhánh khác nhau của gia
           tộc. Hãy thử đổi chiều hoặc chọn lại hai người.
         </p>

@@ -4,7 +4,7 @@
     :title="isEdit ? 'Cập nhật thành viên' : 'Thêm thành viên'"
     @close="onClose"
   >
-    <form class="space-y-4" @submit.prevent="onSubmit">
+    <form class="space-y-4 text-ink-1 [line-height:1.6]" @submit.prevent="onSubmit">
       <!-- LIVE PREVIEW -->
       <MemberCardPreview
         :full-name="form.fullName"
@@ -54,14 +54,14 @@
         <input
           v-model="form.isLiving"
           type="checkbox"
-          class="w-4 h-4 rounded border-slate-300 text-terracotta focus:ring-terracotta cursor-pointer"
+          class="w-4 h-4 rounded border-black/20 text-accent focus:ring-accent cursor-pointer"
           data-testid="member-is-living"
         />
-        <span class="text-sm text-slate-700 font-medium">Đang sống</span>
+        <span class="text-sm text-ink-2 font-medium">Đang sống</span>
       </label>
 
       <div class="flex flex-col">
-        <label for="member-notes" class="text-sm font-medium text-slate-700 mb-1">
+        <label for="member-notes" class="text-sm font-medium text-ink-1 mb-1">
           Ghi chú
         </label>
         <textarea
@@ -69,12 +69,12 @@
           v-model="form.notes"
           rows="3"
           placeholder="Ghi chú về thành viên…"
-          class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus:border-transparent hover:border-slate-400 resize-y"
+          class="block w-full rounded-lg border border-black/20 dark:border-white/20 bg-card px-3 py-2 text-sm text-ink-1 placeholder:text-ink-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus:border-transparent hover:border-black/30 dark:hover:border-white/30 resize-y"
         />
       </div>
 
       <!-- Form-level error (from API) -->
-      <p v-if="submitError" class="text-sm text-red-600" data-testid="member-form-error">
+      <p v-if="submitError" class="text-sm text-danger-fg" data-testid="member-form-error">
         {{ submitError }}
       </p>
     </form>

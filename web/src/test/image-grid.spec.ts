@@ -46,4 +46,36 @@ describe('ImageGrid', () => {
     await nextTick();
     expect(wrapper.find('[data-testid="image-grid"]').classes()).toContain('grid-cols-3');
   });
+
+  // ---- Phase 3 Quiet Clarity restyle — additive contract cases ----
+
+  it('places each tile on the semantic well surface with hairline + md radius', () => {
+    const wrapper = mount(ImageGrid, { props: { images: ['https://a/1.jpg'] } });
+    const tile = wrapper.find('a');
+    expect(tile.classes()).toContain('bg-well');
+    expect(tile.classes()).toContain('border-hairline');
+    expect(tile.classes()).toContain('rounded-app-md');
+    expect(tile.classes()).toContain('aspect-square');
+    // Focus stays visible (terracotta halo, design-system §3.5)
+    expect(tile.classes()).toContain('focus-visible:ring-accent');
+  });
+
+  it('keeps the external-link security contract on every tile anchor', () => {
+    const wrapper = mount(ImageGrid, {
+      props: { images: ['https://a/1.jpg', 'https://a/2.jpg'] },
+    });
+    for (const anchor of wrapper.findAll('a')) {
+      expect(anchor.attributes('target')).toBe('_blank');
+      const rel = anchor.attributes('rel') ?? '';
+      expect(rel).toContain('noopener');
+      expect(rel).toContain('noreferrer');
+    }
+  });
+
+  it('keeps the hover motion inside the 140ms fast transition budget', () => {
+    const wrapper = mount(ImageGrid, { props: { images: ['https://a/1.jpg'] } });
+    const img = wrapper.find('img');
+    expect(img.classes()).toContain('hover:scale-105');
+    expect(img.classes()).toContain('duration-[140ms]');
+  });
 });

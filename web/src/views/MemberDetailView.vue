@@ -1,16 +1,12 @@
 <template>
-  <div class="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
+  <div class="min-h-screen bg-canvas text-ink-1 p-4 md:p-6 max-w-4xl mx-auto space-y-4">
     <!-- Loading -->
     <div
       v-if="memberStore.loading && !memberStore.currentMember"
-      class="bg-white rounded-xl border border-slate-200 py-16 flex flex-col items-center gap-3"
+      class="bg-card rounded-app-xl border border-hairline py-16 flex flex-col items-center gap-3"
       data-testid="member-loading"
     >
-      <svg class="animate-spin h-8 w-8 text-terracotta" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
-      <p class="text-sm text-slate-500">Đang tải hồ sơ…</p>
+      <div class="w-full max-w-xl space-y-4 px-6" role="status"><div class="h-8 w-2/3 rounded-full bg-well"></div><div class="h-4 w-1/2 rounded-full bg-well"></div><div class="h-24 rounded-app-xl bg-well"></div><p class="text-sm text-ink-2" style="line-height:1.6">Đang tải hồ sơ…</p></div>
     </div>
 
     <!-- Not found / error -->
@@ -26,7 +22,7 @@
 
     <template v-else>
       <!-- Header / Hero card (mockup 05) -->
-      <div class="bg-white rounded-xl shadow-xs border border-slate-200 p-5">
+      <div class="bg-card rounded-app-xl shadow-e1 border border-hairline p-5">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div class="flex items-center gap-4 min-w-0">
             <AppAvatar
@@ -37,7 +33,7 @@
               data-testid="member-hero-avatar"
             />
             <div class="min-w-0">
-              <h1 class="text-2xl font-bold font-display text-slate-800 truncate" data-testid="member-name">
+              <h1 class="text-2xl font-bold font-display text-ink-1 truncate" data-testid="member-name">
                 {{ member.full_name }}
               </h1>
               <div class="mt-1 flex items-center gap-2 flex-wrap">
@@ -47,7 +43,7 @@
                 <AppChip :variant="member.is_living ? 'success' : 'default'" size="sm" data-testid="member-living-status">
                   {{ member.is_living ? 'Đang sống' : 'Đã mất' }}
                 </AppChip>
-                <span v-if="yearsText" class="text-sm text-slate-500 font-mono">{{ yearsText }}</span>
+                <span v-if="yearsText" class="text-sm text-ink-3 font-mono">{{ yearsText }}</span>
               </div>
             </div>
           </div>
@@ -68,7 +64,7 @@
                 </span>
               </AppButton>
             </template>
-            <span v-else class="text-xs text-slate-500 italic" data-testid="member-auth-hint">
+            <span v-else class="text-xs text-ink-3 italic" data-testid="member-auth-hint">
               Đăng nhập để chỉnh sửa
             </span>
           </div>
@@ -76,8 +72,8 @@
       </div>
 
       <!-- Tabs -->
-      <div class="bg-white rounded-xl shadow-xs border border-slate-200">
-        <div class="border-b border-slate-200 flex" role="tablist" data-testid="member-tabs">
+      <div class="bg-card rounded-app-xl shadow-e1 border border-hairline">
+        <div class="border-b border-hairline flex" role="tablist" data-testid="member-tabs">
           <button
             v-for="tab in tabs"
             :key="tab.key"
@@ -87,8 +83,8 @@
             :class="[
               'px-4 py-3 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-px rounded-t-md focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-inset',
               activeTab === tab.key
-                ? 'border-terracotta text-terracotta-dark'
-                : 'border-transparent text-slate-500 hover:text-slate-800',
+                ? 'border-accent text-accent-fg'
+                : 'border-transparent text-ink-3 hover:text-ink-1',
             ]"
             :data-testid="`tab-${tab.key}`"
             @click="activeTab = tab.key"
@@ -102,26 +98,26 @@
           <div v-if="activeTab === 'overview'" data-testid="tab-panel-overview">
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <dt class="text-xs font-medium uppercase tracking-wide text-slate-400">Dòng họ</dt>
-                <dd class="mt-1 text-sm text-slate-800">{{ member.family_name || '—' }}</dd>
+                <dt class="text-xs font-medium uppercase tracking-wide text-ink-3">Dòng họ</dt>
+                <dd class="mt-1 text-sm text-ink-1">{{ member.family_name || '—' }}</dd>
               </div>
               <div>
-                <dt class="text-xs font-medium uppercase tracking-wide text-slate-400">Giới tính</dt>
-                <dd class="mt-1 text-sm text-slate-800" data-testid="member-gender">{{ uiGender || '—' }}</dd>
+                <dt class="text-xs font-medium uppercase tracking-wide text-ink-3">Giới tính</dt>
+                <dd class="mt-1 text-sm text-ink-1" data-testid="member-gender">{{ uiGender || '—' }}</dd>
               </div>
               <div>
-                <dt class="text-xs font-medium uppercase tracking-wide text-slate-400">Ngày sinh</dt>
-                <dd class="mt-1 text-sm text-slate-800">{{ formatDate(member.birth_date) || '—' }}</dd>
+                <dt class="text-xs font-medium uppercase tracking-wide text-ink-3">Ngày sinh</dt>
+                <dd class="mt-1 text-sm text-ink-1">{{ formatDate(member.birth_date) || '—' }}</dd>
               </div>
               <div>
-                <dt class="text-xs font-medium uppercase tracking-wide text-slate-400">Ngày mất</dt>
-                <dd class="mt-1 text-sm text-slate-800">
+                <dt class="text-xs font-medium uppercase tracking-wide text-ink-3">Ngày mất</dt>
+                <dd class="mt-1 text-sm text-ink-1">
                   {{ member.is_living ? '—' : (formatDate(member.death_date) || '—') }}
                 </dd>
               </div>
               <div class="sm:col-span-2">
-                <dt class="text-xs font-medium uppercase tracking-wide text-slate-400">Ghi chú</dt>
-                <dd class="mt-1 text-sm text-slate-700 whitespace-pre-line" data-testid="member-notes">
+                <dt class="text-xs font-medium uppercase tracking-wide text-ink-3">Ghi chú</dt>
+                <dd class="mt-1 text-sm text-ink-2 whitespace-pre-line" data-testid="member-notes">
                   {{ member.notes || 'Chưa có ghi chú.' }}
                 </dd>
               </div>
@@ -131,8 +127,8 @@
           <!-- Tab: Quan hệ — gen-stripe relation cards (mockup 05) -->
           <div v-else-if="activeTab === 'relations'" class="space-y-6" data-testid="tab-panel-relations">
             <div v-for="group in relationGroups" :key="group.title">
-              <h3 class="text-sm font-semibold text-slate-700 mb-2">{{ group.title }}</h3>
-              <div v-if="group.members.length === 0" class="text-sm text-slate-400 italic">
+              <h3 class="text-sm font-semibold text-ink-2 mb-2">{{ group.title }}</h3>
+              <div v-if="group.members.length === 0" class="text-sm text-ink-3 italic">
                 {{ group.emptyText }}
               </div>
               <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -140,8 +136,8 @@
                   v-for="rel in group.members"
                   :key="rel.id"
                   :to="`/members/${encodeURIComponent(rel.id)}`"
-                  class="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white p-2.5 hover:border-terracotta hover:shadow-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-1"
-                  :style="rel.generation_index ? { borderLeftWidth: '4px', borderLeftColor: `var(${genAccentVar(rel.generation_index)})` } : {}"
+                  class="flex items-center gap-2.5 rounded-lg border border-hairline bg-card p-2.5 hover:border-accent hover:shadow-e1 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
+                  :style="rel.generation_index ? { borderLeftWidth: '4px', borderLeftColor: `var(--gen-${Math.min(4, Math.max(1, rel.generation_index))})` } : {}"
                   :data-testid="`relation-${rel.id}`"
                 >
                   <AppAvatar
@@ -151,11 +147,11 @@
                     size="w-9"
                   />
                   <span class="min-w-0">
-                    <span class="block text-sm font-medium font-display text-slate-800 truncate" style="line-height: 1.45">
+                    <span class="block text-sm font-medium font-display text-ink-1 truncate" style="line-height: 1.6">
                       {{ rel.full_name }}
                     </span>
                     <span class="flex items-center gap-1.5 mt-0.5">
-                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-slate-600 border border-slate-200 bg-white" style="line-height: 1.45">
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-ink-2 border border-hairline bg-card" style="line-height: 1.6">
                         {{ generationLabelOf(rel.generation_index) }}
                       </span>
                       <span
@@ -163,7 +159,7 @@
                           'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium',
                           getGenderBadgeClass(rel.gender),
                         ]"
-                        style="line-height: 1.45"
+                        style="line-height: 1.6"
                       >
                         {{ toUiGender(rel.gender) }}
                       </span>
@@ -176,7 +172,7 @@
 
           <!-- Tab: Bảng tin — reuses PostCard idiom (mockup 05) -->
           <div v-else data-testid="tab-panel-posts">
-            <div v-if="posts.length === 0" class="text-sm text-slate-400 italic">
+            <div v-if="posts.length === 0" class="text-sm text-ink-3 italic">
               Chưa có bài viết nào.
             </div>
             <ol v-else class="space-y-4">
@@ -198,10 +194,10 @@
 
       <!-- Delete confirm -->
       <AppDialog :open="deleteConfirmOpen" title="Xóa thành viên" @close="deleteConfirmOpen = false">
-        <p class="text-sm text-slate-700" data-testid="delete-confirm-text">
+        <p class="text-sm text-ink-2" data-testid="delete-confirm-text">
           Xóa thành viên này?
         </p>
-        <p class="mt-2 text-sm text-slate-500">
+        <p class="mt-2 text-sm text-ink-3">
           Con của thành viên này sẽ được gán lại cho vợ/chồng còn sống (nếu có), nếu không
           chúng sẽ trở thành gốc riêng. Chỉ số đời của các thành viên liên quan được giữ nguyên.
         </p>
@@ -238,7 +234,7 @@ import { useMemberStore } from '@/stores/member';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
 import { toUiGender, getGenderBadgeClass } from '@/api/gender';
-import { getYearsText, genAccentVar } from '@/components/tree/card-visual';
+import { getYearsText } from '@/components/tree/card-visual';
 import type { FeedPostItem, Member } from '@/types/api';
 
 const route = useRoute();

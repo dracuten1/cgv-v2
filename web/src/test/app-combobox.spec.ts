@@ -39,6 +39,13 @@ describe('AppCombobox.vue', () => {
     expect(wrapper.find('input[role="combobox"]').exists()).toBe(false);
   });
 
+  it('uses generation foreground token for generation badge text', async () => {
+    const wrapper = mount(AppCombobox, { props: { options: sampleMembers } });
+    await wrapper.find('input[role="combobox"]').trigger('focus');
+    const badge = wrapper.find('li[role="option"] button span.inline-flex');
+    expect(badge.attributes('style')).toContain('color: var(--gen-1-fg)');
+  });
+
   it('filters options based on search query', async () => {
     const wrapper = mount(AppCombobox, {
       props: {

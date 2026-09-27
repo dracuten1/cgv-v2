@@ -77,6 +77,15 @@ beforeEach(() => {
 });
 
 describe('MemberEditDialog — INV-03 gender boundary', () => {
+  it('mounts live preview and keeps it synchronized with form values', async () => {
+    const wrapper = mountDialog({ member: editMember });
+    await flushPromises();
+    expect(wrapper.find('[data-testid="member-card-preview"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="preview-name"]').text()).toBe('Nguyễn Văn An');
+    await wrapper.find('#member-full-name').setValue('Trần Văn Bình');
+    expect(wrapper.find('[data-testid="preview-name"]').text()).toBe('Trần Văn Bình');
+  });
+
   it('hydrates API gender "male" → Vietnamese form value "Nam"', async () => {
     const wrapper = mountDialog({ member: editMember });
     await flushPromises();

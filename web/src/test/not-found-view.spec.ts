@@ -69,4 +69,46 @@ describe('NotFoundView.vue (mockup 03 / spec §6.3)', () => {
     const back = wrapper.find('button');
     expect(back.text()).toContain('quay lại trang trước');
   });
+
+  // --- Apple Phase 3 restyle (additive) ---
+
+  it('Phase 3: 404 numeral keeps pinned terracotta in light and gains the dark accent variant', () => {
+    const wrapper = mount(NotFoundView, {
+      global: { stubs: { RouterLink: stubRouterLink } },
+    });
+
+    const numeral = wrapper.find('p[aria-hidden="true"]');
+    expect(numeral.classes()).toContain('text-terracotta');
+    expect(numeral.classes()).toContain('dark:text-accent-fg');
+    expect(numeral.classes()).toContain('tracking-[-0.04em]');
+  });
+
+  it('Phase 3: semantic ink tokens, accent-fg eyebrow and filled neutral secondary CTA', () => {
+    const wrapper = mount(NotFoundView, {
+      global: { stubs: { RouterLink: stubRouterLink } },
+    });
+
+    // Eyebrow uses the mockup copy + AA accent text token in both themes
+    const eyebrow = wrapper.findAll('p').find((p) => p.text() === 'Đường dẫn không tồn tại');
+    expect(eyebrow).toBeDefined();
+    expect(eyebrow!.classes()).toContain('text-accent-fg');
+    expect(eyebrow!.classes()).toContain('leading-[1.45]');
+
+    const h1 = wrapper.find('h1');
+    expect(h1.classes()).toContain('text-ink-1');
+
+    const body = wrapper.findAll('p').find((p) => p.classes().includes('text-ink-2'));
+    expect(body).toBeDefined();
+
+    // Secondary CTA is the filled neutral (mockup btn--secondary), still → /kinship
+    const kinship = wrapper.find('[data-testid="not-found-kinship"]');
+    expect(kinship.attributes('href')).toBe('/kinship');
+    expect(kinship.classes()).toContain('bg-well');
+    expect(kinship.classes()).toContain('text-ink-1');
+
+    // Back-link affordance: accent-fg stable color + underline hover (AA in dark too)
+    const back = wrapper.find('button');
+    expect(back.classes()).toContain('text-accent-fg');
+    expect(back.classes()).toContain('hover:underline');
+  });
 });

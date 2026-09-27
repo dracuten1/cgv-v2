@@ -294,7 +294,7 @@ const genBadgeStyle = (generation?: number): Record<string, string> => {
   }
   return {
     backgroundColor: `var(${genSoftVar(generation)})`,
-    color: `var(${genAccentVar(generation)})`,
+    color: `var(${genAccentVar(generation)}-fg)`,
     lineHeight: '1.45',
   };
 };

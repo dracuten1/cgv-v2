@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { useNotificationsStore } from '@/stores/notifications';
 import { pushApi } from '@/api/push';
 import { urlBase64ToUint8Array } from '@/utils/urlBase64ToUint8Array';
@@ -171,5 +171,101 @@ describe('NotificationToggle (jsdom guard)', () => {
     expect(wrapper.find('[data-testid="notification-toggle"]').exists()).toBe(false);
     expect(wrapper.find('[data-testid="notification-unconfigured"]').exists()).toBe(false);
     expect(wrapper.find('button').exists()).toBe(false);
+  });
+});
+
+// ---- Phase 3 Quiet Clarity restyle — additive contract cases ----
+describe('NotificationToggle (Quiet Clarity restyle contract)', () => {
+  let fakeSubscription: ReturnType<typeof makeFakeSubscription>;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+
+    fakeSubscription = makeFakeSubscription();
+
+    // Same simulated push-capable browser as the store describe above
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        getRegistration: vi.fn().mockResolvedValue({
+          pushManager: {
+            getSubscription: vi.fn().mockResolvedValue(fakeSubscription),
+            subscribe: vi.fn().mockResolvedValue(fakeSubscription),
+          },
+        }),
+      },
+    });
+    (window as unknown as Record<string, unknown>).PushManager = class FakePushManager {};
+    (window as unknown as Record<string, unknown>).Notification = class FakeNotification {
+      static requestPermission = vi.fn().mockResolvedValue('granted');
+    };
+    Object.defineProperty(navigator, 'permissions', {
+      configurable: true,
+      value: { query: vi.fn() },
+    });
+
+    // VAPID key present so the switch branch renders
+    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', 'test-vapid-key');
+  });
+
+  afterEach(() => {
+    delete (navigator as unknown as Record<string, unknown>).serviceWorker;
+    delete (window as unknown as Record<string, unknown>).PushManager;
+    delete (window as unknown as Record<string, unknown>).Notification;
+    delete (navigator as unknown as Record<string, unknown>).permissions;
+    vi.unstubAllEnvs();
+  });
+
+  it('renders the off state: recessed canvas-deep track, ink-2 label', async () => {
+    // Derive "off" from an empty push manager
+    (
+      (navigator.serviceWorker as unknown as { getRegistration: () => Promise<unknown> })
+        .getRegistration as ReturnType<typeof vi.fn>
+    ).mockResolvedValue({
+      pushManager: { getSubscription: vi.fn().mockResolvedValue(undefined) },
+    });
+
+    const wrapper = mount(NotificationToggle);
+    await flushPromises();
+
+    const toggle = wrapper.find('[data-testid="notification-toggle"]');
+    expect(toggle.exists()).toBe(true);
+    expect(toggle.attributes('role')).toBe('switch');
+    expect(toggle.attributes('aria-checked')).toBe('false');
+    expect(toggle.classes()).toContain('bg-canvas-deep');
+    expect(toggle.classes()).toContain('border-hairline-strong');
+    expect(toggle.classes()).not.toContain('bg-accent-button');
+    // White knob is theme-invariant (kit vocabulary for filled/track pairs)
+    expect(toggle.find('span').classes()).toContain('bg-white');
+
+    const label = wrapper.get('span.text-ink-2');
+    expect(label.text()).toBe('Nhận thông báo');
+    expect(label.classes()).toContain('text-ink-2');
+  });
+
+  it('renders the on state: accent-button track (white knob stays AA in both themes)', async () => {
+    const wrapper = mount(NotificationToggle);
+    await flushPromises();
+
+    const toggle = wrapper.find('[data-testid="notification-toggle"]');
+    expect(toggle.attributes('aria-checked')).toBe('true');
+    expect(toggle.classes()).toContain('bg-accent-button');
+    expect(toggle.classes()).not.toContain('bg-canvas-deep');
+
+    const label = wrapper.get('span.text-ink-2');
+    expect(label.text()).toBe('Đang nhận thông báo');
+  });
+
+  it('renders the unconfigured note on the readable ink-3 token', () => {
+    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', '');
+
+    const wrapper = mount(NotificationToggle);
+
+    const note = wrapper.find('[data-testid="notification-unconfigured"]');
+    expect(note.exists()).toBe(true);
+    expect(note.text()).toBe('Chưa cấu hình thông báo.');
+    expect(note.classes()).toContain('text-ink-3');
+    expect(wrapper.find('[data-testid="notification-toggle"]').exists()).toBe(false);
   });
 });

@@ -79,4 +79,48 @@ describe('InstallPrompt', () => {
 
     expect(event.preventDefault).toHaveBeenCalledTimes(1);
   });
+
+  // ---- Phase 3 Quiet Clarity restyle — additive contract cases ----
+
+  it('renders the banner on the semantic card surface with the accent icon disc', async () => {
+    const wrapper = mount(InstallPrompt);
+    await nextTick();
+    fireBeforeInstallPrompt();
+    await nextTick();
+
+    const banner = wrapper.find('[data-testid="install-prompt"]');
+    expect(banner.classes()).toContain('bg-card');
+    expect(banner.classes()).toContain('border-hairline');
+    expect(banner.classes()).toContain('rounded-app-xl');
+    expect(banner.classes()).toContain('shadow-e1');
+    // Region semantics preserved
+    expect(banner.attributes('role')).toBe('region');
+    expect(banner.attributes('aria-label')).toBe('Cài đặt ứng dụng');
+
+    // Icon disc: accent tint family, decorative (icon has no text pair here)
+    const iconDisc = banner.find('div[aria-hidden="true"]');
+    expect(iconDisc.classes()).toContain('bg-accent-soft');
+    expect(iconDisc.classes()).toContain('text-accent-fg');
+
+    // Copy hierarchy: ink-1 title, ink-3 description
+    const paragraphs = banner.findAll('p');
+    expect(paragraphs[0].classes()).toContain('text-ink-1');
+    expect(paragraphs[1].classes()).toContain('text-ink-3');
+  });
+
+  it('styles the primary install action on the terracotta fill and the dismiss as quiet text', async () => {
+    const wrapper = mount(InstallPrompt);
+    await nextTick();
+    fireBeforeInstallPrompt();
+    await nextTick();
+
+    const installButton = wrapper.find('[data-testid="install-button"]');
+    // AppButton primary: white-label terracotta (accent-button alias), AA both themes
+    expect(installButton.classes()).toContain('bg-terracotta');
+    expect(installButton.classes()).toContain('text-white');
+
+    const dismissButton = wrapper.find('[data-testid="install-dismiss"]');
+    // AppButton ghost: quiet ink-2 label, never a competing saturated fill
+    expect(dismissButton.classes()).toContain('text-ink-2');
+  });
 });

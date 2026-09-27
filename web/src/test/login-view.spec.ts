@@ -200,4 +200,24 @@ describe('LoginView.vue', () => {
     expect(sendMagicLinkSpy).toHaveBeenCalledWith('test@example.com');
     expect(wrapper.text()).toContain('Đã gửi liên kết đăng nhập');
   });
+
+  // --- F1 scheduled defect fix (additive): Zalo glyph dark-mode contrast ---
+
+  it('F1: Zalo glyph keeps brand blue in light and pins the dark-mode AA variant class', () => {
+    const wrapper = mount(LoginView, {
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+      },
+    });
+
+    const zaloGlyph = wrapper.findAll('span').find((s) => s.classes().includes('tracking-tighter'));
+    expect(zaloGlyph).toBeDefined();
+    // Light mode unchanged: exact Zalo brand blue (already passing 4.75:1 on white card)
+    expect(zaloGlyph!.classes()).toContain('text-[#0068FF]');
+    // Dark mode: lightened Zalo blue, 6.45:1 on the dark card surface (#292624)
+    expect(zaloGlyph!.classes()).toContain('dark:text-[#74ABFF]');
+    // Glyph remains the bold "Z" brand mark — not swapped for an icon or plain text
+    expect(zaloGlyph!.classes()).toContain('font-bold');
+    expect(zaloGlyph!.text()).toBe('Z');
+  });
 });
