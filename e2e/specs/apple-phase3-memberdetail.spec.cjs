@@ -255,7 +255,6 @@ const GEN_PROBE = (varName, prop) => `(() => {
   p.remove();
   return v; })()`;
 
-// ---- Alpha-composited contrast sweep, canvas-parsed (Tailwind v4 oklch/color-mix safe).
 const SWEEP = `(() => {
   const cv = document.createElement('canvas'); cv.width = cv.height = 1;
   const cx = cv.getContext('2d', { willReadFrequently: true });
@@ -275,9 +274,6 @@ const SWEEP = `(() => {
     const cs = getComputedStyle(e);
     if (cs.visibility === 'hidden' || cs.display === 'none') continue;
     if (e.closest('[aria-hidden="true"]')) continue;
-    if (e.classList.contains('sr-only')) continue; // not visually rendered
-    const rect = e.getBoundingClientRect();
-    if (rect.width < 2 || rect.height < 2) continue; // clipped/not visibly rendered
     let text = '', fg = parse(cs.color), kind = 'text';
     if (e.tagName === 'INPUT' || e.tagName === 'TEXTAREA') {
       text = e.value || e.getAttribute('placeholder') || '';
@@ -287,27 +283,20 @@ const SWEEP = `(() => {
     let bg = [255, 255, 255], n = e, opaque = false;
     while (n) { const c = parse(getComputedStyle(n).backgroundColor); if (c[3] > 0) { bg = bg.map((v, i) => c[i] * c[3] + v * (1 - c[3])); if (c[3] === 1) { opaque = true; break; } } n = n.parentElement; }
     const f = lum(fg.slice(0, 3)), b = lum(bg);
-    out.push({ tag: e.tagName.toLowerCase(), kind, text: text.trim().replace(/\\s+/g, ' ').slice(0, 60), ratio: +((Math.max(f, b) + 0.05) / (Math.min(f, b) + 0.05)).toFixed(3), fg: 'rgb(' + fg.slice(0, 3).map(Math.round).join(', ') + ')', bg: 'rgb(' + bg.map(Math.round).join(', ') + ')', opaqueBg: opaque });
+    out.push({ tag: e.tagName.toLowerCase(), kind, text: text.trim().replace(/\\s+/g, ' ').slice(0, 60), ratio: +( (Math.max(f, b) + 0.05) / (Math.min(f, b) + 0.05) ).toFixed(3), fg: 'rgb(' + fg.slice(0, 3).map(Math.round).join(', ') + ')', bg: 'rgb(' + bg.map(Math.round).join(', ') + ')', opaqueBg: opaque });
   }
   return out; })()`;
 
-// ---- Per-row gates: contrast ≥ 4.5, no horizontal overflow, first-Tab :focus-visible.
+// Ported row gate from phase3-content: same sweep, viewport overflow, Tab/focus and console policy.
 async function gates(page) {
   const entries = await page.evaluate(SWEEP);
-  const overflow = await page.evaluate(() => ({
-    html: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-    body: document.body.scrollWidth - document.body.clientWidth,
-  }));
-  await page.evaluate(() => document.activeElement && document.activeElement.blur());
-  await page.keyboard.press('Tab');
-  await page.waitForTimeout(250); // AppButton animates box-shadow 140ms — let it settle
-  const focus = await page.locator(':focus-visible').first().evaluate((e) => {
-    const s = getComputedStyle(e);
-    return { tag: e.tagName, outline: s.outlineStyle, shadow: s.boxShadow,
-      indicated: s.outlineStyle !== 'none' || s.boxShadow !== 'none' };
-  });
+  const overflow = await page.evaluate(() => ({ html: document.documentElement.scrollWidth - document.documentElement.clientWidth, body: document.body.scrollWidth - document.body.clientWidth }));
+  await page.evaluate(() => { const el = document.activeElement; if (el && el.blur) el.blur(); });
+  await page.keyboard.press('Tab'); await page.waitForTimeout(150);
+  let focus = null;
+  try { focus = await page.locator(':focus-visible').first().evaluate((el) => { const s = getComputedStyle(el); return { tag: el.tagName, outline: s.outlineStyle, shadow: s.boxShadow, indicated: s.outlineStyle !== 'none' || s.boxShadow !== 'none' }; }); } catch (_) {}
   const bad = entries.filter((x) => !Number.isFinite(x.ratio) || x.ratio < MIN_AA);
-  return { entries, bad, overflow, focus, ok: bad.length === 0 && overflow.html <= 0 && overflow.body <= 0 && focus.indicated };
+  return { entries, bad, overflow, focus: focus || { indicated: false }, ok: !bad.length && overflow.html <= 0 && overflow.body <= 0 && !!(focus && focus.indicated) };
 }
 
 test.beforeAll(async ({ browser }) => { await discoverMembers(browser); });
@@ -497,6 +486,12 @@ test('relations (root): empty groups keep headings and show exact emptyText', as
 // 4 — Edit dialog: a11y, LIVE preview sync (v-model, zero network), CANCEL only.
 test('edit dialog: role=dialog/aria-modal, live preview sync, cancel = zero writes', async ({ browser }) => {
   const { ctx, page } = await demoLogin(browser);
+  await ctx.route('**/api/v1/members/*', async (route) => {
+    const id = route.request().url().split('/').pop().split('?')[0];
+    const fixture = id === MBR.rootId ? MBR.root : (id === MBR.midId ? MBR.mid : null);
+    if (route.request().method() === 'GET' && fixture) await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...fixture, family_name: 'Gia phả họ Nguyễn Văn', relations: fixture.relations || MBR.rootRelations, posts: [] }) });
+    else await route.continue();
+  });
   current.errors = monitor(page); current.page = page;
   const writes = [];
   page.on('request', (r) => {
@@ -528,6 +523,12 @@ test('edit dialog: role=dialog/aria-modal, live preview sync, cancel = zero writ
 // 5 — Delete dialog on a member WITH children: child-reassignment warning + cancel.
 test('delete dialog: child-reassignment warning copy visible, cancel = zero writes', async ({ browser }) => {
   const { ctx, page } = await demoLogin(browser);
+  await ctx.route('**/api/v1/members/*', async (route) => {
+    const id = route.request().url().split('/').pop().split('?')[0];
+    const fixture = id === MBR.rootId ? MBR.root : (id === MBR.midId ? MBR.mid : null);
+    if (route.request().method() === 'GET' && fixture) await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...fixture, family_name: 'Gia phả họ Nguyễn Văn', relations: fixture.relations || MBR.rootRelations, posts: [] }) });
+    else await route.continue();
+  });
   current.errors = monitor(page); current.page = page;
   const writes = [];
   page.on('request', (r) => {
