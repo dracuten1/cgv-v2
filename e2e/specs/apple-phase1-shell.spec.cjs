@@ -57,17 +57,35 @@ const CONTRAST_EVALUATOR = `(() => {
     const a = top[3];
     return [Math.round(top[0]*a + bottom[0]*(1-a)), Math.round(top[1]*a + bottom[1]*(1-a)), Math.round(top[2]*a + bottom[2]*(1-a)), 1];
   };
-  const effectiveBackground = (el) => {
+  const opaqueBase = () => {
+    const html = parseColor(getComputedStyle(document.documentElement).backgroundColor);
+    if (html && html[3] > 0) return html[3] === 1 ? html : composite(html, [255,255,255,1]);
+    return [255,255,255,1];
+  };
+  const ancestorLayers = (el) => {
+    const layers = [];
     let node = el;
     while (node && node.nodeType === 1) {
       const raw = getComputedStyle(node).backgroundColor;
       const c = parseColor(raw);
-      if (c && c[3] > 0) return { color: c, node };
+      if (c && c[3] > 0) layers.push({ color: c, node });
       node = node.parentElement;
     }
-    const body = parseColor(getComputedStyle(document.body).backgroundColor) || [255,255,255,1];
-    const html = parseColor(getComputedStyle(document.documentElement).backgroundColor) || [255,255,255,1];
-    return { color: composite(body, html), node: document.body };
+    return layers;
+  };
+  const effectiveBackground = (el) => {
+    const layers = ancestorLayers(el);
+    if (!layers.length) {
+      const base = opaqueBase();
+      return { color: base, node: document.documentElement, chain: ['html-base'] };
+    }
+    let acc = layers[layers.length - 1].color[3] === 1 ? layers[layers.length - 1].color : composite(layers[layers.length - 1].color, opaqueBase());
+    const chain = [layers[layers.length - 1].node.tagName + (layers[layers.length - 1].node.id ? '#' + layers[layers.length - 1].node.id : '')];
+    for (let i = layers.length - 2; i >= 0; i--) {
+      acc = composite(layers[i].color, acc);
+      chain.unshift(layers[i].node.tagName + (layers[i].node.id ? '#' + layers[i].node.id : ''));
+    }
+    return { color: acc, node: layers[0].node, chain };
   };
   const measure = (el) => {
     const cs = getComputedStyle(el);
@@ -380,24 +398,33 @@ test('account-direction demo login → /account + contrast 1440 & 390 both theme
     await b.click();
     await page.waitForURL(/\/tree/, { timeout: 12000 });
     const observed = [];
+    const cellFailures = [];
     for (const v of [{ width: 1440, theme: 'light' }, { width: 1440, theme: 'dark' }, { width: 390, theme: 'light' }, { width: 390, theme: 'dark' }]) {
-      await page.setViewportSize({ width: v.width, height: 900 });
-      await page.emulateMedia({ colorScheme: v.theme });
-      await page.goto(base + '/account', { waitUntil: 'networkidle' });
-      await expect(page.locator('#app')).toBeAttached();
-      await expect(page.locator('main')).toBeVisible();
-      expect(new URL(page.url()).pathname).toBe('/account');
-      const overflow = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
-      expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth);
-      const samples = await page.evaluate((evaluatorSrc) => { const ev = eval(evaluatorSrc); const out = []; const walk = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT); let count = 0; while (walk.nextNode() && count < 60) { const n = walk.currentNode, e = n.parentElement; if (!n.textContent.trim() || !e.getClientRects().length) continue; const s = getComputedStyle(e); if (s.visibility === 'hidden' || +s.opacity === 0) continue; out.push({ text: n.textContent.trim().slice(0, 70), ...ev.measure(e) }); count++; } return out; }, CONTRAST_EVALUATOR);
-      expect(samples.length).toBeGreaterThanOrEqual(3);
-      const sampled = samples.slice(0, Math.min(5, samples.length));
-      const failures = sampled.filter(x => !Number.isFinite(x.ratio) || x.ratio < 4.5);
-      expect(failures, JSON.stringify(failures)).toEqual([]);
-      observed.push({ viewport: v.width, theme: v.theme, path: new URL(page.url()).pathname, overflow, sampledCount: sampled.length, minimum: Math.min(...sampled.map(x => x.ratio)), rows: sampled });
-      await appendCase({ name: `account-direction-${v.width}-${v.theme}`, kind: 'route-contrast', viewport: v.width, theme: v.theme, status: 'PASS', overflow, sampledCount: sampled.length, minimum: Math.min(...sampled.map(x => x.ratio)) });
+      let cell = { viewport: v.width, theme: v.theme, status: 'FAIL', error: null };
+      try {
+        await page.setViewportSize({ width: v.width, height: 900 });
+        await page.emulateMedia({ colorScheme: v.theme });
+        await page.goto(base + '/account', { waitUntil: 'networkidle' });
+        if (await page.locator('#app').count() === 0) throw new Error('#app missing');
+        if (await page.locator('main').count() === 0) throw new Error('main missing');
+        if (new URL(page.url()).pathname !== '/account') throw new Error(`unexpected pathname ${new URL(page.url()).pathname}`);
+        const overflow = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
+        if (overflow.scrollWidth > overflow.clientWidth) throw new Error(`horizontal overflow ${overflow.scrollWidth}>${overflow.clientWidth}`);
+        const samples = await page.evaluate((evaluatorSrc) => { const ev = eval(evaluatorSrc); const out = []; const walk = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT); let count = 0; while (walk.nextNode() && count < 60) { const n = walk.currentNode, e = n.parentElement; if (!n.textContent.trim() || !e.getClientRects().length) continue; const s = getComputedStyle(e); if (s.visibility === 'hidden' || +s.opacity === 0) continue; out.push({ text: n.textContent.trim().slice(0, 70), ...ev.measure(e) }); count++; } return out; }, CONTRAST_EVALUATOR);
+        if (samples.length < 3) throw new Error(`only ${samples.length} text samples on /account`);
+        const sampled = samples.slice(0, Math.min(5, samples.length));
+        const rowFailures = sampled.filter(x => !Number.isFinite(x.ratio) || x.ratio < 4.5);
+        cell = { viewport: v.width, theme: v.theme, status: rowFailures.length === 0 ? 'PASS' : 'FAIL', path: new URL(page.url()).pathname, overflow, sampledCount: sampled.length, minimum: Math.min(...sampled.map(x => x.ratio)), sampled, rowFailures };
+        if (rowFailures.length) cellFailures.push({ viewport: v.width, theme: v.theme, rowFailures });
+      } catch (e) {
+        cell.error = String(e.message || e);
+        cellFailures.push({ viewport: v.width, theme: v.theme, error: cell.error });
+      }
+      observed.push(cell);
+      await appendCase({ name: `account-direction-${v.width}-${v.theme}`, kind: 'route-contrast', viewport: v.width, theme: v.theme, status: cell.status, error: cell.error, overflow: cell.overflow, sampledCount: cell.sampledCount, minimum: cell.minimum });
     }
-    await appendCase({ name: 'account-direction', kind: 'route-contrast', viewport: 'multi', theme: 'both', status: 'PASS', summary: observed.map(o => ({ viewport: o.viewport, theme: o.theme, minimum: o.minimum })) });
+    expect(cellFailures, JSON.stringify(cellFailures)).toEqual([]);
+    await appendCase({ name: 'account-direction', kind: 'route-contrast', viewport: 'multi', theme: 'both', status: 'PASS', summary: observed.map(o => ({ viewport: o.viewport, theme: o.theme, status: o.status, minimum: o.minimum })) });
   } catch (e) {
     await appendCase({ name: 'account-direction', kind: 'route-contrast', viewport: 'multi', theme: 'both', status: 'FAIL', error: String(e.message || e) });
     throw e;
