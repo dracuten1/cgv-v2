@@ -76,10 +76,10 @@
   --demo-border: rgba(232,137,12,0.28);
 
   /* Generation accents — quiet, same-saturation family */
-  --gen-1: #8C8C94;  --gen-1-soft: #F3F3F5;  /* Đời 1 */
-  --gen-2: #6E7B8E;  --gen-2-soft: #F1F4F8;  /* Đời 2 */
-  --gen-3: #5E7F79;  --gen-3-soft: #EFF5F4;  /* Đời 3 */
-  --gen-4: #94795A;  --gen-4-soft: #F6F2EC;  /* Đời 4 */
+  --gen-1: #8C8C94; --gen-1-fg: #62626A;  --gen-1-soft: #F3F3F5;  /* Đời 1 */
+  --gen-2: #6E7B8E; --gen-2-fg: #526074;  --gen-2-soft: #F1F4F8;  /* Đời 2 */
+  --gen-3: #5E7F79; --gen-3-fg: #476B64;  --gen-3-soft: #EFF5F4;  /* Đời 3 */
+  --gen-4: #94795A; --gen-4-fg: #705738;  --gen-4-soft: #F6F2EC;  /* Đời 4 */
 
   /* ---- Radii (continuous-feel) ---- */
   --r-sm: 8px;    /* chips */
@@ -138,10 +138,10 @@
 
     --demo: #FFB340; --demo-deep: #FFC46B; --demo-button: #9A5700; --demo-hover: #804800; --demo-soft: rgba(255,179,64,0.14); --demo-border: rgba(255,179,64,0.32);
 
-    --gen-1: #A6A6AD; --gen-1-soft: #262628;
-    --gen-2: #8C9AAE; --gen-2-soft: #232830;
-    --gen-3: #7FA098; --gen-3-soft: #202826;
-    --gen-4: #B09472; --gen-4-soft: #2A251F;
+    --gen-1: #A6A6AD; --gen-1-fg: var(--gen-1); --gen-1-soft: #262628;
+    --gen-2: #8C9AAE; --gen-2-fg: var(--gen-2); --gen-2-soft: #232830;
+    --gen-3: #7FA098; --gen-3-fg: var(--gen-3); --gen-3-soft: #202826;
+    --gen-4: #B09472; --gen-4-fg: var(--gen-4); --gen-4-soft: #2A251F;
 
     --shadow-1: 0 1px 2px rgba(0,0,0,0.4);
     --shadow-2: 0 2px 8px rgba(0,0,0,0.45);
@@ -512,10 +512,10 @@ input, select, textarea { font: inherit; color: inherit; }
   --demo-border: rgba(232,137,12,0.28);
 
   /* Generation accents — quiet, same-saturation family */
-  --gen-1: #8C8C94;  --gen-1-soft: #F3F3F5;  /* Đời 1 */
-  --gen-2: #6E7B8E;  --gen-2-soft: #F1F4F8;  /* Đời 2 */
-  --gen-3: #5E7F79;  --gen-3-soft: #EFF5F4;  /* Đời 3 */
-  --gen-4: #94795A;  --gen-4-soft: #F6F2EC;  /* Đời 4 */
+  --gen-1: #8C8C94; --gen-1-fg: #62626A;  --gen-1-soft: #F3F3F5;  /* Đời 1 */
+  --gen-2: #6E7B8E; --gen-2-fg: #526074;  --gen-2-soft: #F1F4F8;  /* Đời 2 */
+  --gen-3: #5E7F79; --gen-3-fg: #476B64;  --gen-3-soft: #EFF5F4;  /* Đời 3 */
+  --gen-4: #94795A; --gen-4-fg: #705738;  --gen-4-soft: #F6F2EC;  /* Đời 4 */
 
   /* ---- Radii (continuous-feel) ---- */
   --r-sm: 8px;    /* chips */

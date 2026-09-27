@@ -71,12 +71,14 @@ The browser mockups share [`mockups/assets/tokens.css`](mockups/assets/tokens.cs
 
 Generation coding is **subtle and informational**, not the main palette:
 
-| Generation | Accent light | Soft light | Accent dark | Soft dark |
-|---|---|---|---|---|
-| 1 | `#8C8C94` | `#F3F3F5` | `#A6A6AD` | `#262628` |
-| 2 | `#6E7B8E` | `#F1F4F8` | `#8C9AAE` | `#232830` |
-| 3 | `#5E7F79` | `#EFF5F4` | `#7FA098` | `#202826` |
-| 4 | `#94795A` | `#F6F2EC` | `#B09472` | `#2A251F` |
+| Generation | Accent light | Soft light | Text light (`--gen-N-fg`) | Accent/text dark (`--gen-N-fg`) | Soft dark |
+|---|---|---|---|---|---|
+| 1 | `#8C8C94` | `#F3F3F5` | `#62626A` | `#A6A6AD` | `#262628` |
+| 2 | `#6E7B8E` | `#F1F4F8` | `#526074` | `#8C9AAE` | `#232830` |
+| 3 | `#5E7F79` | `#EFF5F4` | `#476B64` | `#7FA098` | `#202826` |
+| 4 | `#94795A` | `#F6F2EC` | `#705738` | `#B09472` | `#2A251F` |
+
+Generation accents (`--gen-N`) remain decorative; `--gen-N-fg` is the distinct AA text role on the matching soft background. Light foregrounds preserve each hue but deepen it for normal-size AppChip labels (≥4.5:1); dark foregrounds alias the existing approved accents unchanged. Both canonical mockup tokens and the Vue `@theme` mapping define this compatible semantic extension.
 
 Terracotta and amber are the two branding accents; green/red are semantic exceptions. OAuth provider symbols alone may use their official colors. **Foreground and fill must be selected separately:** light `--success` and `--danger` are **decorative/icon/stroke colors only**, never 12–15px copy; `--ink-3`/`--ink-4`/`--ink-placeholder` are now AA even for meaningful labels; dark `--accent` is a focus/decorative color, not text or a white-label fill. For text use `--accent-fg`, `--demo-deep`, `--success-fg`, `--danger-fg`; for white-label filled buttons use `--accent-button`, `--demo-button`, `--danger-button`. Decorative-only use is limited to non-text icons, dots, focus/border strokes and charts **accompanied by text or a programmatic name**—never communicate a state by a low-contrast color alone.
 
