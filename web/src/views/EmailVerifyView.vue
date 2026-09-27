@@ -5,6 +5,7 @@
       :title="currentTitle"
       :copy="currentCopy"
       :step="currentStep"
+      :subtitle="currentSubtitle"
       :retryable="hasToken"
       retry-label="Thử lại"
       login-target="/login"
@@ -46,6 +47,12 @@ const currentStep = computed(() => {
   return 2;
 });
 
+const currentSubtitle = computed(() => {
+  if (state.value === 'loading') return 'Đang xác thực';
+  if (state.value === 'success') return 'Xác thực hoàn tất';
+  return 'Xác thực liên kết email';
+});
+
 const currentTitle = computed(() => {
   if (state.value === 'loading') return 'Đang xác thực liên kết...';
   if (state.value === 'success') return 'Đăng nhập thành công!';
@@ -54,10 +61,10 @@ const currentTitle = computed(() => {
 
 const currentCopy = computed(() => {
   if (state.value === 'loading') {
-    return 'Vui lòng đợi trong giây lát, hệ thống đang kiểm tra token đăng nhập của bạn.';
+    return 'Vui lòng đợi trong giây lát. Chúng tôi đang kiểm tra liên kết đăng nhập của bạn.';
   }
   if (state.value === 'success') {
-    return 'Đang chuyển hướng bạn đến cây gia phả...';
+    return 'Liên kết đã được xác nhận. Bạn sẽ được chuyển đến cây gia phả.';
   }
   return errorMessage.value;
 });

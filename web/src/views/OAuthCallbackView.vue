@@ -3,6 +3,7 @@
     <AuthInterstitial
       :status="outcome.type === 'success' ? 'success' : 'error'"
       :step="3"
+      :subtitle="currentSubtitle"
       :retryable="false"
       :title="outcome.type === 'success' ? 'Liên kết tài khoản thành công!' : 'Liên kết tài khoản không thành công'"
       :copy="outcome.message"
@@ -14,7 +15,7 @@
         <router-link
           v-if="outcome.type === 'success'"
           to="/account"
-          class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-terracotta text-white hover:bg-terracotta-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta transition-colors"
+          class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-app-lg bg-accent-button text-white hover:bg-accent-hover active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card transition-colors shadow-e1"
           data-testid="oauth-nav-affordance"
         >
           Quay lại trang tài khoản
@@ -22,7 +23,7 @@
         <router-link
           v-else
           :to="errorNavTarget"
-          class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-terracotta text-white hover:bg-terracotta-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-terracotta transition-colors"
+          class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-app-lg bg-accent-button text-white hover:bg-accent-hover active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card transition-colors shadow-e1"
           data-testid="oauth-nav-affordance"
         >
           {{ errorNavLabel }}
@@ -109,6 +110,10 @@ const errorNavTarget = computed(() => {
 
 const errorNavLabel = computed(() => {
   return authStore.isAuthenticated ? 'Quay lại trang tài khoản' : 'Về trang đăng nhập';
+});
+
+const currentSubtitle = computed(() => {
+  return 'Liên kết phương thức đăng nhập';
 });
 
 onMounted(() => {

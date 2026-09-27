@@ -60,6 +60,56 @@ describe('AuthInterstitial.vue', () => {
     await retryBtn.trigger('click');
     expect(wrapper.emitted('retry')).toBeDefined();
   });
+
+  it('renders default subtitle when no subtitle prop is provided', () => {
+    const wrapper = mount(AuthInterstitial, {
+      props: {
+        status: 'working',
+        title: 'T',
+      },
+      global: { stubs: ['router-link'] },
+    });
+
+    const subtitle = wrapper.find('[data-testid="interstitial-subtitle"]');
+    expect(subtitle.exists()).toBe(true);
+    expect(subtitle.text()).toBe('Hệ thống quản lý phả hệ & kết nối dòng tộc');
+  });
+
+  it('renders custom subtitle when subtitle prop is provided', () => {
+    const wrapper = mount(AuthInterstitial, {
+      props: {
+        status: 'working',
+        title: 'T',
+        subtitle: 'Xác thực liên kết email',
+      },
+      global: { stubs: ['router-link'] },
+    });
+
+    const subtitle = wrapper.find('[data-testid="interstitial-subtitle"]');
+    expect(subtitle.exists()).toBe(true);
+    expect(subtitle.text()).toBe('Xác thực liên kết email');
+  });
+
+  it('status disc uses 56×56 (h-14 w-14) Apple-style sizing', () => {
+    const working = mount(AuthInterstitial, {
+      props: { status: 'working' },
+      global: { stubs: ['router-link'] },
+    });
+    const success = mount(AuthInterstitial, {
+      props: { status: 'success' },
+      global: { stubs: ['router-link'] },
+    });
+    const error = mount(AuthInterstitial, {
+      props: { status: 'error' },
+      global: { stubs: ['router-link'] },
+    });
+    expect(working.find('[data-testid="status-disc-working"]').classes()).toContain('h-14');
+    expect(working.find('[data-testid="status-disc-working"]').classes()).toContain('w-14');
+    expect(success.find('[data-testid="status-disc-success"]').classes()).toContain('h-14');
+    expect(success.find('[data-testid="status-disc-success"]').classes()).toContain('w-14');
+    expect(error.find('[data-testid="status-disc-error"]').classes()).toContain('h-14');
+    expect(error.find('[data-testid="status-disc-error"]').classes()).toContain('w-14');
+  });
 });
 
 describe('dark contrast regression semantics', () => {

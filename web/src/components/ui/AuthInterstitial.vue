@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-canvas p-4 sm:p-6">
-    <div class="w-full max-w-md bg-card rounded-app-xl shadow-e2 border border-hairline p-6 sm:p-8 text-center">
+    <div class="w-full max-w-[430px] bg-card rounded-app-xl shadow-e2 border border-hairline p-6 sm:p-8 text-center">
       <!-- Brand Lockup -->
       <div class="mb-6 flex flex-col items-center">
         <div class="flex items-center space-x-2 text-ink-1 font-bold text-xl mb-1">
@@ -9,8 +9,8 @@
           </span>
           <span>Cây Gia Phả</span>
         </div>
-        <p class="text-ink-3 text-xs leading-[1.45]">
-          Hệ thống quản lý phả hệ & kết nối dòng tộc
+        <p class="text-ink-3 text-xs leading-[1.45]" data-testid="interstitial-subtitle">
+          {{ subtitle }}
         </p>
 
         <!-- 3-dot stepper reflecting route step -->
@@ -38,14 +38,14 @@
 
       <!-- Content Area by Status -->
       <div class="py-6 space-y-4">
-        <!-- Status Disc -->
+        <!-- Status Disc — Apple-style 56×56 tinted circle with semantic fg -->
         <div class="mx-auto flex items-center justify-center">
           <div
             v-if="status === 'working'"
-            class="h-12 w-12 rounded-full bg-accent-soft text-accent-fg flex items-center justify-center"
+            class="h-14 w-14 rounded-full bg-accent-soft text-accent-fg flex items-center justify-center"
             data-testid="status-disc-working"
           >
-            <svg class="animate-spin h-6 w-6 text-accent-fg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin h-7 w-7 text-accent-fg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path
                 class="opacity-75"
@@ -57,7 +57,7 @@
 
           <div
             v-else-if="status === 'success'"
-            class="h-12 w-12 rounded-full bg-success-soft text-success-fg flex items-center justify-center"
+            class="h-14 w-14 rounded-full bg-success-soft text-success-fg flex items-center justify-center"
             data-testid="status-disc-success"
           >
             <IconCheckCircle class="h-7 w-7" stroke-width="1.5" />
@@ -65,7 +65,7 @@
 
           <div
             v-else
-            class="h-12 w-12 rounded-full bg-danger-soft text-danger-fg flex items-center justify-center"
+            class="h-14 w-14 rounded-full bg-danger-soft text-danger-fg flex items-center justify-center"
             data-testid="status-disc-error"
           >
             <IconExclamationCircle class="h-7 w-7" stroke-width="1.5" />
@@ -73,7 +73,7 @@
         </div>
 
         <!-- Title -->
-        <h2 class="text-lg font-bold text-ink-1">
+        <h2 class="text-lg font-bold text-ink-1 leading-[1.45]">
           <slot name="title">{{ title }}</slot>
         </h2>
 
@@ -124,6 +124,7 @@ interface Props {
   retryLabel?: string;
   loginTarget?: RouteLocationRaw;
   loginLabel?: string;
+  subtitle?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -135,6 +136,7 @@ const props = withDefaults(defineProps<Props>(), {
   retryLabel: 'Thử lại',
   loginTarget: '/login',
   loginLabel: 'Về trang đăng nhập',
+  subtitle: 'Hệ thống quản lý phả hệ & kết nối dòng tộc',
 });
 
 defineEmits<{

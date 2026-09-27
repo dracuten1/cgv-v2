@@ -51,6 +51,51 @@ describe('EmailVerifyView.vue', () => {
     expect(wrapper.text()).toContain('Liên kết không hợp lệ');
     expect(wrapper.text()).toContain('Không tìm thấy mã xác thực');
     expect(wrapper.text()).toContain('Về trang đăng nhập');
+    // Role-specific subtitle from AuthInterstitial prop
+    expect(wrapper.text()).toContain('Xác thực liên kết email');
+  });
+
+  it('renders loading state with working disc and role-specific loading subtitle/copy', async () => {
+    // Pin a token but intercept the API to keep state in loading.
+    mockQuery = { token: 'pending-jwt-token' };
+
+    let resolveVerify: (() => void) | null = null;
+    vi.spyOn(authApi, 'verifyMagicLink').mockImplementation(
+      () => new Promise((resolve) => {
+        resolveVerify = () => resolve({
+          user: {
+            id: 'usr-1',
+            display_name: 'Pending',
+            is_demo: false,
+            created_at: new Date().toISOString(),
+          },
+          is_new: false,
+          conflict_detected: false,
+        });
+      })
+    );
+
+    const wrapper = mount(EmailVerifyView, {
+      global: {
+        stubs: {
+          'router-link': {
+            template: '<a><slot /></a>',
+          },
+        },
+      },
+    });
+
+    // First promise micro-task: state moves to 'loading' before verify resolves.
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(wrapper.find('[data-testid="verify-loading"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="status-disc-working"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain('Đang xác thực');
+    expect(wrapper.text()).toContain('Vui lòng đợi trong giây lát');
+
+    // Cleanup: resolve so no hanging promise
+    if (resolveVerify) (resolveVerify as () => void)();
   });
 
   it('calls verifyMagicLink with token and redirects to /tree on success', async () => {
@@ -92,6 +137,9 @@ describe('EmailVerifyView.vue', () => {
     expect(wrapper.find('[data-testid="verify-success"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="status-disc-success"]').exists()).toBe(true);
     expect(wrapper.text()).toContain('Đăng nhập thành công!');
+    // Mockup-aligned success copy
+    expect(wrapper.text()).toContain('Liên kết đã được xác nhận');
+    // Success stepper shows step 3 (completion)
   });
 
   it('displays error message when verifyMagicLink fails', async () => {
