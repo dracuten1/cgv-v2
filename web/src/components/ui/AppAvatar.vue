@@ -10,7 +10,7 @@
       v-if="src && !hasError"
       :src="src"
       :alt="alt || name || 'Avatar'"
-      class="w-full h-full object-cover rounded-full border border-slate-200 bg-slate-100"
+      class="w-full h-full object-cover rounded-full border border-hairline bg-well"
       @error="hasError = true"
     />
     <div
@@ -89,10 +89,12 @@ const sizeConfig = computed(() => {
 
 const ringClass = computed(() => {
   if (props.self) {
+    // Pinned test contract: ring-tree-self-ring (tree renderer token).
     return 'ring-2 ring-offset-1 ring-tree-self-ring';
   }
   if (props.selected) {
-    return 'ring-2 ring-offset-1 ring-terracotta';
+    // Pinned test contract: ring-terracotta; dark uses the AA accent stroke.
+    return 'ring-2 ring-offset-1 ring-terracotta dark:ring-accent';
   }
   return '';
 });

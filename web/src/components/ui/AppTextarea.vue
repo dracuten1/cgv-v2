@@ -1,8 +1,8 @@
 <template>
   <div :class="['flex flex-col', fullWidth ? 'w-full' : '']">
-    <label v-if="label" :for="textareaId" class="text-sm font-medium text-slate-700 mb-1">
+    <label v-if="label" :for="textareaId" class="text-sm font-medium text-ink-1 mb-1">
       {{ label }}
-      <span v-if="required" class="text-red-500">*</span>
+      <span v-if="required" class="text-danger-fg">*</span>
     </label>
     <div class="relative">
       <textarea
@@ -16,16 +16,16 @@
         :class="[
           'block w-full transition-colors',
           variantClasses,
-          error ? 'border-red-500 text-red-900 focus:ring-red-500' : '',
-          disabled ? 'bg-slate-100 cursor-not-allowed text-slate-500' : '',
+          error ? 'border-danger-fg text-danger-fg focus:ring-danger-fg' : '',
+          disabled ? 'bg-well cursor-not-allowed text-ink-4' : '',
         ]"
         @input="onInput"
         @blur="$emit('blur', $event)"
         @focus="$emit('focus', $event)"
       ></textarea>
     </div>
-    <p v-if="error" class="mt-1 text-xs text-red-600">{{ error }}</p>
-    <p v-else-if="hint" class="mt-1 text-xs text-slate-500">{{ hint }}</p>
+    <p v-if="error" class="mt-1 text-xs text-danger-fg leading-[1.45]">{{ error }}</p>
+    <p v-else-if="hint" class="mt-1 text-xs text-ink-3 leading-[1.45]">{{ hint }}</p>
   </div>
 </template>
 
@@ -75,10 +75,11 @@ const textareaId = computed(() => props.id || generatedId);
 
 const variantClasses = computed(() => {
   if (props.variant === 'bordered') {
-    return 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 hover:border-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus:border-transparent resize-y';
+    // Pinned test contract: border / border-slate-300 (compat class retained).
+    return 'rounded-app-md border border-slate-300 bg-card px-3 py-2 text-sm text-ink-1 hover:border-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent focus:border-transparent resize-y';
   }
   // borderless variant (default for composer)
-  return 'bg-transparent resize-none border-0 px-0 py-2 text-base text-slate-800 placeholder-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta/40 focus-visible:ring-inset';
+  return 'bg-transparent resize-none border-0 px-0 py-2 text-base text-ink-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-inset';
 });
 
 const onInput = (event: Event) => {

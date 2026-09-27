@@ -26,9 +26,10 @@ describe('AppButton.vue', () => {
       },
     });
 
-    expect(wrapper.classes()).toContain('bg-amber-400');
-    expect(wrapper.classes()).toContain('text-amber-950');
-    expect(wrapper.classes()).toContain('border-amber-500/40');
+    expect(wrapper.classes()).toContain('bg-demo-button');
+    expect(wrapper.classes()).toContain('hover:bg-demo-hover');
+    expect(wrapper.classes()).toContain('text-white');
+    expect(wrapper.classes()).toContain('border-demo-border');
   });
 
   it('renders router-link when "to" prop is passed', () => {
@@ -53,8 +54,8 @@ describe('AppButton.vue', () => {
     const link = wrapper.find('a');
     expect(link.exists()).toBe(true);
     expect(link.attributes('href')).toBe('/login');
-    expect(link.classes()).toContain('border-slate-300');
-    expect(link.classes()).toContain('text-slate-700');
+    expect(link.classes()).toContain('border-hairline-strong');
+    expect(link.classes()).toContain('text-ink-1');
   });
 
   it('disables click and interaction when disabled or loading', async () => {

@@ -6,11 +6,11 @@
     :disabled="to ? undefined : (disabled || loading)"
     :aria-disabled="to && (disabled || loading) ? 'true' : undefined"
     :class="[
-      'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+      'inline-flex items-center justify-center font-medium rounded-app-lg transition duration-[140ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card',
       sizeClasses,
       variantClasses,
       fullWidth ? 'w-full' : '',
-      disabled || loading ? 'opacity-60 cursor-not-allowed pointer-events-none' : 'cursor-pointer',
+      disabled || loading ? 'opacity-60 cursor-not-allowed pointer-events-none' : 'cursor-pointer active:scale-[0.98]',
     ]"
     @click="handleClick"
   >
@@ -82,18 +82,20 @@ const sizeClasses = computed(() => {
 const variantClasses = computed(() => {
   switch (props.variant) {
     case 'secondary':
-      return 'bg-cream-muted text-slate-700 hover:bg-slate-200 focus-visible:ring-slate-400';
+      return 'bg-well text-ink-1 hover:bg-canvas-deep focus-visible:ring-accent';
     case 'outline':
-      return 'border border-slate-300 bg-white text-slate-700 hover:bg-cream-muted hover:border-slate-400 focus-visible:ring-terracotta';
+      return 'border border-hairline-strong bg-card text-ink-1 hover:bg-well hover:border-hairline-strong focus-visible:ring-accent';
     case 'ghost':
-      return 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-slate-300';
+      return 'bg-transparent text-ink-2 hover:bg-canvas-deep hover:text-ink-1 focus-visible:ring-accent';
     case 'danger':
-      return 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500';
+      return 'bg-danger-button text-white hover:bg-danger-hover focus-visible:ring-accent shadow-e1';
     case 'demo':
-      return 'bg-amber-400 text-amber-950 hover:bg-amber-300 focus-visible:ring-amber-500 border border-amber-500/40 shadow-sm';
+      // INV-04: semantic demo tokens retain a distinct amber-family CTA.
+      return 'bg-demo-button text-white hover:bg-demo-hover focus-visible:ring-demo border border-demo-border shadow-e1';
     case 'primary':
     default:
-      return 'bg-terracotta text-white hover:bg-terracotta-hover focus-visible:ring-terracotta shadow-sm';
+      // Pinned test contract: bg-terracotta / text-white (compat alias → --accent-button).
+      return 'bg-terracotta text-white hover:bg-terracotta-hover active:bg-accent-press focus-visible:ring-accent shadow-e1';
   }
 });
 </script>

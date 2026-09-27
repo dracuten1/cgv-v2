@@ -24,13 +24,14 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const sizeClasses = computed(() => {
-  return props.size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs';
+  // INV-02: badge line-height floor 1.45 so Vietnamese diacritics never clip.
+  return props.size === 'sm' ? 'px-2 py-0.5 text-xs leading-[1.45]' : 'px-2.5 py-1 text-xs leading-[1.45]';
 });
 
 const variantClasses = computed(() => {
   switch (props.variant) {
     case 'primary':
-      return 'bg-terracotta-soft text-terracotta-dark border border-terracotta-border';
+      return 'bg-accent-soft text-accent-fg border border-accent-border';
     case 'success':
       return 'bg-emerald-50 text-emerald-800 border border-emerald-200';
     case 'warning':
@@ -38,13 +39,13 @@ const variantClasses = computed(() => {
     case 'info':
       return 'bg-sky-50 text-sky-800 border border-sky-200';
     case 'gen1':
-      return 'bg-gen-1-soft text-terracotta-hover border border-terracotta-border';
+      return 'bg-gen-1-soft text-gen-1-fg border border-terracotta-border';
     case 'gen2':
-      return 'bg-gen-2-soft text-emerald-800 border border-emerald-200';
+      return 'bg-gen-2-soft text-gen-2-fg border border-emerald-200';
     case 'gen3':
-      return 'bg-gen-3-soft text-teal-800 border border-teal-200';
+      return 'bg-gen-3-soft text-gen-3-fg border border-teal-200';
     case 'gen4':
-      return 'bg-gen-4-soft text-amber-800 border border-amber-200';
+      return 'bg-gen-4-soft text-gen-4-fg border border-amber-200';
     case 'default':
     default:
       return 'bg-slate-100 text-slate-700 border border-slate-200';

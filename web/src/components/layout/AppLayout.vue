@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-cream text-slate-800">
-    <!-- Desktop Header (md+) -->
-    <header class="hidden md:block bg-white border-b border-slate-200 sticky top-0 z-40">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+  <div class="min-h-screen flex flex-col bg-canvas text-ink-1">
+    <!-- Desktop Header (md+) — frosted translucent bar (spec §3.3 / §4) -->
+    <header class="hidden md:block bg-card/80 backdrop-blur-xl border-b border-hairline sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         <!-- Logo & Brand -->
         <div class="flex items-center space-x-3">
-          <router-link to="/tree" class="flex items-center space-x-2 text-slate-900 font-display font-bold text-xl">
-            <span class="w-8 h-8 rounded-lg bg-terracotta text-white flex items-center justify-center font-display text-lg">
+          <router-link to="/tree" class="flex items-center space-x-2 text-ink-1 font-bold text-xl">
+            <span class="w-8 h-8 rounded-app-sm bg-terracotta text-white flex items-center justify-center font-semibold text-lg">
               Phả
             </span>
             <span>Cây Gia Phả</span>
@@ -16,50 +16,33 @@
         <!-- Navigation Links -->
         <nav class="flex items-center space-x-1" aria-label="Điều hướng chính">
           <router-link
-            to="/tree"
-            class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-            :class="isActive('/tree') ? 'bg-terracotta-soft text-terracotta-dark font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+            v-for="item in navItems"
+            :key="item.to"
+            :to="item.to"
+            class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+            :class="isActive(item.to) ? 'bg-well text-ink-1 font-semibold' : 'text-ink-2 hover:text-ink-1 hover:bg-quiet'"
+            :aria-current="isActive(item.to) ? 'page' : undefined"
           >
-            Gia phả
-          </router-link>
-          <router-link
-            to="/kinship"
-            class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-            :class="isActive('/kinship') ? 'bg-terracotta-soft text-terracotta-dark font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
-          >
-            Quan hệ
-          </router-link>
-          <router-link
-            to="/feed"
-            class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-            :class="isActive('/feed') ? 'bg-terracotta-soft text-terracotta-dark font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
-          >
-            Bảng tin
-          </router-link>
-          <router-link
-            to="/account"
-            class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-            :class="isActive('/account') ? 'bg-terracotta-soft text-terracotta-dark font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
-          >
-            Tài khoản
+            {{ item.label }}
           </router-link>
         </nav>
 
         <!-- User Controls / Auth -->
         <div class="flex items-center space-x-3">
           <template v-if="auth.isAuthenticated">
-            <div class="flex items-center space-x-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full text-xs">
-              <span class="font-medium text-slate-800">{{ auth.displayName }}</span>
+            <div class="flex items-center space-x-2 bg-quiet border border-hairline pl-1 pr-3 py-1 rounded-full text-xs">
+              <AppAvatar :name="auth.displayName" size="sm" />
+              <span class="font-medium text-ink-1 leading-[1.45]">{{ auth.displayName }}</span>
               <span
                 v-if="auth.isDemo"
-                class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                class="bg-demo-soft text-demo-deep border border-demo-border px-1.5 py-0.5 rounded-app-sm text-[10px] font-bold uppercase tracking-wider leading-[1.45]"
               >
                 Demo
               </span>
             </div>
             <button
               type="button"
-              class="text-xs text-slate-500 hover:text-red-600 font-medium transition-colors cursor-pointer"
+              class="text-xs text-ink-3 hover:text-danger-fg font-medium transition-colors cursor-pointer rounded-app-sm px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               @click="handleLogout"
             >
               Đăng xuất
@@ -68,7 +51,7 @@
           <template v-else>
             <router-link
               to="/login"
-              class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-terracotta text-white hover:bg-terracotta-hover transition-colors"
+              class="px-3 py-1.5 rounded-app-md text-xs font-semibold bg-terracotta text-white hover:bg-terracotta-hover transition-colors"
             >
               Đăng nhập
             </router-link>
@@ -78,7 +61,7 @@
     </header>
 
     <!-- Main Content Area with padding for mobile BottomNav -->
-    <main class="flex-1 pb-20 md:pb-6">
+    <main class="flex-1 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:pb-6">
       <slot />
     </main>
 
@@ -86,7 +69,7 @@
     <!-- Hidden on /login route per spec -->
     <nav
       v-if="showBottomNav"
-      class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xs border-t border-slate-200"
+      class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/80 backdrop-blur-xl border-t border-hairline"
       style="padding-bottom: env(safe-area-inset-bottom, 0px);"
       aria-label="Điều hướng di động"
     >
@@ -95,7 +78,8 @@
         <router-link
           to="/tree"
           class="flex flex-col items-center justify-center text-xs font-medium transition-colors"
-          :class="isActive('/tree') ? 'text-terracotta' : 'text-slate-500 hover:text-slate-900'"
+          :class="isActive('/tree') ? 'text-accent-fg' : 'text-ink-3 hover:text-ink-1'"
+          :aria-current="isActive('/tree') ? 'page' : undefined"
         >
           <!-- Tree SVG Icon -->
           <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,7 +92,8 @@
         <router-link
           to="/kinship"
           class="flex flex-col items-center justify-center text-xs font-medium transition-colors"
-          :class="isActive('/kinship') ? 'text-terracotta' : 'text-slate-500 hover:text-slate-900'"
+          :class="isActive('/kinship') ? 'text-accent-fg' : 'text-ink-3 hover:text-ink-1'"
+          :aria-current="isActive('/kinship') ? 'page' : undefined"
         >
           <!-- Kinship SVG Icon -->
           <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -121,7 +106,8 @@
         <router-link
           to="/feed"
           class="flex flex-col items-center justify-center text-xs font-medium transition-colors"
-          :class="isActive('/feed') ? 'text-terracotta' : 'text-slate-500 hover:text-slate-900'"
+          :class="isActive('/feed') ? 'text-accent-fg' : 'text-ink-3 hover:text-ink-1'"
+          :aria-current="isActive('/feed') ? 'page' : undefined"
         >
           <!-- Feed SVG Icon -->
           <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -134,7 +120,8 @@
         <router-link
           to="/account"
           class="flex flex-col items-center justify-center text-xs font-medium transition-colors"
-          :class="isActive('/account') ? 'text-terracotta' : 'text-slate-500 hover:text-slate-900'"
+          :class="isActive('/account') ? 'text-accent-fg' : 'text-ink-3 hover:text-ink-1'"
+          :aria-current="isActive('/account') ? 'page' : undefined"
         >
           <!-- Account SVG Icon -->
           <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -151,10 +138,19 @@
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import AppAvatar from '@/components/ui/AppAvatar.vue';
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+
+/** Four authenticated nav destinations (design-system §7 shipped IA). */
+const navItems = [
+  { to: '/tree', label: 'Gia phả' },
+  { to: '/kinship', label: 'Quan hệ' },
+  { to: '/feed', label: 'Bảng tin' },
+  { to: '/account', label: 'Tài khoản' },
+] as const;
 
 const showBottomNav = computed(() => {
   return route.path !== '/login';

@@ -48,7 +48,9 @@ describe('LoginView.vue', () => {
     const ghosts = wrapper.findAll('div[aria-hidden="true"]');
     // Oversized glyph + two gen-pastel dot clusters
     expect(ghosts.length).toBeGreaterThanOrEqual(3);
-    const glyph = ghosts.find((d) => d.text() === 'Phả');
+    // Glyph is pure decoration rendered as ::before pseudo-content (no measurable
+    // DOM text node at 5% opacity — WCAG 1.4.3 decorative exemption).
+    const glyph = ghosts.find((d) => d.classes().some((c) => c.includes('before:content')));
     expect(glyph).toBeDefined();
     expect(glyph!.classes()).toContain('opacity-[0.05]');
     expect(glyph!.classes()).toContain('font-display');
@@ -80,7 +82,7 @@ describe('LoginView.vue', () => {
 
     const demoBtn = wrapper.find('[data-testid="demo-login-btn"]');
     expect(demoBtn.exists()).toBe(true);
-    expect(demoBtn.classes()).toContain('bg-amber-400');
+    expect(demoBtn.classes()).toContain('bg-demo-button');
     // INV-04: demo CTA never uses terracotta
     expect(demoBtn.classes()).not.toContain('bg-terracotta');
 

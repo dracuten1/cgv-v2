@@ -1,15 +1,15 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-cream p-4 sm:p-6">
-    <div class="w-full max-w-md bg-white rounded-xl shadow-xs border border-slate-200 p-6 sm:p-8 text-center">
+  <div class="min-h-screen flex items-center justify-center bg-canvas p-4 sm:p-6">
+    <div class="w-full max-w-md bg-card rounded-app-xl shadow-e2 border border-hairline p-6 sm:p-8 text-center">
       <!-- Brand Lockup -->
       <div class="mb-6 flex flex-col items-center">
-        <div class="flex items-center space-x-2 text-slate-900 font-display font-bold text-xl mb-1">
-          <span class="w-8 h-8 rounded-lg bg-terracotta text-white flex items-center justify-center font-display text-lg">
+        <div class="flex items-center space-x-2 text-ink-1 font-bold text-xl mb-1">
+          <span class="w-8 h-8 rounded-app-sm bg-terracotta text-white flex items-center justify-center font-semibold text-lg">
             Phả
           </span>
           <span>Cây Gia Phả</span>
         </div>
-        <p class="text-slate-500 text-xs">
+        <p class="text-ink-3 text-xs leading-[1.45]">
           Hệ thống quản lý phả hệ & kết nối dòng tộc
         </p>
 
@@ -18,19 +18,19 @@
           <span
             :class="[
               'w-2 h-2 rounded-full transition-colors',
-              currentStep >= 1 ? 'bg-terracotta' : 'bg-slate-200',
+              currentStep >= 1 ? 'bg-accent' : 'bg-hairline-strong',
             ]"
           />
           <span
             :class="[
               'w-2 h-2 rounded-full transition-colors',
-              currentStep >= 2 ? 'bg-terracotta' : 'bg-slate-200',
+              currentStep >= 2 ? 'bg-accent' : 'bg-hairline-strong',
             ]"
           />
           <span
             :class="[
               'w-2 h-2 rounded-full transition-colors',
-              currentStep >= 3 ? 'bg-terracotta' : 'bg-slate-200',
+              currentStep >= 3 ? 'bg-accent' : 'bg-hairline-strong',
             ]"
           />
         </div>
@@ -42,10 +42,10 @@
         <div class="mx-auto flex items-center justify-center">
           <div
             v-if="status === 'working'"
-            class="h-12 w-12 rounded-full bg-terracotta-soft text-terracotta flex items-center justify-center"
+            class="h-12 w-12 rounded-full bg-accent-soft text-accent-fg flex items-center justify-center"
             data-testid="status-disc-working"
           >
-            <svg class="animate-spin h-6 w-6 text-terracotta" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin h-6 w-6 text-accent-fg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path
                 class="opacity-75"
@@ -57,7 +57,7 @@
 
           <div
             v-else-if="status === 'success'"
-            class="h-12 w-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"
+            class="h-12 w-12 rounded-full bg-success-soft text-success-fg flex items-center justify-center"
             data-testid="status-disc-success"
           >
             <IconCheckCircle class="h-7 w-7" stroke-width="1.5" />
@@ -65,7 +65,7 @@
 
           <div
             v-else
-            class="h-12 w-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center"
+            class="h-12 w-12 rounded-full bg-danger-soft text-danger-fg flex items-center justify-center"
             data-testid="status-disc-error"
           >
             <IconExclamationCircle class="h-7 w-7" stroke-width="1.5" />
@@ -73,12 +73,12 @@
         </div>
 
         <!-- Title -->
-        <h2 class="text-lg font-bold font-display text-slate-800">
+        <h2 class="text-lg font-bold text-ink-1">
           <slot name="title">{{ title }}</slot>
         </h2>
 
         <!-- Copy -->
-        <p class="text-sm text-slate-600 max-w-sm mx-auto leading-normal">
+        <p class="text-sm text-ink-2 max-w-sm mx-auto leading-[1.6]">
           <slot name="copy">{{ copy }}</slot>
         </p>
 
@@ -96,7 +96,7 @@
             </AppButton>
             <router-link
               :to="loginTarget"
-              class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-terracotta hover:text-terracotta-hover hover:underline transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2"
+              class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-accent-fg hover:text-accent-fg hover:underline transition-colors rounded-app-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
             >
               {{ loginLabel }}
             </router-link>

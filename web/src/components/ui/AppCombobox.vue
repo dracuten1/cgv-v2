@@ -1,14 +1,14 @@
 <template>
   <div class="relative w-full" ref="containerRef">
-    <label v-if="label" :for="inputId" class="text-sm font-medium text-slate-700 mb-1 block">
+    <label v-if="label" :for="inputId" class="text-sm font-medium text-ink-1 mb-1 block">
       {{ label }}
-      <span v-if="required" class="text-red-500">*</span>
+      <span v-if="required" class="text-danger-fg">*</span>
     </label>
 
     <!-- Selected State Chip View: gen-stripe card (spec §4.2 / §6.4) -->
     <div
       v-if="selectedMember"
-      class="flex items-center justify-between p-2 rounded-lg border border-slate-200 bg-white text-xs shadow-xs"
+      class="flex items-center justify-between p-2 rounded-app-lg border border-hairline bg-card text-xs shadow-e1"
       :style="selectedMember.generation_index ? { borderLeftWidth: '4px', borderLeftColor: `var(${genAccentVar(selectedMember.generation_index)})` } : {}"
       data-testid="combobox-selected-chip"
     >
@@ -19,7 +19,7 @@
           :generation="selectedMember.generation_index"
           size="w-6"
         />
-        <span class="font-display font-semibold text-slate-800 truncate">
+        <span class="font-semibold text-ink-1 truncate">
           {{ selectedMember.full_name }}
         </span>
         <span
@@ -42,7 +42,7 @@
       <button
         v-if="!disabled"
         type="button"
-        class="text-slate-400 hover:text-slate-600 p-1 rounded-md transition-colors cursor-pointer shrink-0 ml-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-1"
+        class="text-ink-3 hover:text-ink-1 p-1 rounded-app-md transition-colors cursor-pointer shrink-0 ml-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-transparent"
         aria-label="Xóa chọn"
         data-testid="combobox-clear-btn"
         @click="clearSelection"
@@ -53,7 +53,7 @@
 
     <!-- Trigger Input View -->
     <div v-else class="relative">
-      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-ink-3">
         <IconMagnifyingGlass class="w-4 h-4" />
       </div>
       <input
@@ -68,23 +68,23 @@
         :placeholder="placeholder"
         :disabled="disabled"
         :class="[
-          'block w-full rounded-lg border pl-9 pr-3 py-2 text-sm text-slate-800 placeholder-slate-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus:border-transparent',
-          error ? 'border-red-500 text-red-900 focus:ring-red-500' : 'border-slate-300 bg-white hover:border-slate-400',
-          disabled ? 'bg-slate-100 cursor-not-allowed text-slate-500' : '',
+          'block w-full rounded-app-md border pl-9 pr-3 py-2 text-sm text-ink-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent focus:border-transparent',
+          error ? 'border-danger-fg text-danger-fg focus:ring-danger-fg' : 'border-hairline-strong bg-card hover:border-ink-3',
+          disabled ? 'bg-well cursor-not-allowed text-ink-4' : '',
         ]"
         @focus="onFocus"
         @keydown="onKeyDown"
       />
     </div>
 
-    <p v-if="error" class="mt-1 text-xs text-red-600">{{ error }}</p>
+    <p v-if="error" class="mt-1 text-xs text-danger-fg leading-[1.45]">{{ error }}</p>
 
     <!-- Dropdown Listbox -->
     <ul
       v-if="isOpen && !selectedMember"
       :id="listboxId"
       role="listbox"
-      class="absolute z-30 mt-1 w-full bg-white rounded-lg border border-slate-200 shadow-lg max-h-60 overflow-y-auto divide-y divide-slate-100 py-1"
+      class="absolute z-30 mt-1 w-full bg-card rounded-app-lg border border-hairline shadow-e2 max-h-60 overflow-y-auto divide-y divide-hairline py-1"
     >
       <li
         v-if="filteredOptions.length === 0"
@@ -92,12 +92,12 @@
         data-testid="combobox-empty"
       >
         <div
-          class="mx-auto w-8 h-8 rounded-full bg-cream-muted text-slate-400 flex items-center justify-center mb-2"
+          class="mx-auto w-8 h-8 rounded-full bg-cream-muted text-ink-3 flex items-center justify-center mb-2"
           aria-hidden="true"
         >
           <IconMagnifyingGlass class="w-4 h-4" />
         </div>
-        <p class="text-xs text-slate-500 leading-relaxed">{{ emptyText }}</p>
+        <p class="text-xs text-ink-2 leading-relaxed">{{ emptyText }}</p>
       </li>
       <li
         v-for="(member, idx) in filteredOptions"
@@ -113,8 +113,9 @@
           type="button"
           tabindex="-1"
           :class="[
-            'w-full text-left px-3 py-2.5 text-xs flex items-center justify-between cursor-pointer transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-1',
-            idx === activeIndex ? 'bg-slate-100 text-slate-900' : 'hover:bg-slate-50 text-slate-800',
+            // Pinned test contract (INV-06): focus-visible:ring-2 + ring-terracotta + ring-offset-1.
+            'w-full text-left px-3 py-2.5 text-xs flex items-center justify-between cursor-pointer transition-colors rounded-app-md focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-1 dark:focus-visible:ring-accent',
+            idx === activeIndex ? 'bg-well text-ink-1' : 'hover:bg-quiet text-ink-1',
           ]"
         >
           <div class="flex items-center space-x-2.5 min-w-0">
@@ -125,7 +126,7 @@
               size="w-9"
             />
             <div class="truncate">
-              <span class="font-display font-semibold text-slate-900 block truncate">
+              <span class="font-semibold text-ink-1 block truncate">
                 {{ member.full_name }}
               </span>
             </div>

@@ -16,7 +16,7 @@
         v-for="toast in toasts"
         :key="toast.id"
         :class="[
-          'pointer-events-auto flex items-center justify-between p-4 rounded-xl shadow-lg border text-sm',
+          'pointer-events-auto flex items-center justify-between p-4 rounded-app-xl shadow-e3 border text-sm bg-card',
           getToastClasses(toast.type),
         ]"
       >
@@ -24,7 +24,7 @@
           <!-- Icon -->
           <svg
             v-if="toast.type === 'success'"
-            class="h-5 w-5 text-emerald-500 shrink-0"
+            class="h-5 w-5 text-success-fg shrink-0"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -33,7 +33,7 @@
           </svg>
           <svg
             v-else-if="toast.type === 'error'"
-            class="h-5 w-5 text-red-500 shrink-0"
+            class="h-5 w-5 text-danger-fg"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -42,7 +42,7 @@
           </svg>
           <svg
             v-else-if="toast.type === 'warning'"
-            class="h-5 w-5 text-amber-500 shrink-0"
+            class="h-5 w-5 text-demo-deep"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -51,7 +51,7 @@
           </svg>
           <svg
             v-else
-            class="h-5 w-5 text-sky-500 shrink-0"
+            class="h-5 w-5 text-accent-fg"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -59,21 +59,21 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
 
-          <span class="text-slate-800 break-words leading-normal">{{ toast.message }}</span>
+          <span class="text-ink-1 break-words leading-[1.6]">{{ toast.message }}</span>
         </div>
 
         <div class="flex items-center space-x-2 shrink-0">
           <button
             v-if="toast.action"
             type="button"
-            class="px-2.5 py-1 text-xs font-semibold rounded bg-terracotta text-white hover:bg-terracotta-hover transition-colors"
+            class="px-2.5 py-1 text-xs font-semibold rounded-app-sm bg-terracotta text-white hover:bg-terracotta-hover transition-colors"
             @click="handleAction(toast)"
           >
             {{ toast.action.label }}
           </button>
           <button
             type="button"
-            class="text-slate-400 hover:text-slate-600 p-1 rounded-md"
+            class="text-ink-3 hover:text-ink-1 p-1 rounded-app-md"
             @click="dismiss(toast.id)"
           >
             <span class="sr-only">Đóng</span>
@@ -95,14 +95,14 @@ const { toasts, dismiss } = useToast();
 const getToastClasses = (type: ToastType) => {
   switch (type) {
     case 'success':
-      return 'bg-white border-emerald-200';
+      return 'border-success/30';
     case 'error':
-      return 'bg-white border-red-200';
+      return 'border-danger/30';
     case 'warning':
-      return 'bg-white border-amber-200';
+      return 'border-demo/30';
     case 'info':
     default:
-      return 'bg-white border-sky-200';
+      return 'border-accent/30';
   }
 };
 

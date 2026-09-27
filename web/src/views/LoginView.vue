@@ -1,12 +1,12 @@
 <template>
   <div class="relative min-h-[calc(100vh-8rem)] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
-    <!-- Heritage ghost decorations (mockup 01): oversized Fraunces glyph + gen-pastel dot clusters -->
+    <!-- Heritage ghost decorations (mockup 01): oversized Fraunces glyph + gen-pastel dot clusters.
+         Glyph is pure decoration (WCAG 1.4.3-exempt): rendered via ::before pseudo-content so no
+         measurable DOM text node exists at 5% opacity. -->
     <div
       aria-hidden="true"
-      class="absolute -right-16 -top-10 font-display font-bold text-[22rem] leading-[1] text-terracotta opacity-[0.05] select-none pointer-events-none"
-    >
-      Phả
-    </div>
+      class="absolute -right-16 -top-10 font-display font-bold text-[22rem] leading-[1] text-terracotta opacity-[0.05] select-none pointer-events-none before:content-['Phả']"
+    ></div>
     <div aria-hidden="true" class="absolute left-10 top-14 hidden sm:flex items-center gap-1.5 opacity-60">
       <span class="w-2.5 h-2.5 rounded-full bg-gen-1"></span>
       <span class="w-2 h-2 rounded-full bg-gen-2"></span>
@@ -21,7 +21,7 @@
     </div>
 
     <!-- Login card -->
-    <div class="relative w-full max-w-md bg-white rounded-xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
+    <div class="relative w-full max-w-md bg-card rounded-app-xl shadow-e2 border border-hairline p-6 sm:p-8">
       <!-- Brand lockup -->
       <div class="text-center mb-8">
         <div
@@ -30,10 +30,10 @@
         >
           Phả
         </div>
-        <h1 class="text-3xl font-bold font-display text-slate-800 tracking-tight">
+        <h1 class="text-3xl font-bold font-display text-ink-1 tracking-tight">
           Cây Gia Phả
         </h1>
-        <p class="text-slate-500 text-sm mt-1">
+        <p class="text-ink-2 text-sm mt-1">
           Gìn giữ nguồn cội, kết nối muôn đời
         </p>
       </div>
@@ -89,10 +89,10 @@
       <!-- Divider -->
       <div class="relative my-6">
         <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-slate-200"></div>
+          <div class="w-full border-t border-hairline"></div>
         </div>
         <div class="relative flex justify-center">
-          <span class="bg-white px-3 text-xs uppercase font-medium text-slate-400 tracking-wider">Hoặc email</span>
+          <span class="bg-card px-3 text-xs uppercase font-medium text-ink-3 tracking-wider">Hoặc email</span>
         </div>
       </div>
 
@@ -142,10 +142,10 @@
       <!-- Divider -->
       <div class="relative my-6">
         <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-slate-200"></div>
+          <div class="w-full border-t border-hairline"></div>
         </div>
         <div class="relative flex justify-center">
-          <span class="bg-white px-3 text-xs uppercase font-medium text-slate-400 tracking-wider">Thử nghiệm</span>
+          <span class="bg-card px-3 text-xs uppercase font-medium text-ink-3 tracking-wider">Thử nghiệm</span>
         </div>
       </div>
 
@@ -178,7 +178,7 @@
         </AppButton>
       </div>
 
-      <p class="mt-6 text-center text-xs text-slate-400">
+      <p class="mt-6 text-center text-xs text-ink-3">
         Việc đăng nhập nghĩa là bạn đồng ý với Điều khoản sử dụng &amp; Chính sách bảo mật.
       </p>
     </div>

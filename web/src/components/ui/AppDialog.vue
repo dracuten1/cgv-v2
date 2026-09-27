@@ -14,19 +14,19 @@
         @click.self="onBackdropClick"
       >
         <div
-          class="relative w-full max-w-lg bg-white rounded-xl shadow-xl overflow-hidden transform transition-all flex flex-col max-h-[90vh]"
+          class="relative w-full max-w-lg bg-card rounded-app-2xl shadow-e3 border border-hairline overflow-hidden transform transition-all flex flex-col max-h-[90vh]"
           role="dialog"
           aria-modal="true"
         >
           <!-- Header -->
-          <div v-if="title || $slots.header" class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div v-if="title || $slots.header" class="px-6 py-4 border-b border-hairline flex items-center justify-between">
             <slot name="header">
-              <h3 class="text-lg font-bold text-slate-800 font-display">{{ title }}</h3>
+              <h3 class="text-lg font-bold text-ink-1 font-body">{{ title }}</h3>
             </slot>
             <button
               v-if="closable"
               type="button"
-              class="text-slate-400 hover:text-slate-600 rounded-lg p-1 transition-colors"
+              class="text-ink-3 hover:text-ink-1 rounded-app-md p-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               @click="$emit('close')"
             >
               <span class="sr-only">Đóng</span>
@@ -42,7 +42,7 @@
           </div>
 
           <!-- Footer -->
-          <div v-if="$slots.footer" class="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3">
+          <div v-if="$slots.footer" class="px-6 py-3 bg-quiet border-t border-hairline flex items-center justify-end space-x-3">
             <slot name="footer" />
           </div>
         </div>
