@@ -63,3 +63,18 @@ Live `GET http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign` returned ID 
 **Quick nonblocking fixes:** shared `demo-panel__icon` CSS now covers dashboard's demo notice as well as login; account/header avatar initials NMP; design-system mobile directory contract corrected to name + status with specimen-action column hidden, Cường's name still linked; login email uses `name=email`, `autocomplete=email`, `inputmode=email`. All are presentation/auth-form semantics only.
 
 **Evidence/verdict:** final `contact-{desktop,mobile}-{light,dark}.jpg` images and the two full-size affected PNGs were inspected via real image bytes; 390px document scrollWidth remained 390 for all six pages in both themes, and 320px login scrollWidth remained 320 in both themes (`tester-followup-capture-log.txt`). Browser CDP confirmed custom font usage and painted bar geometry. **VERIFIED locally for all four reviewer findings and six recaptured static baselines; PARTIAL overall** for unchanged OD stale/missing mirrors and unimplemented app behaviors. Do not claim an OD or app audit from these captures.
+
+## OpenDesign publication — 2026-09-27
+
+**Delta:** OpenDesign MCP access succeeded in this new instance. Exact project `cgp-v2-apple-redesign` was inventoried before writes. An OD run (`0fb316d2-5a1c-4ce4-8ca9-e943fdb94f6b`, terminal **succeeded**) published the six local standalone HTML artifacts, shared `assets/tokens.css`, 12 relative `fonts/*.woff2`, and local design-system document as `apple-redesign-design-system.md`. The existing hash-routed `index.html` and earlier other artifacts were intentionally not overwritten. All 20 target files were re-listed and independently fetched through the OD raw read endpoint; every local and OD SHA-256 matches. Full hashes are in `od-publish-evidence/verification.md`. The MCP `get_file` separately confirmed a new page entry; the read-only raw response provided complete bytes, including fonts.
+
+| Page | Canonical source | OD project/file | App URL | Status | OD preview evidence / verdict |
+|---|---|---|---|---|---|
+| Dashboard | `mockups/dashboard.html` | `cgp-v2-apple-redesign/dashboard.html` | not implemented in this task | current | Byte-verified; OD rendering unverified; **PARTIAL** |
+| Login | `mockups/login.html` | `cgp-v2-apple-redesign/login.html` | `/login` reference, not QA'd | current | `od-publish-evidence/login-desktop.png` 1440×900 light, ImageReader inspected; mobile/dark OD unverified; **PARTIAL** |
+| Person detail | `mockups/person-detail.html` | `cgp-v2-apple-redesign/person-detail.html` | `/members/:id` reference, not QA'd | current | Byte-verified; OD rendering unverified; **PARTIAL** |
+| Persons | `mockups/persons.html` | `cgp-v2-apple-redesign/persons.html` | proposed | current | Byte-verified; OD rendering unverified; **PARTIAL** |
+| Settings | `mockups/settings.html` | `cgp-v2-apple-redesign/settings.html` | `/account` reference, not QA'd | current | Byte-verified; OD rendering unverified; **PARTIAL** |
+| Tree | `mockups/tree.html` | `cgp-v2-apple-redesign/tree.html` | `/tree` chrome reference, not QA'd | current | `od-publish-evidence/tree-desktop.png` 1440×900 light, ImageReader inspected; central tree intentionally placeholder, mobile/dark OD unverified; **PARTIAL** |
+
+Every page's local desktop/mobile, light/dark baseline was audited previously (see `audit-evidence/` above), but no claim is made that all OD page screenshots were inspected. OD raw preview route is `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/{filename}`. **Overall PARTIAL** for end-to-end visual/app QA, **VERIFIED** for exact-byte publication of all six and dependencies. No app or unrelated OD files were intentionally changed.
