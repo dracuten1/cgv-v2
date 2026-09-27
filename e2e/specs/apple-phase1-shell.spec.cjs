@@ -293,7 +293,7 @@ test('demo-login flow routes to /tree', async ({ browser }) => {
     await b.click();
     await page.waitForURL(/\/tree/, { timeout: 12000 });
     await expect(page.locator('main')).toBeVisible();
-    const current = page.locator('nav a[aria-current="page"]');
+    const current = page.locator('nav[aria-label="Điều hướng chính"] a[aria-current="page"]');
     await expect(current).toHaveCount(1);
     await appendCase({ name: 'demo-flow', kind: 'flow', viewport: 1440, theme: 'light', status: 'PASS', path: new URL(page.url()).pathname, current: await current.innerText() });
   } catch (e) {
