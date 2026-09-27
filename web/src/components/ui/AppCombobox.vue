@@ -157,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, useId } from 'vue';
 import AppAvatar from './AppAvatar.vue';
 import { IconMagnifyingGlass, IconXMark } from '@/components/icons';
 import { genAccentVar, genSoftVar } from '@/components/tree/card-visual';
@@ -200,8 +200,7 @@ const emit = defineEmits<{
   (e: 'select', member: ComboboxMember | null): void;
 }>();
 
-let uniqueIdCounter = 0;
-const generatedId = `app-combobox-${++uniqueIdCounter}`;
+const generatedId = `app-combobox-${useId()}`;
 const inputId = computed(() => props.id || generatedId);
 const listboxId = computed(() => `${inputId.value}-listbox`);
 

@@ -9,6 +9,37 @@ const sampleMembers: ComboboxMember[] = [
 ];
 
 describe('AppCombobox.vue', () => {
+  it('generates unique ids and keeps label and aria associations instance-local', async () => {
+    const wrapper = mount({
+      components: { AppCombobox },
+      template: `
+        <div>
+          <AppCombobox label="Father" :options="options" />
+          <AppCombobox label="Mother" :options="options" />
+        </div>
+      `,
+      setup: () => ({ options: sampleMembers }),
+    });
+
+    const inputs = wrapper.findAll('input[role="combobox"]');
+    const labels = wrapper.findAll('label');
+    expect(inputs).toHaveLength(2);
+    const ids = inputs.map((input) => input.attributes('id'));
+    expect(new Set(ids).size).toBe(2);
+
+    inputs.forEach((input, index) => {
+      expect(labels[index].attributes('for')).toBe(ids[index]);
+      expect(input.attributes('aria-controls')).toBe(`${ids[index]}-listbox`);
+    });
+
+    await inputs[0].trigger('focus');
+    const listboxes = wrapper.findAll('[role="listbox"]');
+    expect(listboxes).toHaveLength(1);
+    expect(listboxes[0].attributes('id')).toBe(inputs[0].attributes('aria-controls'));
+    expect(inputs[1].attributes('aria-controls')).not.toBe(listboxes[0].attributes('id'));
+    wrapper.unmount();
+  });
+
   it('renders input trigger when no selection is present', () => {
     const wrapper = mount(AppCombobox, {
       props: {
