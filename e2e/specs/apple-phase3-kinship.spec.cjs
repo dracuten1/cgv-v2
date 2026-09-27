@@ -110,8 +110,8 @@ const expectConsoleClean = (allowed = []) => {
 // apple-phase2-email-verify.spec.cjs:13) + per-row overflow and first-Tab focus-visible.
 async function rowGates(p, theme, w, state) {
   const rows = await p.evaluate(`(() => {
-    const lum = s => { const m = s.match(/[\\d.]+/g) || [0,0,0], a = m.slice(0,3).map(v => +v/255).map(v => v <= .04045 ? v/12.92 : ((v+.055)/1.055) ** 2.4); return .2126*a[0] + .7152*a[1] + .0722*a[2]; };
-    const parse = s => { const m=s.match(/rgba?\(([^)]+)\)/); if(m){const a=m[1].match(/[\\d.]+/g).map(Number);return[a[0],a[1],a[2],a.length>3?a[3]:1]} const c=document.createElement("canvas").getContext("2d"); c.fillStyle=s; const rgb=c.fillStyle.match(/[\\d.]+/g)||[]; return rgb.length>=3?[+rgb[0],+rgb[1],+rgb[2],1]:[0,0,0,0]; };
+    const lum = s => { const m = s.match(/[\d.]+/g) || [0,0,0], a = m.slice(0,3).map(v => +v/255).map(v => v <= .04045 ? v/12.92 : ((v+.055)/1.055) ** 2.4); return .2126*a[0] + .7152*a[1] + .0722*a[2]; };
+    const parse = s => { const m=s.match(/rgba?\(([^)]+)\)/); if(m){const a=m[1].match(/[\d.]+/g).map(Number);return[a[0],a[1],a[2],a.length>3?a[3]:1]} const c=document.createElement("canvas").getContext("2d"); c.fillStyle=s; const rgb=c.fillStyle.match(/[\d.]+/g)||[]; return rgb.length>=3?[+rgb[0],+rgb[1],+rgb[2],1]:[0,0,0,0]; };
     const out = [];
     for (const e of document.querySelectorAll('h1,h2,h3,p,span,a,button,label'))
       if (e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && (e.innerText || '').trim() && !e.closest('[aria-hidden=true]')) {
