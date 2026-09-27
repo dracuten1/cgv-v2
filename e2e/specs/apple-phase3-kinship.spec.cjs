@@ -111,7 +111,7 @@ const expectConsoleClean = (allowed = []) => {
 async function rowGates(p, theme, w, state) {
   const rows = await p.evaluate(`(() => {
     const lum = s => { const m = s.match(/[\\d.]+/g) || [0,0,0], a = m.slice(0,3).map(v => +v/255).map(v => v <= .04045 ? v/12.92 : ((v+.055)/1.055) ** 2.4); return .2126*a[0] + .7152*a[1] + .0722*a[2]; };
-    const parse = s => { let m = s.match(/[\\d.]+/g) || [0,0,0]; return [+m[0], +m[1], +m[2], m.length > 3 ? +m[3] : 1]; };
+    const parse = s => { const m=s.match(/rgba?\(([^)]+)\)/); if(m){const a=m[1].match(/[\\d.]+/g).map(Number);return[a[0],a[1],a[2],a.length>3?a[3]:1]} const c=document.createElement("canvas").getContext("2d"); c.fillStyle=s; const rgb=c.fillStyle.match(/[\\d.]+/g)||[]; return rgb.length>=3?[+rgb[0],+rgb[1],+rgb[2],1]:[0,0,0,0]; };
     const out = [];
     for (const e of document.querySelectorAll('h1,h2,h3,p,span,a,button,label'))
       if (e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && (e.innerText || '').trim() && !e.closest('[aria-hidden=true]')) {
@@ -304,6 +304,7 @@ test('PD-P3-1: gen badge color token + AA contrast on chips and option rows, bot
     }
     (current.visual ||= []).push({ state: 'pd-p3-1', width: w, theme, optionBadges: optionBadges.length, chipBadges: chipBadges.length, lowest: all.slice().sort((a, b) => a.ratio - b.ratio).slice(0, 3) });
     current.proof['pd-' + theme + '-' + w] = { optionBadges: optionBadges.length, chipBadges: chipBadges.length, minRatio: Math.min(...all.map(b => b.ratio)) };
+    (current.proof.badgeMinima ||= {})[theme] = Math.min(current.proof.badgeMinima?.[theme] ?? Infinity, ...all.map(b => b.ratio));
     expectConsoleClean();
     await c.close();
   }
