@@ -61,3 +61,20 @@ describe('AuthInterstitial.vue', () => {
     expect(wrapper.emitted('retry')).toBeDefined();
   });
 });
+
+describe('dark contrast regression semantics', () => {
+  it('uses semantic readable foregrounds while preserving generation surfaces and login link', async () => {
+    const auth = mount(AuthInterstitial, { global: { stubs: ['router-link'] } });
+    const loginLink = auth.find('router-link-stub');
+    expect(loginLink.exists()).toBe(true);
+    expect(loginLink.classes()).toContain('hover:text-accent-fg');
+    expect(loginLink.attributes('to')).toBe('/login');
+    const { default: AppChip } = await import('@/components/ui/AppChip.vue');
+    for (const [i, variant] of (['gen1', 'gen2', 'gen3', 'gen4'] as const).entries()) {
+      const chip = mount(AppChip, { props: { variant }, slots: { default: 'Generation' } });
+      expect(chip.classes()).toContain(`text-gen-${i + 1}`);
+      expect(chip.classes()).toContain(`bg-gen-${i + 1}-soft`);
+      expect(chip.text()).toBe('Generation');
+    }
+  });
+});
