@@ -1,27 +1,101 @@
 <template>
-  <div class="relative min-h-[calc(100vh-8rem)] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+  <div
+    class="relative min-h-[calc(100vh-8rem)] flex items-center justify-center p-4 sm:p-6 overflow-hidden min-[960px]:grid min-[960px]:grid-cols-[1.1fr_1fr] min-[960px]:items-stretch min-[960px]:p-0"
+  >
     <!-- Heritage ghost decorations (mockup 01): oversized Fraunces glyph + gen-pastel dot clusters.
          Glyph is pure decoration (WCAG 1.4.3-exempt): rendered via ::before pseudo-content so no
-         measurable DOM text node exists at 5% opacity. -->
+         measurable DOM text node exists at 5% opacity. Hidden at >=960px where the approved
+         login.html intro panel takes over the brand surface. -->
     <div
       aria-hidden="true"
-      class="absolute -right-16 -top-10 font-display font-bold text-[22rem] leading-[1] text-terracotta opacity-[0.05] select-none pointer-events-none before:content-['Phả']"
+      class="absolute -right-16 -top-10 font-display font-bold text-[22rem] leading-[1] text-terracotta opacity-[0.05] select-none pointer-events-none before:content-['Phả'] min-[960px]:hidden"
     ></div>
-    <div aria-hidden="true" class="absolute left-10 top-14 hidden sm:flex items-center gap-1.5 opacity-60">
+    <div
+      aria-hidden="true"
+      class="absolute left-10 top-14 hidden sm:flex items-center gap-1.5 opacity-60 min-[960px]:hidden"
+    >
       <span class="w-2.5 h-2.5 rounded-full bg-gen-1"></span>
       <span class="w-2 h-2 rounded-full bg-gen-2"></span>
       <span class="w-24 h-px bg-gen-2/40"></span>
       <span class="w-3 h-3 rounded-full bg-gen-3"></span>
       <span class="w-2 h-2 rounded-full bg-gen-4"></span>
     </div>
-    <div aria-hidden="true" class="absolute left-24 bottom-16 hidden sm:flex items-center gap-1.5 opacity-50">
+    <div
+      aria-hidden="true"
+      class="absolute left-24 bottom-16 hidden sm:flex items-center gap-1.5 opacity-50 min-[960px]:hidden"
+    >
       <span class="w-2 h-2 rounded-full bg-gen-4"></span>
       <span class="w-16 h-px bg-gen-4/40"></span>
       <span class="w-2.5 h-2.5 rounded-full bg-gen-1"></span>
     </div>
 
+    <!-- Quiet brand/context intro panel — approved login.html mockup, >=960px only.
+         Semantic tokens throughout (bg-quiet, ink-*, gen-*, accent-button). -->
+    <aside
+      data-testid="login-intro"
+      class="hidden min-[960px]:flex min-[960px]:flex-col min-[960px]:justify-between overflow-hidden border-r border-hairline bg-quiet p-16"
+    >
+      <div>
+        <div
+          class="flex h-11 w-11 items-center justify-center rounded-[13px] bg-accent-button text-lg font-bold tracking-[-0.03em] text-white shadow-e1"
+          aria-hidden="true"
+        >
+          Ph
+        </div>
+        <p class="mt-10 max-w-[21ch] font-display text-[2.125rem] font-bold leading-[1.25] tracking-[-0.022em] text-ink-1">
+          Gìn giữ nguồn cội, kết nối muôn đời.
+        </p>
+        <p class="mt-3.5 max-w-[42ch] text-sm leading-[1.6] text-ink-2">
+          Cây Gia Phả giúp dòng họ của bạn ghi lại, tra cứu và chia sẻ gia phả — rõ ràng, tôn nghiêm và bền bỉ qua thế hệ.
+        </p>
+
+        <!-- Hairline lineage motif — structural decoration (gen tokens re-theme in dark) -->
+        <div class="mt-14">
+          <svg
+            width="360"
+            height="132"
+            viewBox="0 0 360 132"
+            fill="none"
+            class="max-w-full"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <!-- gen 1 -->
+            <circle cx="70" cy="18" r="9" fill="var(--gen-1)" />
+            <!-- gen 2 -->
+            <path d="M70 27 V 52 H 22 M70 27 V 52 H 118" stroke="var(--hairline-strong)" stroke-width="1.5" />
+            <circle cx="22" cy="61" r="9" fill="var(--gen-2)" />
+            <circle cx="118" cy="61" r="9" fill="var(--gen-2)" />
+            <!-- gen 3 -->
+            <path d="M22 70 V 95 H 4 M22 70 V 95 H 40" stroke="var(--hairline-strong)" stroke-width="1.5" />
+            <path d="M118 70 V 95 H 96 M118 70 V 95 H 140" stroke="var(--hairline-strong)" stroke-width="1.5" />
+            <circle cx="4" cy="104" r="9" fill="var(--gen-3)" />
+            <circle cx="40" cy="104" r="9" fill="var(--gen-3)" />
+            <circle cx="96" cy="104" r="9" fill="var(--gen-4)" />
+            <circle cx="140" cy="104" r="9" fill="var(--gen-4)" />
+            <!-- lineage highlight to self -->
+            <path d="M70 27 V 52 H 118 M118 70 V 95 H 140" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" />
+            <circle cx="140" cy="104" r="13" fill="none" stroke="var(--accent)" stroke-width="1.5" />
+            <circle cx="212" cy="104" r="3.5" fill="var(--ink-3)" />
+            <circle cx="234" cy="104" r="3.5" fill="var(--ink-3)" />
+            <circle cx="256" cy="104" r="3.5" fill="var(--ink-3)" />
+          </svg>
+          <div class="mt-4 flex flex-wrap gap-x-[18px] gap-y-1.5 text-xs leading-[1.45] text-ink-3">
+            <span class="inline-flex items-center gap-[7px]"><span class="h-2 w-2 rounded-full bg-gen-1"></span>Đời thứ nhất</span>
+            <span class="inline-flex items-center gap-[7px]"><span class="h-2 w-2 rounded-full bg-gen-2"></span>Đời thứ hai</span>
+            <span class="inline-flex items-center gap-[7px]"><span class="h-2 w-2 rounded-full bg-gen-3"></span>Đời thứ ba</span>
+            <span class="inline-flex items-center gap-[7px]"><span class="h-2 w-2 rounded-full bg-gen-4"></span>Đời thứ tư</span>
+          </div>
+        </div>
+      </div>
+      <p class="mt-10 text-xs leading-[1.45] text-ink-4">Bản quyền dòng họ · Dữ liệu lưu trữ riêng tư</p>
+    </aside>
+
+    <!-- Auth panel: centers the card below 960px (current layout), fills the right
+         grid column with canvas background at >=960px per mockup. -->
+    <section class="relative flex min-h-0 w-full items-center justify-center min-[960px]:bg-canvas min-[960px]:px-6 min-[960px]:pb-14 min-[960px]:pt-10">
     <!-- Login card -->
-    <div class="relative w-full max-w-md bg-card rounded-app-xl shadow-e2 border border-hairline p-6 sm:p-8">
+    <div class="relative w-full max-w-md bg-card rounded-app-xl shadow-e2 border border-hairline p-6 sm:p-8 min-[960px]:max-w-[400px]">
       <!-- Brand lockup -->
       <div class="text-center mb-8">
         <div
@@ -182,6 +256,7 @@
         Việc đăng nhập nghĩa là bạn đồng ý với Điều khoản sử dụng &amp; Chính sách bảo mật.
       </p>
     </div>
+    </section>
   </div>
 </template>
 

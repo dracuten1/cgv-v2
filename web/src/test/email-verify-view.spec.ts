@@ -93,6 +93,11 @@ describe('EmailVerifyView.vue', () => {
     expect(wrapper.find('[data-testid="status-disc-working"]').exists()).toBe(true);
     expect(wrapper.text()).toContain('Đang xác thực');
     expect(wrapper.text()).toContain('Vui lòng đợi trong giây lát');
+    // Step mapping contrast: loading = step 2 -> dots 1-2 active, dot 3 NOT yet
+    const dots = wrapper.findAll('[data-testid="verify-loading"] span.rounded-full');
+    expect(dots.length).toBe(3);
+    expect(dots[1].classes()).toContain('bg-accent');
+    expect(dots[2].classes()).not.toContain('bg-accent');
 
     // Cleanup: resolve so no hanging promise
     if (resolveVerify) (resolveVerify as () => void)();
@@ -139,7 +144,11 @@ describe('EmailVerifyView.vue', () => {
     expect(wrapper.text()).toContain('Đăng nhập thành công!');
     // Mockup-aligned success copy
     expect(wrapper.text()).toContain('Liên kết đã được xác nhận');
-    // Success stepper shows step 3 (completion)
+    // Success stepper shows step 3 (completion): third dot active (all 3 lit)
+    const dots = wrapper.findAll('[data-testid="verify-success"] span.rounded-full');
+    expect(dots.length).toBe(3);
+    expect(dots[2].classes()).toContain('bg-accent');
+    expect(dots.filter((d) => d.classes().includes('bg-accent')).length).toBe(3);
   });
 
   it('displays error message when verifyMagicLink fails', async () => {

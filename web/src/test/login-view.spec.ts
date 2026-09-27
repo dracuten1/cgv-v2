@@ -56,6 +56,54 @@ describe('LoginView.vue', () => {
     expect(glyph!.classes()).toContain('font-display');
   });
 
+  it('renders the two-column intro panel per approved login.html mockup (shown >=960px only)', () => {
+    const wrapper = mount(LoginView, {
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+      },
+    });
+
+    // Intro panel exists, hidden below 960px, flex column at >=960px (responsive classes)
+    const intro = wrapper.find('[data-testid="login-intro"]');
+    expect(intro.exists()).toBe(true);
+    expect(intro.classes()).toContain('hidden');
+    expect(intro.classes()).toContain('min-[960px]:flex');
+    expect(intro.classes()).toContain('bg-quiet');
+    expect(intro.classes()).toContain('border-r');
+    expect(intro.classes()).toContain('border-hairline');
+
+    // Intro copy per mockup (title, sub, lineage legend, footer)
+    expect(intro.text()).toContain('Gìn giữ nguồn cội, kết nối muôn đời.');
+    expect(intro.text()).toContain('Cây Gia Phả giúp dòng họ của bạn ghi lại, tra cứu và chia sẻ gia phả');
+    expect(intro.text()).toContain('Đời thứ nhất');
+    expect(intro.text()).toContain('Đời thứ tư');
+    expect(intro.text()).toContain('Bản quyền dòng họ · Dữ liệu lưu trữ riêng tư');
+
+    // Intro brand mark: NEW markup -> semantic accent token (not the legacy alias)
+    const mark = intro.find('.bg-accent-button');
+    expect(mark.exists()).toBe(true);
+    expect(mark.text().trim()).toBe('Ph');
+
+    // Ghost decorations yield to the intro panel at >=960px
+    const glyph = wrapper
+      .findAll('div[aria-hidden="true"]')
+      .find((d) => d.classes().some((c) => c.includes('before:content')));
+    expect(glyph).toBeDefined();
+    expect(glyph!.classes()).toContain('min-[960px]:hidden');
+
+    // All card affordances still present after the restructure
+    expect(wrapper.find('[data-testid="demo-login-btn"]').exists()).toBe(true);
+    expect(wrapper.find('input[type="email"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain('Đăng nhập với Google');
+
+    // Card width per mockup .auth-card: max-w-md (448px) below 960px (mobile byte-identical),
+    // mockup-pinned 400px at >=960px (desktop conformance)
+    const card = wrapper.find('.bg-card');
+    expect(card.exists()).toBe(true);
+    expect(card.classes()).toContain('max-w-md');
+    expect(card.classes()).toContain('min-[960px]:max-w-[400px]');
+  });
+
   it('renders OAuth provider buttons for Google, Facebook and Zalo', () => {
     const wrapper = mount(LoginView, {
       global: {
