@@ -22,6 +22,11 @@
 
     <template v-else>
       <!-- Header / Hero card (mockup 05) -->
+      <div class="mb-2">
+        <router-link to="/tree" class="inline-flex items-center text-sm font-medium text-accent-fg hover:text-ink-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2 focus-visible:ring-offset-canvas rounded" style="line-height:1.6" data-testid="member-tree-breadcrumb">
+          ← Gia phả
+        </router-link>
+      </div>
       <div class="bg-card rounded-app-xl shadow-e1 border border-hairline p-5">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div class="flex items-center gap-4 min-w-0">
@@ -50,6 +55,9 @@
 
           <!-- Actions -->
           <div class="flex items-center gap-2 flex-shrink-0">
+            <AppButton variant="outline" size="sm" :to="{ path: '/tree', query: { family: member.family_id } }" class="hidden md:inline-flex" data-testid="member-view-tree">
+              Xem trên cây
+            </AppButton>
             <template v-if="auth.isAuthenticated">
               <AppButton variant="outline" size="sm" data-testid="member-edit" @click="editOpen = true">
                 <span class="flex items-center gap-1.5">
@@ -69,6 +77,9 @@
             </span>
           </div>
         </div>
+        <AppButton variant="outline" :to="{ path: '/tree', query: { family: member.family_id } }" full-width class="md:hidden" data-testid="member-view-tree-mobile">
+          Xem trên cây
+        </AppButton>
       </div>
 
       <!-- Tabs -->
