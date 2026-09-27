@@ -262,7 +262,7 @@ function makeApiRoute(staged) {
       return fulfillFeed(route, feedBody(FEED_PAGE, familyId, 'F1', 0, true));
     }
     const count = familyId === FAMILY2 ? 2 : FEED_PAGE;
-    return fulfillFeed(route, feedBody(count, familyId, familyId === FAMILY2 ? 'F2' : 'F1', 0, false));
+    return fulfillFeed(route, feedBody(count, familyId, familyId === FAMILY2 ? 'F2' : 'F1', 0, familyId === FAMILY1));
   };
 }
 async function anonFeedCtx(browser, { w, h, theme, mode = 'list' }) {
@@ -295,7 +295,8 @@ async function demoLogin(browser, w = 1440, h = 900, theme = 'light') {
   return { ctx, page };
 }
 
-let current = {};
+let current = { proof: {} };
+test.beforeEach(() => { current = { proof: {} }; });
 test.afterEach(async ({}, info) => {
   const errors = Array.isArray(current.errors) ? current.errors : [];
   const allowed = current.allowedConsole || [];
@@ -508,9 +509,9 @@ test('family selector change refetches the chosen family', async ({ browser }) =
   current.p = page; current.errors = []; attachLogging(page, current);
   await page.goto(base + '/feed', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('[data-testid="feed-list"] [data-testid="post-author"]')).toHaveCount(FEED_PAGE);
-  const selector = page.getByLabel('Chọn dòng họ'); // FeedView.vue:27
+  const selector = page.getByLabel('Chọn dòng họ'); // AppSelect renders native <select>
   await expect(selector).toBeEnabled(); // loadingFamilies done :28
-  await selector.selectOption(FAMILY2); // onFamilyChange → reset + fetch :311-315
+  await selector.selectOption(FAMILY2); // AppSelect.vue:8-29; onFamilyChange :311-315
   await expect(page.locator('[data-testid="feed-list"] [data-testid="post-author"]')).toHaveCount(2);
   await expect(page.getByText(/^F2 bài đăng e2e/).first()).toBeVisible();
   await expect(page.locator('[data-testid="load-more"]')).toHaveCount(0); // F2 page has no cursor
