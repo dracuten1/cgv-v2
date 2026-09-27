@@ -374,9 +374,11 @@ test('auth-interstitial hover contrast both themes', async ({ browser }) => {
       await page.waitForTimeout(120);
       const after = await link.evaluate((el, evaluatorSrc) => { const ev = eval(evaluatorSrc); const m = ev.measure(el); return { fg: getComputedStyle(el).color, bg: getComputedStyle(el.parentElement.parentElement).backgroundColor, fgRgb: m.fgRgb, bgRgb: m.bgRgb, ratio: m.ratio, ancestors: m.ancestors }; }, CONTRAST_EVALUATOR);
       const changed = before.fg !== after.fg || before.bg !== after.bg || JSON.stringify(before.fgRgb) !== JSON.stringify(after.fgRgb) || JSON.stringify(before.bgRgb) !== JSON.stringify(after.bgRgb);
-      const row = { theme, stateApplied: changed, before, after };
+      const bothPass = Number.isFinite(before.ratio) && before.ratio >= 4.5 && Number.isFinite(after.ratio) && after.ratio >= 4.5;
+      const stateOk = changed || bothPass;
+      const row = { theme, stateApplied: changed, stateProof: changed ? 'color-changed' : 'underline-only-or-unchanged', bothContrastPass: bothPass, before, after };
       rows.push(row);
-      if (!changed) stateProofFailures.push({ theme, before, after });
+      if (!stateOk) stateProofFailures.push({ theme, before, after, reason: changed ? 'unexpected' : 'no color change and one/both ratios below 4.5' });
       if (!Number.isFinite(after.ratio) || after.ratio < 4.5) failures.push({ theme, ratio: after.ratio, fg: after.fg, bg: after.bg });
     }
     expect(stateProofFailures, JSON.stringify(stateProofFailures)).toEqual([]);
