@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+vi.mock('vue-router', () => ({ useRoute: () => ({ query: {} }) }));
 import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import TreeView from '@/views/TreeView.vue';

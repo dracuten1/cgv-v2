@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
+  <div class="tree-chrome p-4 md:p-6 max-w-7xl mx-auto space-y-4">
     <!-- Toolbar: family selector + generation filter + actions -->
     <div class="bg-white rounded-xl shadow-xs border border-slate-200 p-4 space-y-3">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -145,6 +145,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import TreeVisualizer from '@/components/tree/TreeVisualizer.vue';
 import ExcelPanel from '@/components/excel/ExcelPanel.vue';
 import MemberEditDialog from '@/components/member/MemberEditDialog.vue';
@@ -162,6 +163,7 @@ import type { Family } from '@/types/api';
 const store = useTreeStore();
 const auth = useAuthStore();
 const toast = useToast();
+const route = useRoute();
 
 const families = ref<Family[]>([]);
 const selectedFamilyId = ref<string>('');
@@ -229,7 +231,13 @@ function onMemberSaved(): void {
 
 onMounted(async () => {
   await loadFamilies();
-  // Auto-select first family on mount
+  // Honor member-detail navigation; otherwise preserve first-family default.
+  const requestedFamily = typeof route.query.family === 'string' ? route.query.family : '';
+  if (requestedFamily && families.value.some((family) => family.id === requestedFamily)) {
+    selectedFamilyId.value = requestedFamily;
+    await loadSelectedFamily();
+    return;
+  }
   if (families.value.length > 0 && !selectedFamilyId.value) {
     selectedFamilyId.value = families.value[0].id;
     await loadSelectedFamily();
