@@ -9,7 +9,7 @@ const out = process.env.APPLE_PHASE1_ARTIFACTS || path.resolve(__dirname, '../..
 const rows = [];
 async function check(page, name, selector, width, theme, fn) {
   const row = { name, selector, viewport: width, theme, status: 'FAIL' };
-  try { row.measurements = await fn(); row.status = 'PASS'; } catch (e) { row.error = String(e.message || e); }
+  try { row.measurements = await fn(); row.status = 'PASS'; } catch (e) { row.error = String(e.message || e); if (e.measurements) row.measurements = e.measurements; }
   const screenshot = `${name}-vp${width}-${theme}.png`;
   try { await page.screenshot({ path: path.join(out, screenshot), fullPage: true }); row.screenshot = screenshot; } catch (e) { row.screenshotError = String(e.message || e); }
   rows.push(row);
@@ -56,19 +56,68 @@ test('live Vue Phase 1 shell',async({browser})=>{
   page.on('request',r=>{if(/\.(woff2?|ttf|otf)(\?|$)/i.test(r.url())&&!r.url().startsWith(base+'/'))externalFonts.push(r.url())});
   page.on('response',r=>{if(/\.(woff2?|ttf|otf)(\?|$)/i.test(r.url()))fontResponses.push({url:r.url(),status:r.status()})});
   try {
-    const dist=path.join(root,'web/dist/index.html'); const source=path.join(root,'web/src/assets/main.css');
-    const distMtime=fs.statSync(dist).mtimeMs, sourceMtime=fs.statSync(source).mtimeMs;
-    await check(page,'fresh-dist-proof','web/dist/index.html newer than Phase 1 stylesheet',1440,'light',async()=>{expect(distMtime).toBeGreaterThan(sourceMtime);return{distMtime:new Date(distMtime).toISOString(),phase1SourceMtime:new Date(sourceMtime).toISOString()}});
+    const dist=path.join(root,'web/dist/index.html');
+    const sources=['web/src/assets/main.css','web/src/components/ui/AppChip.vue','web/src/components/ui/AuthInterstitial.vue'];
+    const distMtime=fs.statSync(dist).mtimeMs;
+    await check(page,'fresh-dist-proof','web/dist/index.html newer than stylesheet + tested Vue components',1440,'light',async()=>{
+      const sourceMtimes=Object.fromEntries(sources.map(file=>[file,fs.statSync(path.join(root,file)).mtimeMs]));
+      for(const [file,mtime] of Object.entries(sourceMtimes)) expect(distMtime,`stale dist: ${file}`).toBeGreaterThan(mtime);
+      return {distMtime:new Date(distMtime).toISOString(),sourceMtimes:Object.fromEntries(Object.entries(sourceMtimes).map(([file,mtime])=>[file,new Date(mtime).toISOString()]))};
+    });
     for(const width of [1440,390,320]) for(const theme of ['light','dark']) { await page.setViewportSize({width,height:900}); await page.emulateMedia({colorScheme:theme}); await page.goto(base+'/login',{waitUntil:'networkidle'}); await shell(page,width,theme); }
     await page.setViewportSize({width:1440,height:900}); await page.emulateMedia({colorScheme:'dark'}); await page.goto(base+'/login',{waitUntil:'networkidle'});
     await check(page,'demo-amber','[data-testid=demo-login-btn]',1440,'dark',async()=>{const b=page.locator('[data-testid="demo-login-btn"]');await expect(b).toHaveCount(1);const x=await b.evaluate(e=>({bg:getComputedStyle(e).backgroundColor,token:getComputedStyle(document.documentElement).getPropertyValue('--demo-button').trim(),fg:getComputedStyle(e).color}));expect(x.bg).toBe(x.token);expect(contrast(x.fg,x.bg)).toBeGreaterThanOrEqual(4.5);return x});
     await check(page,'fraunces-self-hosted','loaded Fraunces + successful same-origin font request',1440,'dark',async()=>{const faces=await page.evaluate(async()=>{await document.fonts.load('600 32px Fraunces','Phả');return[...document.fonts].filter(x=>x.family.includes('Fraunces')).map(x=>({family:x.family,status:x.status}))});const own=fontResponses.filter(x=>x.url.startsWith(base+'/')&&x.status<400);expect(faces.some(x=>x.status==='loaded')).toBeTruthy();expect(own.length).toBeGreaterThan(0);expect(externalFonts).toEqual([]);return{faces,own,externalFonts}});
-    for(const variant of ['gen1','gen2','gen3','gen4']) rows.push({name:`dark-${variant}-chip-contrast`,selector:`AppChip variant ${variant}`,viewport:1440,theme:'dark',status:'NOT OBSERVED',reason:'No reachable route guarantees this generation variant; absent component is not a pass.'});
-    await page.goto(base+'/auth/email/verify',{waitUntil:'networkidle'});
-    await check(page,'dark-authinterstitial-hover-contrast','AuthInterstitial link:hover',1440,'dark',async()=>{const a=page.locator('main a');await expect(a).toHaveCount(1);await a.hover();const x=await a.evaluate(e=>({fg:getComputedStyle(e).color,bg:getComputedStyle(e.parentElement.parentElement).backgroundColor,text:e.innerText}));expect(contrast(x.fg,x.bg)).toBeGreaterThanOrEqual(4.5);return{...x,ratio:contrast(x.fg,x.bg)}});
+    // Fixture-backed *live Vue route*: the real MemberDetailView renders the real AppChip
+    // from the served dist bundle. Only the GET data is controlled; no static HTML/CSS or
+    // synthetic badge classes. A normal /members/:id shows ONE variant at a time, and
+    // available backend members do not guarantee all four generations.
+    await page.route('**/api/v1/members/apple-phase1-gen-*', async route => {
+      const match=/^\/api\/v1\/members\/apple-phase1-gen-([1-4])$/.exec(new URL(route.request().url()).pathname);
+      if (!match) return route.continue();
+      const generation=Number(match[1]);
+      await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+        id:`apple-phase1-gen-${generation}`,family_id:'apple-phase1-fixture',
+        full_name:`Thành viên kiểm tra đời ${generation}`,gender:'male',generation_index:generation,
+        is_living:true,created_at:'2026-01-01T00:00:00Z',family_name:'Gia đình kiểm tra',
+        relations:{parents:[],spouses:[],siblings:[],children:[]},posts:[]
+      })});
+    });
+    for (const theme of ['light','dark']) {
+      await page.setViewportSize({width:1440,height:900}); await page.emulateMedia({colorScheme:theme});
+      for (let generation=1;generation<=4;generation++) {
+        const variant=`gen${generation}`;
+        await page.goto(base+`/members/apple-phase1-gen-${generation}`,{waitUntil:'networkidle'});
+        await check(page,`${theme}-${variant}-chip-contrast`,'[data-testid=member-generation-badge]',1440,theme,async()=>{
+          const badge=page.locator('[data-testid="member-generation-badge"]');
+          await expect(badge).toHaveCount(1); await expect(badge).toBeVisible();
+          await expect(badge).toHaveText(`Đời thứ ${generation}`);
+          const x=await badge.evaluate(e=>({fg:getComputedStyle(e).color,bg:getComputedStyle(e).backgroundColor,
+            classes:[...e.classList],text:e.textContent.trim()}));
+          // Explicit variant class guards against a default/fallback chip false pass.
+          const ratio=contrast(x.fg,x.bg);
+          const measurements={...x,ratio,source:'fixture-backed live Vue MemberDetailView + AppChip (not live backend data)'};
+          if (!x.classes.includes(`bg-gen-${generation}-soft`) || !Number.isFinite(ratio) || ratio<4.5)
+            throw Object.assign(new Error(`AppChip ${variant} ${theme} expected class and contrast >=4.5; got ${JSON.stringify(measurements)}`),{measurements});
+          return measurements;
+        });
+      }
+      await page.goto(base+'/auth/email/verify',{waitUntil:'networkidle'});
+      await check(page,`${theme}-authinterstitial-hover-contrast`,'AuthInterstitial link:hover',1440,theme,async()=>{
+        const a=page.locator('main a'); await expect(a).toHaveCount(1); await expect(a).toBeVisible();
+        await a.hover(); await page.waitForTimeout(250); // let the real CSS hover transition settle
+        const x=await a.evaluate(e=>{let p=e;while(p&&getComputedStyle(p).backgroundColor==='rgba(0, 0, 0, 0)')p=p.parentElement;
+          return {fg:getComputedStyle(e).color,bg:p?getComputedStyle(p).backgroundColor:'',text:e.innerText,hovered:e.matches(':hover')};});
+        expect(x.hovered).toBeTruthy(); const ratio=contrast(x.fg,x.bg);
+        const measurements={...x,ratio,source:'live Vue /auth/email/verify (no response fixture)'};
+        if (!Number.isFinite(ratio) || ratio<4.5)
+          throw Object.assign(new Error(`AuthInterstitial hover ${theme} contrast >=4.5 required; got ${JSON.stringify(measurements)}`),{measurements});
+        return measurements;
+      });
+    }
     await page.goto(base+'/login',{waitUntil:'networkidle'}); await check(page,'theme-live-switch','prefers-color-scheme light↔dark',1440,'light',async()=>{const bg=()=>page.evaluate(()=>getComputedStyle(document.body).backgroundColor),light=await bg();await page.emulateMedia({colorScheme:'dark'});const dark=await bg();await page.emulateMedia({colorScheme:'light'});const again=await bg();expect(dark).not.toBe(light);expect(again).toBe(light);return{light,dark,again}});
     for(const route of ['/tree','/kinship','/feed']) {await page.goto(base+route,{waitUntil:'networkidle'});await check(page,`route-${route.slice(1)}`,`#app main ${route}`,1440,'light',async()=>{await expect(page.locator('#app')).toBeVisible();await expect(page.locator('main')).toBeVisible();expect(new URL(page.url()).pathname).toBe(route);return{path:new URL(page.url()).pathname,title:await page.title()}})}
     await page.goto(base+'/login',{waitUntil:'networkidle'});await check(page,'demo-flow','demo login button→tree route',1440,'light',async()=>{const b=page.locator('[data-testid="demo-login-btn"]');await expect(b).toHaveCount(1);await b.click();await page.waitForURL(/\/tree/,{timeout:12000});const a=page.locator('nav a[aria-current="page"]');await expect(a).toHaveCount(1);return{path:new URL(page.url()).pathname,current:await a.innerText()}});
-  } finally {await context.close();fs.writeFileSync(path.join(out,'summary.json'),JSON.stringify({base,cases:rows,errors,fontResponses,externalFonts,preFixBaseline:{genLabels:'1.81–2.14:1',authInterstitialHover:'~1.8:1'},verdict:rows.some(r=>r.status==='FAIL')||errors.length?'FAIL':'INCOMPLETE: NOT OBSERVED cases remain; do not treat as full phase pass'},null,2))}
+  } finally {await context.close();fs.writeFileSync(path.join(out,'summary.json'),JSON.stringify({base,cases:rows,errors,fontResponses,externalFonts,userSuppliedLightBaselineNotMeasured:{gen1:3.011,gen2:3.895,gen3:3.976,gen4:3.662},verdict:rows.some(r=>r.status==='FAIL')||errors.length?'FAIL':rows.some(r=>r.status==='NOT OBSERVED')?'INCOMPLETE: NOT OBSERVED cases remain':'PASS'},null,2))}
   expect(rows.filter(x=>x.status==='FAIL')).toEqual([]); expect(rows.filter(x=>x.status==='NOT OBSERVED').map(x=>({name:x.name,reason:x.reason})), 'Coverage incomplete; NOT OBSERVED checks are not a pass').toEqual([]); expect(errors).toEqual([]);
 });
