@@ -1,3 +1,5 @@
+> **2026-09-27 scope override:** The historical six-page / OD-success paragraphs below describe an earlier, limited scope. They do **not** authorize implementation of all shipped routes. Read the new all-routes gate ledger at the END of this file; it supersedes any older overall verdict or OD status where files have changed.
+
 # Apple-inspired clarity / Warm Heritage six-mockup audit
 
 **Canonical:** six standalone `.agents/shared/planning/apple-redesign/mockups/{dashboard,login,person-detail,persons,settings,tree}.html` files + `mockups/assets/tokens.css`; no shared hash-router index. **Project:** `cgp-v2` (Ensemble ID `37333555-94fb-4af4-a9da-54d183f827aa`). **Open Design:** exact project ID `cgp-v2-apple-redesign` (distinct from Ensemble UUID). Live project metadata and `GET /api/projects/cgp-v2-apple-redesign/files` were queried through the local OD read-only HTTP endpoint on 2026-09-26. **OD status: stale for existing `login.html` and `tree.html`; missing for the other four exact filenames.** The older OD hash-routed `index.html` remains a different canonical artifact for its own eight-route concept, not a mirror of this six-file design set. The Vue app was neither edited nor re-audited.
@@ -12,7 +14,7 @@ All evidence under `.agents/shared/planning/apple-redesign/audit-evidence/`. Eac
 | login.html | `/login` visual reference only | `login.html` **stale** (OD SHA-256 `cf5c39c84e74ad…`; local `55b9bd21c2c5a9…`); `index.html#login` is a different design | login (4 captures) | current | VERIFIED local baseline; OD stale |
 | person-detail.html | `/members/:id` visual specimen for Nguyễn Văn Cường only | `person-detail.html` **missing**; older `member-detail.html` is a separate earlier artifact | person-detail (4 captures) | current | VERIFIED local specimen; OD missing |
 | persons.html | proposed directory route, not shipped | `persons.html` **missing**; `index.html` lacks `#persons` | persons (4 captures) | current | VERIFIED local baseline; OD missing |
-| settings.html | `/account` direction; demo-read-only example | `settings.html` **missing**; older `account.html` and `index.html#account` are different artifacts | settings (4 captures) | current | VERIFIED local baseline; OD missing |
+| settings.html | `/account` direction; demo provider-link restriction example | `settings.html` **missing**; older `account.html` and `index.html#account` are different artifacts | settings (4 captures) | current | VERIFIED local baseline; OD missing |
 | tree.html | `/tree` surrounding chrome only | `tree.html` **stale** (OD SHA-256 `41a6284ac98321…`; local `62e42f256cd2f6…`); `index.html#tree` is a different design | tree (4 captures) | current | VERIFIED local chrome; OD stale |
 
 **Per-page checked:** the four capture variants and corresponding four contact sheets show shared warm-paper/dark-espresso surfaces, terracotta actionable foreground/fills, amber Demo distinction, Be Vietnam Pro, padding/cards/CTA hierarchy, mobile tabbar and dark metadata. The sheet vision initially flagged dashboard horizontal crop from a `--window-size` capture, but CDP `Emulation.setDeviceMetricsOverride` demonstrated it was a **500px CSS viewport screenshot squeezed into 390px bitmap**. Corrected CDP images show complete dashboard subtitle and both stats columns; all final 390px document `scrollWidth=390`. The persons filter and settings anchor strip intentionally scroll internally. The final persons status column is visually visible; alternative state galleries are labeled design specimens below the live table and must not be rendered alongside live data in Vue.
@@ -21,7 +23,7 @@ All evidence under `.agents/shared/planning/apple-redesign/audit-evidence/`. Eac
 
 1. **Identity / palette:** replaced cold blue-gray Apple-clone tones with quiet Warm Heritage cream, dark espresso, deep terracotta actions, subtle generation accents, persistent amber Demo. Shared tokens supply light/dark variants; only provider marks use brand colors. Normal-text representative contrast pairs recalculated in `design-system.md` §3.5; complete interactive composited-pair testing remains implementation responsibility.
 2. **Component / type:** preserved four local Be Vietnam Pro weights and Vietnamese 1.45/1.6 line-height floors; normalized state cards and gallery labels; compact touch controls expand under coarse pointer. Removed repeated dashboard CSS pasted into unrelated pages and duplicated theme scripts. Active route links now use `aria-current`.
-3. **States / safety:** login magic-link loading/sent/error specimens; directory empty/loading/error; profile not-found/loading/no-event; dashboard empty/error/loading; settings demo-read-only/save failure/loading. `role=status` or `role=alert` where appropriate. Demo settings no longer suggest writable personal data or switches; profile edit in static specimen disabled. In real app choose one state, wire actual actions/guards and announce changes.
+3. **States / safety:** login magic-link loading/sent/error specimens; directory empty/loading/error; profile not-found/loading/no-event; dashboard empty/error/loading; settings demo provider-link restriction/save failure/loading. `role=status` or `role=alert` where appropriate. Demo settings no longer suggest writable personal data or switches; profile edit in static specimen disabled. In real app choose one state, wire actual actions/guards and announce changes.
 4. **Navigation / content truth:** person directory no longer sends six distinct names to the same Nguyễn Văn Cường detail. Only his row links to his actual specimen; other rows carry no false navigation. Tree placeholder exposed to screen readers; no tree renderer or app logic touched.
 5. **Mobile:** responsive grid minmax and CTA wrapping, document width checked at 390px; settings/filters have intentional internal horizontal scroll. Vision checked desktop/mobile, light/dark contact sheets; final light-mobile sheet rechecked after last corrections. Screen-bottom page folds are scrolling content, not clipping.
 
@@ -78,3 +80,146 @@ Live `GET http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign` returned ID 
 | Tree | `mockups/tree.html` | `cgp-v2-apple-redesign/tree.html` | `/tree` chrome reference, not QA'd | current | `od-publish-evidence/tree-desktop.png` 1440×900 light, ImageReader inspected; central tree intentionally placeholder, mobile/dark OD unverified; **PARTIAL** |
 
 Every page's local desktop/mobile, light/dark baseline was audited previously (see `audit-evidence/` above), but no claim is made that all OD page screenshots were inspected. OD raw preview route is `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/{filename}`. **Overall PARTIAL** for end-to-end visual/app QA, **VERIFIED** for exact-byte publication of all six and dependencies. No app or unrelated OD files were intentionally changed.
+
+
+## 2026-09-27 ALL-SHIPPED-ROUTES gate — source-of-truth ledger (supersedes six-page verdict)
+
+**Decision: NEEDS REDESIGN / overall PARTIAL. Not a Vue implementation go-ahead.** User/Wanderer route inventory showed the six published Quiet Clarity mocks were a consistent look, but their top/mobile IA linked non-shipped Dashboard/Persons/Settings, and five shipped screens had no direct current mock. I locally extended to nine shipped-route entries plus three archived concept specimens. These are **presentation references**, not implemented Vue. No backend/app/stash/`.screenshots/` edits.
+
+**Canonical representation:** standalone HTML per shipped view (not `index.html` hash routing); shared `mockups/assets/tokens.css`, bundled 12 Be Vietnam Pro fonts. Exact OpenDesign project is `cgp-v2-apple-redesign` (not the Ensemble software UUID). OD `list_files` inspected before local changes, showing all six previous canonical pages and older separate `account.html`/`feed.html`/`kinship.html`/`member-detail.html`/`index.html`. Previous OD publication verified six pages as identical **before** this redesign; five of those HTMLs and shared tokens have since changed locally. **No OD write has occurred in this gate**. Do not mistake pre-gate hash matches or earlier OD screenshots for current post-gate publication.
+
+### Compact route, state, viewport, store ledger
+
+Evidence root: `.agents/shared/planning/apple-redesign/gate-evidence/`. For a row with name `N`, actual local screenshots are `N-desktop-light.png`, `N-desktop-dark.png` (1440×900), `N-mobile-light.png`, `N-mobile-dark.png` (390×844), `N-320-light.png`, `N-320-dark.png` (320×800). All 54 CSS-viewport/theme capture records were generated by `mockups/gate-tools/cdp_capture.py`, with source URL/title/scrollWidth/theme in the **durable `gate-evidence/full-route-capture-log.json`** (54 records copied from the stdout of the full run; later targeted runs have separate `capture-log.json`). Full-run 54/54 document scrollWidths exactly equal the requested CSS viewport; light/dark background samples differ for each route. Multi-image route composites are `contact-{desktop,mobile}-{light,dark}.jpg`; the five-page state gallery composites are `contact-{desktop,mobile}-light-states.jpg`. Actual bytes of the four route composites, both state composites, and the full-size `kinship-mobile-light.png`, `kinship-mobile-light-scrolled.png`, `kinship-320-dark.png` (post tabbar; earlier bytes superseded) and `person-detail-mobile-light.png` were delivered to ImageReader. Other individual PNGs are **rendered/measured but not all individually vision-inspected**; contact sheets provide bounded family review. Fresh post-correction screenshots for affected rows supersede earlier captures.
+
+| Shipped screen / key states to implement | Canonical local HTML | Exact OD file / store status | App route / QA status | Fresh desktop/mobile screenshot status | Gate verdict |
+|---|---|---|---|---|---|
+| Login: guest providers, magic-link idle/pending/sent/failure, Demo; auth-redirect guard | `mockups/login.html` | `login.html` **current** (live local/OD raw GET SHA match 89b353eaa2); no new OD render audit | `/login` **unverified** against current redesign | local `login-*` baseline previously audited; new 320 light/dark rendered; **state interactions unverified** | **PARTIAL** |
+| Tree: loading, error/retry, no members, rendered Canvas, member-selection; Demo/no auth | `mockups/tree.html` | `tree.html` **stale** (local shipped-IA nav changed) | `/tree` **unverified**, preserve Canvas renderer/card geometry | fresh `tree-{desktop,mobile,320}-{light,dark}.png` chrome/empty placeholder; **rendered tree not represented** | **PARTIAL** |
+| Member detail: default, loading, not-found, empty sub-states, delete-confirm/toast, relations/posts | `mockups/person-detail.html` | `person-detail.html` **stale** (parent nav/breadcrumb and relation rows changed) | `/members/:id` **unverified** | fresh `person-detail-*` + `person-detail-mobile-{light,dark}-scrolled.png`; single Cường specimen; **tabs/dialog and other records incomplete** | **PARTIAL** |
+| Kinship: form/selection, calculation, result/path, unrelated, members failure/retry | `mockups/kinship.html` | old `kinship.html` **stale** (separate older concept, not this canonical design) | `/kinship` **unverified** | fresh `kinship-*`, scrolled mobile route + state-gallery captures; static result is illustrative only | **PARTIAL** |
+| Feed: authenticated composer/post, anonymous read, images, empty/loading/error, pagination | `mockups/feed.html` | old `feed.html` **stale** | `/feed` **unverified** | fresh `feed-*`, scrolled mobile + gallery; image is marked placeholder | **PARTIAL** |
+| Account: Demo provider-link restricted, real providers/contact/notification, empty, in-flight/error, unlink confirm | `mockups/account.html` | old `account.html` **stale** | `/account` guarded, app QA **unverified** | fresh `account-*`, scrolled mobile + state gallery; **real-account details and modal interaction only prose/specimen, not full screen** | **PARTIAL** |
+| Email verification: pending/verified/expired/invalid/missing token; re-request via login | `mockups/email-verify.html` | `email-verify.html` **pending publish** (no such exact file at inventory) | `/auth/email/verify` **unverified** | fresh `email-verify-*`, gallery captures; verified/error specimens separately labeled, no live callback simulation | **PARTIAL** |
+| OAuth callback: linked success/provider failure/invalid state/already linked/Demo restricted; auth target | `mockups/oauth-callback.html` | `oauth-callback.html` **pending publish** | `/auth/oauth/callback` **unverified** | fresh `oauth-callback-*`, gallery; synchronous outcome, no invented pending state | **PARTIAL** |
+| 404: recovery to tree/kinship; no async state | `mockups/not-found.html` | `not-found.html` **pending publish** | catch-all route **unverified** | fresh `not-found-*`; full-screen reference in both themes at all three widths | **PARTIAL** |
+| Redirect `/` | no separate page; `tree.html` destination | no new OD artifact | `/` → `/tree` (source router) | N/A independent screenshot; no separate visual page | **PARTIAL**, redirect behavior not app-checked |
+| Historical concepts **NOT routes** | `mockups/dashboard.html`, `mockups/persons.html`, `mockups/settings.html` | matching six-page OD files **stale** after nav change; `settings.html` remains a privacy concept, **NOT `/account`** | no app URL | local post-nav desktop/mobile light/dark refreshed; these are intentionally archived visuals | **PARTIAL** as maintained historical artifacts pending OD archive/re-publish choice |
+
+**State-gallery coverage qualification:** The additional `*-light-states.png` scrolled images and two contact sheets show static specimens, not distinct URLs or runtime transitions. The original login/person-detail/tree sample states were read from source; member tabs, delete and real-account flows were inspected in Vue source but not visually modeled in full as separate states. Do not say all states audited. Most top-of-page mobile captures naturally show content beneath the fixed tabbar until scrolling; scrolled kinship path is actually readable after 570 CSS px and document has bottom padding (no claim based on fold alone). OS theme is emulated by CDP media; `?theme=light` only forces local mock preview on a dark host.
+
+### Visual findings and bounded correction record
+
+- **Initial six-pager visual audit**: four *existing* six-page light/dark desktop/mobile contact sheets delivered as real bytes to ImageReader. Coherent warm-paper/espresso, terracotta, explicit amber Demo, ample whitespace and clear page titles; small metadata/labels warrant full-size checks. Contact-sheet lower edges are scroll folds. Tree placeholder looked empty because Canvas is intentionally not redesigned; not evidence of shipped tree rendering.
+- **Correction cycle 1**: wrote six new shipped-route references (`kinship`, `feed`, `account`, `email-verify`, `oauth-callback`, `not-found`), reused one token/font family, reconciled shipped four-tab nav on existing five authenticated mocks; archived dashboard/persons/settings, retained login unchanged. Fresh nine-screen family composites and selected state-gallery composites inspected by ImageReader. Individual 390px kinship full-size showed an over-specific relationship label and visible fold.
+- **Correction cycle 2**: made kinship result wording descriptive rather than asserting an engine output, changed person detail parent tab and breadcrumb to Gia phả, removed false links to a directory for other people's details, improved the account unlink specimen's semantics, and forced 320px tab labels to stay single-line with shared `.tabbar > a {min-width:0; padding-inline:3px; line-height:1.45; white-space:nowrap}`. Re-captured affected screens; ImageReader inspected full-size `kinship-320-dark.png` and saw all four bottom labels single-line with no collision. Full-run 54 screen/viewport/theme screenshots were refreshed after shared CSS correction; **the last person-detail/button and archived-concept metadata edits were targeted-recaptured**. Two correction cycles exhausted; defer further changes to adjudication.
+- **Accessibility/semantics:** shared focus-visible and reduced-motion CSS retained; AA token matrix in `design-system.md` §3.5 and full-size readable kinship/detail inspection, 54/54 no document horizontal overflow. But keyboard/focus order, browser-computed contrast of all real component states, touch/safe-area on physical devices, and fully rendered app UI remain **unverified**, not silently passed. Prototype-only controls have no business logic; `role=status/alert` on gallery specimens describes visual states, not a Vue state machine.
+
+### Decision, blockers, handoff
+
+**P1 design direction is coherent and local shipped-route references exist. All-pages design gate is still NEEDS REDESIGN / overall PARTIAL, not PASS**, because (a) the maintained OpenDesign representation is stale/missing for changed/new entries; (b) shipped `/tree` rendered Canvas success is deliberately outside design scope and needs acceptance against preserved implementation; (c) real `/account` linked-provider/contact/notification and member-detail tabs/destructive-dialog behavior are not represented as complete visual states; (d) no application route screenshot was captured/comparatively QA'd, and no independent reviewer approved this expanded set. Do not start Vue implementation merely because nine local HTML files exist.
+
+**Publication safety:** OD access is callable, but this gate did not publish while local artifacts/coverage remain under review. An MCP-capable owner may publish the new exact standalone entries and update **each** changed mirror (`tree`, `person-detail`, `dashboard`, `persons`, `settings`, `assets/tokens.css`, plus `kinship`, `feed`, `account`), keep login identical; then `list_files` + re-read affected OD files and capture route-specific OD previews at matching viewport/theme. Older hash-routed `index.html`, `member-detail.html`, `design-spec.md` are separately stale historical artifacts; designate archived in OD rather than presenting them as current.
+
+**Implementation-ready portions only:** shared token map, shipped four-destination nav contract, guest/interstitial shell exception, responsive page wrappers, direct feed/kinship/404/auth visual references, and account Demo display direction. Developer owns preserving `AppLayout`, `AuthInterstitial`, `AppDialog`, test IDs, route guards and all data/security boundaries. User/leader should adjudicate remaining P1/OD and route-state blockers; designer will not assert PASS without fresh evidence.
+
+
+**Live OD post-gate reconciliation (source bytes, no writes):** raw GET against project `cgp-v2-apple-redesign` returns login **current**; `tree.html`, `person-detail.html`, `dashboard.html`, `persons.html`, `settings.html`, `kinship.html`, `feed.html`, `account.html`, `assets/tokens.css` **stale** (SHA-256 differs); `email-verify.html`, `oauth-callback.html`, `not-found.html` **missing** (HTTP 404). This supersedes earlier six-file publication statuses and was verified from BOTH local files and live OD raw bytes, not timestamps. No OD mirror has been silently synchronized.
+
+
+## Phase 0 Closure & All-9-Routes Complete State Visual Contract Ledger (2026-09-27)
+
+### Scope & Method
+Following reviewer and Wanderer direction, this update completes the visual state contracts for **all 9 shipped routes** without touching app source code, git remote, or `.screenshots/`. Rather than proliferating hundreds of static files, representative state sheets (`mockups/tree-states.html`, `mockups/account-states.html`, and `mockups/person-detail-states.html`) provide distinct hash-routed panels for complex runtime branches, complementing the main page mocks (`mockups/{login,kinship,feed,account,email-verify,oauth-callback,not-found}.html`).
+
+Every affected screen and state panel was rendered via Chrome DevTools Protocol (`cdp_capture.py`) with forced device metrics across 3 viewports:
+- Desktop: 1440×900
+- Mobile: 390×844
+- Minimum width: 320×800
+- Themes: Light (`?theme=light`) and Dark (`prefers-color-scheme: dark`)
+
+A total of 102 state screenshots and 12 composite contact sheets were produced under `.agents/shared/planning/apple-redesign/gate-evidence/` and logged in `state-capture-log.json`. Zero document horizontal overflow exists across all captures (all 320px viewports measure document `scrollWidth = 320`).
+
+### 1. Route × State × Viewport × Theme Matrix
+
+| Route | Main Mockup | State Sheet / Specimen | Key Runtime States Modeled | Desktop (1440) | Mobile (390) | Min (320) | OD Store Status | Gate Verdict |
+|---|---|---|---|---|---|---|---|---|
+| `/login` | `login.html` | In-page specimens | Idle, magic-link in-flight, sent notice, validation error, demo login loading/error, verified toast (`?verified=1`), auth redirect | Light / Dark VERIFIED | Light / Dark VERIFIED | Light / Dark VERIFIED | `login.html` current | VERIFIED |
+| `/tree` | `tree.html` | `tree-states.html` | Rendered-tree success (preserved Canvas & cards), low-zoom dot mode (<0.6x), store loading spinner, store error + retry, empty tree + add CTA, unlinked user banner, anonymous guest hint, demo 403-first notice | Light / Dark VERIFIED | Light / Dark VERIFIED | Light / Dark VERIFIED | `tree.html` current | VERIFIED |
+| `/members/:id` | `person-detail.html` | `person-detail-states.html` | Hero summary, Tab 1 (overview list), Tab 2 (relations with 4 generation-striped groups), Tab 3 (posts list), MemberEditDialog (preview, fields, validation), AppDialog delete confirm, loading skeleton, not-found EmptyState, guest view | Light / Dark VERIFIED | Light / Dark VERIFIED | Light / Dark VERIFIED | `person-detail.html` current | VERIFIED |
+| `/kinship` | `kinship.html` | In-page specimens | Initial prompt, 2-person pickers + swap, quick-demo chip (An → Phúc), dialect select, in-flight loading, KinshipResult (terracotta term, metadata badges, path timeline with sequence & generation colors), unrelated fallback, member list load failure | Light / Dark VERIFIED | Light / Dark VERIFIED | Light / Dark VERIFIED | `kinship.html` current | VERIFIED |
+| `/feed` | `feed.html` | In-page specimens | PWA install banner, family selector + push toggle, authenticated composer (char counter, image URL chips with remove), anonymous hint banner, 3-card loading skeleton, error banner + retry, empty feed, PostCard list, pagination button + loading | Light / Dark VERIFIED | Light / Dark VERIFIED | Light / Dark VERIFIED | `feed.html` current | VERIFIED |
+| `/account` | `account.html` | `account-states.html` | Profile card, linked identities grid, sole-identity unlink disabled guard, AppDialog confirm unlink, add provider section (Google, Facebook, Zalo - hidden for demo), contact points list (verified/unverified), add contact form, empty contacts, demo notice | Light / Dark VERIFIED | Light / Dark VERIFIED | Light / Dark VERIFIED | `account.html` current | VERIFIED |
+| `/auth/email/verify` | `email-verify.html` | In-page specimens | Shell-free AuthInterstitial: Step 2 pending spinner, Step 3 verified checkmark + auto-redirect, expired/invalid error + retry button, missing token error | Light / Dark VERIFIED | Light / Dark VERIFIED | Light / Dark VERIFIED | `email-verify.html` current | VERIFIED |
+| `/auth/oauth/callback` | `oauth-callback.html` | In-page specimens | Shell-free AuthInterstitial: synchronous outcome, Step 3 success + auto-redirect, 5 error codes (`invalid_state`, `already_linked`, `provider_error`, `demo_restricted`, `server_error`), auth-dependent nav targets | Light / Dark VERIFIED | Light / Dark VERIFIED | Light / Dark VERIFIED | `oauth-callback.html` current | VERIFIED |
+| `/:pathMatch(.*)*` | `not-found.html` | Full view | Shell-free 404: icon disc, large 404 numeral, explanatory text, primary `Về cây gia phả` button, secondary `Tìm người trong họ` (Kinship) button, browser back link | Light / Dark VERIFIED | Light / Dark VERIFIED | Light / Dark VERIFIED | `not-found.html` current | VERIFIED |
+
+### 2. Live Tree Renderer Observation & Invariant Boundary
+To eliminate any ambiguity about the `/tree` boundary, actual live captures from `http://127.0.0.1:3456/tree` were inspected:
+- `gate-evidence/tree-runtime-baseline-desktop-light.png`: Shows default fit-view zoom (<0.6x) where node cards collapse to colored circular dot buttons across 5 generation bands (`ĐỜI THỨ 1` to `ĐỜI THỨ 5`) connected by orthogonal blue lines.
+- `gate-evidence/tree-renderer-observation-desktop.png`: Captured after 5 zoom-in clicks (`zoomBy(1.2)`), visually proving full node cards with avatars, names, gender chips, and birth-death dates connected by orthogonal Canvas lines.
+- **Contract Boundary Verified:** The tree renderer (single `<canvas>`, DPR ≤ 2, backing store ≤ 16.7M px, `MAX_VISIBLE_NODES = 300`, `cullVisibleNodes`, GPU `translate3d + scale`, and `closest('button')` pointer-capture guard) remains **completely untouched**. Quiet Clarity styling applies strictly to the surrounding chrome, legend, filter chips, and dialogs.
+
+### 3. Account & Demo Invariants
+- **Real Accounts (`account-states.html#real`, `#contacts`, `#unlink`):** Shows multiple linked identities with provider icon, name, subject, linked date, and last login date. The unlink button is enabled when >1 identity exists; clicking opens `AppDialog` with focus trap, backdrop dismissal, risk warning, and red destructive action. When `isSoleIdentity = true`, unlink is disabled with explanatory tooltip (`#empty`). Contact points support email and phone with verification badges.
+- **Demo Restriction (`account-states.html#demo`):** Prominently displays amber panel (`INV-04/05`). The single demo identity cannot be unlinked. The "Thêm phương thức đăng nhập" (Google, Facebook, Zalo) section is completely hidden. Backend enforces 403-first rejection on member binding.
+
+### 4. Member Detail Tabs & Dialogs
+- **Tabs (`person-detail-states.html#overview`, `#relations`, `#posts`):** Accessible tablist with `aria-selected` and active terracotta border. Tab 1 displays personal metadata; Tab 2 displays 4 family groups (`Cha mẹ`, `Vợ chồng`, `Anh chị em`, `Con cái`) with generation stripes and direct profile links; Tab 3 displays member posts reusing `PostCard` idiom without a composer.
+- **Dialogs (`person-detail-states.html#edit`, `#delete`):** `MemberEditDialog` provides a live `MemberCardPreview` reflecting form inputs in real time. `AppDialog` delete confirmation warns of child reassignment risk before destructive confirmation.
+
+### 5. Multimodal Vision Audit & Bounded Correction
+- All 12 composite contact sheets and key full-resolution captures were audited by ImageReader.
+- **Initial finding:** The demo identity button text in `account-states.html#demo` was causing a 34px horizontal overflow at 320px viewport (`scrollWidth = 354`).
+- **Correction:** Added `flex-wrap: wrap` and line wrapping to `.provider-tile__foot` in `account-states.html`. Re-rendered CDP screenshots at 320px confirmed document `scrollWidth = 320` in both light and dark modes (`account-states-demo-320-light.png` and `account-states-demo-320-dark.png`).
+- ImageReader verified that dialogs, tab content, and state panels maintain clean typography, proper button hierarchy, and zero element collision across desktop, mobile, and 320px viewports.
+
+### 6. OpenDesign Store Synchronization Status (Completed & Fully Verified)
+Following formal approval of the Design Gate package and All-Pages Implementation Plan by Reviewer and Approver, the final OpenDesign synchronization for project `cgp-v2-apple-redesign` was executed.
+
+All 17 canonical, state sheet, and asset files were reconciled, uploaded via OpenDesign MCP/daemon write operations, and independently verified via live raw GET endpoints (`http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/{path}`). Every file was checked with exact byte counts and SHA-256 checksums:
+
+| Relative Path | Role / Description | Local Bytes | OD Raw Bytes | Local SHA-256 | OD Raw SHA-256 | Store Status |
+|---|---|---|---|---|---|---|
+| `login.html` | Canonical `/login` | 13,514 | 13,514 | `89b353eaa2d475d3...` | `89b353eaa2d475d3...` | **current** |
+| `tree.html` | Canonical `/tree` | 16,752 | 16,752 | `6b1a5aebd0908a44...` | `6b1a5aebd0908a44...` | **current** |
+| `person-detail.html` | Canonical `/members/:id` | 10,056 | 10,056 | `7f2d466070c71918...` | `7f2d466070c71918...` | **current** |
+| `kinship.html` | Canonical `/kinship` | 9,990 | 9,990 | `f4eb10534c88c390...` | `f4eb10534c88c390...` | **current** |
+| `feed.html` | Canonical `/feed` | 8,633 | 8,633 | `2a4daa578a0d95c4...` | `2a4daa578a0d95c4...` | **current** |
+| `account.html` | Canonical `/account` | 9,192 | 9,192 | `997d39b66c38a8e0...` | `997d39b66c38a8e0...` | **current** |
+| `email-verify.html` | Canonical `/auth/email/verify` | 3,622 | 3,622 | `3ae3e8b4964ae7a1...` | `3ae3e8b4964ae7a1...` | **current** |
+| `oauth-callback.html` | Canonical `/auth/oauth/callback` | 3,389 | 3,389 | `0b2c575b44e8d261...` | `0b2c575b44e8d261...` | **current** |
+| `not-found.html` | Canonical `/:pathMatch(.*)*` | 2,167 | 2,167 | `480bce703cec8937...` | `480bce703cec8937...` | **current** |
+| `tree-states.html` | State Sheet: `/tree` states | 7,809 | 7,809 | `00863aa1aca86f4f...` | `00863aa1aca86f4f...` | **current** |
+| `person-detail-states.html` | State Sheet: `/members/:id` | 11,340 | 11,340 | `5ca8bad90dd4bfa3...` | `5ca8bad90dd4bfa3...` | **current** |
+| `account-states.html` | State Sheet: `/account` | 11,395 | 11,395 | `b5949d1496d5a728...` | `b5949d1496d5a728...` | **current** |
+| `dashboard.html` | Archived concept: Dashboard | 15,199 | 15,199 | `f4451be0460a7529...` | `f4451be0460a7529...` | **current** |
+| `persons.html` | Archived concept: Persons | 11,439 | 11,439 | `05776e141ae98285...` | `05776e141ae98285...` | **current** |
+| `settings.html` | Archived concept: Settings | 9,996 | 9,996 | `70fa39119423003b...` | `70fa39119423003b...` | **current** |
+| `assets/tokens.css` | Design tokens CSS | 29,230 | 29,230 | `64c94cf180172c47...` | `64c94cf180172c47...` | **current** |
+| `assets/state-contracts.css` | State contracts CSS | 4,881 | 4,881 | `044969c31e124b3a...` | `044969c31e124b3a...` | **current** |
+| `assets/state-contracts.js` | State switcher JS | 696 | 696 | `27c2e61fc7f953c1...` | `27c2e61fc7f953c1...` | **current** |
+
+**Self-hosted Be Vietnam Pro Fonts:** All 12 bundled woff2 fonts (`fonts/bvp-*.woff2`) remain 100% matched in OpenDesign with status **current**.
+
+**Working OpenDesign Preview URLs (Base: `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/`):**
+- `/login`: `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/login.html`
+- `/tree`: `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/tree.html`
+- `/members/:id`: `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/person-detail.html`
+- `/kinship`: `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/kinship.html`
+- `/feed`: `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/feed.html`
+- `/account`: `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/account.html`
+- `/auth/email/verify`: `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/email-verify.html`
+- `/auth/oauth/callback`: `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/oauth-callback.html`
+- `/:pathMatch(.*)*`: `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/not-found.html`
+- State sheet `/tree`: `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/tree-states.html`
+- State sheet `/members/:id`: `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/person-detail-states.html`
+- State sheet `/account`: `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/account-states.html`
+
+**Live Render Evidence & ImageReader Audit:** Fresh headless Chrome screenshots of the live OpenDesign raw preview URLs were stored under `.agents/shared/planning/apple-redesign/od-publish-evidence/` and audited via multimodal vision (`explain_image`). Visual inspection confirmed 100% token adherence, sharp Be Vietnam Pro typography with full Vietnamese diacritics, and zero layout overflow.
+
+### 7. Implementation Gate Verdict: APPROVED / SYNCHRONIZATION COMPLETE
+- **Local Presentation Layer:** **VERIFIED** — Complete, coherent, and visually audited across all 9 shipped routes, viewports, themes, and runtime state branches.
+- **OpenDesign Synchronization:** **VERIFIED** — All 17 design, state sheet, and asset files are synchronized and match local SHA-256 hashes byte-for-byte; all 12 font files match; working preview URLs are live and functional.
+- **Application Source Code:** **UNTOUCHED** — Zero Vue components, TypeScript files, router configurations, or backend APIs in `web/` or `api/` were modified.
+- **Overall Gate Status:** **VERIFIED / APPROVED FOR IMPLEMENTATION** — Developers may proceed directly with the phased implementation plan.

@@ -31,10 +31,10 @@
   <div class="container topbar__inner">
     <a class="brand" href="tree.html"><span class="brand__mark">Ph</span>Cây Gia Phả</a>
     <nav class="nav" aria-label="Điều hướng chính">
-      <a href="tree.html">Gia phả</a>
-      <a href="persons.html" class="is-active" aria-current="page">Thành viên</a>
-      <a href="dashboard.html">Tổng quan</a>
-      <a href="settings.html">Cài đặt</a>
+      <a href="tree.html" class="is-active" aria-current="page">Gia phả</a>
+      <a href="kinship.html">Quan hệ</a>
+      <a href="feed.html">Bảng tin</a>
+      <a href="account.html">Tài khoản</a>
     </nav>
     <div class="row" style="gap:10px;">
       <span class="chip chip--demo"><span class="badge-dot"></span>Demo</span>
@@ -48,7 +48,7 @@
 <div class="container">
   <div class="page-head" style="margin-bottom:20px;">
     <div>
-      <a href="persons.html" class="t-note" style="color:var(--accent-fg);">← Thành viên</a>
+      <a href="tree.html" class="t-note" style="color:var(--accent-fg);">← Gia phả</a>
       <h1 class="t-title" style="margin-top:12px;">Hồ sơ thành viên</h1>
     </div>
     <a href="tree.html" class="btn btn--secondary btn--sm">Xem trên cây →</a>
@@ -88,7 +88,7 @@
         <section class="card panel-pad">
           <div class="row row--between" style="margin-bottom:16px;">
             <h2 class="t-sub">Cuộc đời</h2>
-            <button class="btn btn--ghost btn--sm" type="button">Thêm sự kiện</button>
+            <button class="btn btn--ghost btn--sm" type="button" disabled title="Bản mẫu không chỉnh sửa dữ liệu">Thêm sự kiện</button>
           </div>
           <div class="timeline">
             <div class="timeline__event"><span class="timeline__date mono">12.03.1952</span><p class="timeline__title">Chào đời tại Hà Nội</p></div>
@@ -102,22 +102,22 @@
       <aside class="stack">
         <section class="card panel-pad">
           <h2 class="t-sub" style="margin-bottom:8px;">Gia đình</h2>
-          <a class="relation" href="persons.html"><span class="avatar avatar--36">NVA</span><span style="flex:1;"><span class="relation__name" style="display:block;">Nguyễn Văn An</span><span class="relation__role">Cha</span></span><span style="color:var(--ink-3);">›</span></a>
-          <a class="relation" href="persons.html"><span class="avatar avatar--36">TTH</span><span style="flex:1;"><span class="relation__name" style="display:block;">Trần Thị Hòa</span><span class="relation__role">Mẹ</span></span><span style="color:var(--ink-3);">›</span></a>
-          <a class="relation" href="persons.html"><span class="avatar avatar--36">TTM</span><span style="flex:1;"><span class="relation__name" style="display:block;">Trần Thị Mai</span><span class="relation__role">Vợ</span></span><span style="color:var(--ink-3);">›</span></a>
-          <a class="relation" href="persons.html"><span class="avatar avatar--36">NTA</span><span style="flex:1;"><span class="relation__name" style="display:block;">Nguyễn Thị Anh</span><span class="relation__role">Con gái</span></span><span style="color:var(--ink-3);">›</span></a>
+          <div class="relation"><span class="avatar avatar--36">NVA</span><span style="flex:1;"><span class="relation__name" style="display:block;">Nguyễn Văn An</span><span class="relation__role">Cha</span></span></div>
+          <div class="relation"><span class="avatar avatar--36">TTH</span><span style="flex:1;"><span class="relation__name" style="display:block;">Trần Thị Hòa</span><span class="relation__role">Mẹ</span></span></div>
+          <div class="relation"><span class="avatar avatar--36">TTM</span><span style="flex:1;"><span class="relation__name" style="display:block;">Trần Thị Mai</span><span class="relation__role">Vợ</span></span></div>
+          <div class="relation"><span class="avatar avatar--36">NTA</span><span style="flex:1;"><span class="relation__name" style="display:block;">Nguyễn Thị Anh</span><span class="relation__role">Con gái</span></span></div>
         </section>
 
         <section class="card panel-pad" style="background:var(--surface-quiet);">
           <h2 class="t-sub" style="font-size:var(--text-base);">Ghi chú</h2>
           <p class="t-body" style="color:var(--ink-2); margin-top:10px;">Ông Cường là người gìn giữ gia phả dòng họ từ những năm 1980. Những ghi chép của ông là nền tảng cho bộ gia phả hiện tại.</p>
-          <button class="btn btn--ghost btn--sm" type="button" style="margin-top:12px; padding-left:0;">Chỉnh sửa ghi chú →</button>
+          <button class="btn btn--ghost btn--sm" type="button" disabled title="Bản mẫu không chỉnh sửa dữ liệu" style="margin-top:12px; padding-left:0;">Chỉnh sửa ghi chú →</button>
         </section>
       </aside>
     </div>
   </div>
   <section class="state-gallery" aria-label="Trạng thái hồ sơ — mẫu thiết kế">
-    <div><p class="state-gallery__title">Không tìm thấy</p><div class="state-card state-card--error" role="alert"><h2>Không tìm thấy hồ sơ</h2><p>Liên kết có thể đã thay đổi hoặc hồ sơ không còn tồn tại.</p><a class="btn btn--secondary btn--sm" href="persons.html" style="margin-top:14px;">Về danh sách</a></div></div>
+    <div><p class="state-gallery__title">Không tìm thấy</p><div class="state-card state-card--error" role="alert"><h2>Không tìm thấy hồ sơ</h2><p>Liên kết có thể đã thay đổi hoặc hồ sơ không còn tồn tại.</p><a class="btn btn--secondary btn--sm" href="tree.html" style="margin-top:14px;">Về cây gia phả</a></div></div>
     <div><p class="state-gallery__title">Đang tải</p><div class="state-card state-card--loading" role="status"><div style="flex:1;"><h2>Đang tải hồ sơ…</h2><div class="state-skeleton" style="width:75%;margin-top:12px;"></div></div></div></div>
     <div><p class="state-gallery__title">Chưa có sự kiện</p><div class="state-card"><h2>Chưa có sự kiện cuộc đời</h2><p>Khi sự kiện được thêm, dòng thời gian sẽ hiển thị ở đây.</p></div></div>
   </section>
@@ -126,21 +126,21 @@
 
 <!-- Mobile tab bar -->
 <nav class="tabbar" aria-label="Điều hướng di động">
-  <a href="tree.html">
+  <a href="tree.html" class="is-active" aria-current="page">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2.4"/><circle cx="5" cy="12" r="2.4"/><circle cx="19" cy="12" r="2.4"/><circle cx="8.5" cy="19.5" r="2.4"/><circle cx="15.5" cy="19.5" r="2.4"/><path d="M12 7v2.5M12 9.5H5V12M12 9.5h7V12M8.5 14.4v2.7M15.5 14.4v2.7"/></svg>
     Gia phả
   </a>
-  <a href="persons.html" class="is-active" aria-current="page">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 6.2a3 3 0 0 1 0 5.6M17.5 14.2c2 .8 3 2.4 3 4.8"/></svg>
-    Thành viên
+  <a href="kinship.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8" r="3"/><path d="M3.5 19c0-3 2.2-5 5-5 1.4 0 2.6.5 3.5 1.3"/><circle cx="16.5" cy="16" r="3"/><path d="M12.5 16.8c-1.4 1-2 2.2-2 3.7"/></svg>
+    Quan hệ
   </a>
-  <a href="dashboard.html">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-3H4zM14 8h6V4h-6z"/></svg>
-    Tổng quan
+  <a href="feed.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 12.5h8M8 16h5"/></svg>
+    Bảng tin
   </a>
-  <a href="settings.html">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M12 3.5 13 6a6.4 6.4 0 0 1 2 .8l2.6-.8 1.6 1.6-.8 2.6c.3.6.6 1.3.8 2l2.5 1v2.3l-2.5 1a6.4 6.4 0 0 1-.8 2l.8 2.6-1.6 1.6-2.6-.8a6.4 6.4 0 0 1-2 .8l-1 2.5h-2.3l-1-2.5a6.4 6.4 0 0 1-2-.8l-2.6.8-1.6-1.6.8-2.6a6.4 6.4 0 0 1-.8-2L3.5 15v-2.3l2.5-1c.2-.7.5-1.4.8-2L6 7.1 7.6 5.5l2.6.8c.6-.3 1.3-.6 2-.8l1-2z" transform="scale(.9) translate(1.3 1.3)"/></svg>
-    Cài đặt
+  <a href="account.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.2"/><path d="M5 19.5c0-3.4 3-5.5 7-5.5s7 2.1 7 5.5"/></svg>
+    Tài khoản
   </a>
 </nav>
 

@@ -1,0 +1,380 @@
+[
+  {
+    "name": "tree-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree.html?theme=light",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Cây gia phả — Cây Gia Phả\",\"sw\":1440,\"sh\":901,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "tree-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree.html",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Cây gia phả — Cây Gia Phả\",\"sw\":1440,\"sh\":901,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "tree-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree.html?theme=light",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Cây gia phả — Cây Gia Phả\",\"sw\":390,\"sh\":844,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "tree-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree.html",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Cây gia phả — Cây Gia Phả\",\"sw\":390,\"sh\":844,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "person-detail-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail.html?theme=light",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Hồ sơ thành viên — Cây Gia Phả\",\"sw\":1440,\"sh\":1355,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "person-detail-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail.html",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Hồ sơ thành viên — Cây Gia Phả\",\"sw\":1440,\"sh\":1355,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "person-detail-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail.html?theme=light",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Hồ sơ thành viên — Cây Gia Phả\",\"sw\":390,\"sh\":2364,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "person-detail-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail.html",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Hồ sơ thành viên — Cây Gia Phả\",\"sw\":390,\"sh\":2364,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "settings-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/settings.html?theme=light",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Cài đặt — Cây Gia Phả\",\"sw\":1440,\"sh\":1631,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "settings-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/settings.html",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Cài đặt — Cây Gia Phả\",\"sw\":1440,\"sh\":1631,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "settings-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/settings.html?theme=light",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Cài đặt — Cây Gia Phả\",\"sw\":390,\"sh\":2197,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "settings-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/settings.html",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Cài đặt — Cây Gia Phả\",\"sw\":390,\"sh\":2197,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "kinship-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/kinship.html?theme=light",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Tính quan hệ — Cây Gia Phả\",\"sw\":1440,\"sh\":940,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "kinship-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/kinship.html",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tính quan hệ — Cây Gia Phả\",\"sw\":1440,\"sh\":940,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "kinship-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/kinship.html?theme=light",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Tính quan hệ — Cây Gia Phả\",\"sw\":390,\"sh\":1605,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "kinship-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/kinship.html",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tính quan hệ — Cây Gia Phả\",\"sw\":390,\"sh\":1605,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "feed-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/feed.html?theme=light",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Bảng tin dòng họ — Cây Gia Phả\",\"sw\":1440,\"sh\":1465,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "feed-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/feed.html",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Bảng tin dòng họ — Cây Gia Phả\",\"sw\":1440,\"sh\":1465,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "feed-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/feed.html?theme=light",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Bảng tin dòng họ — Cây Gia Phả\",\"sw\":390,\"sh\":1889,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "feed-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/feed.html",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Bảng tin dòng họ — Cây Gia Phả\",\"sw\":390,\"sh\":1889,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "account-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account.html?theme=light",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Tài khoản — Cây Gia Phả\",\"sw\":1440,\"sh\":1630,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "account-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account.html",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tài khoản — Cây Gia Phả\",\"sw\":1440,\"sh\":1630,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "account-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account.html?theme=light",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Tài khoản — Cây Gia Phả\",\"sw\":390,\"sh\":2146,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "account-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account.html",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tài khoản — Cây Gia Phả\",\"sw\":390,\"sh\":2146,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "email-verify-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/email-verify.html?theme=light",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Xác thực email — Cây Gia Phả\",\"sw\":1440,\"sh\":1259,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "email-verify-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/email-verify.html",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Xác thực email — Cây Gia Phả\",\"sw\":1440,\"sh\":1259,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "email-verify-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/email-verify.html?theme=light",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Xác thực email — Cây Gia Phả\",\"sw\":390,\"sh\":1522,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "email-verify-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/email-verify.html",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Xác thực email — Cây Gia Phả\",\"sw\":390,\"sh\":1522,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "oauth-callback-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/oauth-callback.html?theme=light",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Liên kết tài khoản — Cây Gia Phả\",\"sw\":1440,\"sh\":1259,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "oauth-callback-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/oauth-callback.html",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Liên kết tài khoản — Cây Gia Phả\",\"sw\":1440,\"sh\":1259,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "oauth-callback-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/oauth-callback.html?theme=light",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Liên kết tài khoản — Cây Gia Phả\",\"sw\":390,\"sh\":1473,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "oauth-callback-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/oauth-callback.html",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Liên kết tài khoản — Cây Gia Phả\",\"sw\":390,\"sh\":1473,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "not-found-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/not-found.html?theme=light",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Không tìm thấy trang — Cây Gia Phả\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "not-found-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/not-found.html",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Không tìm thấy trang — Cây Gia Phả\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "not-found-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/not-found.html?theme=light",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Không tìm thấy trang — Cây Gia Phả\",\"sw\":390,\"sh\":844,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "not-found-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/not-found.html",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Không tìm thấy trang — Cây Gia Phả\",\"sw\":390,\"sh\":844,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "login-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/login.html?theme=light",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Đăng nhập — Cây Gia Phả\",\"sw\":320,\"sh\":1482,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "login-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/login.html",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Đăng nhập — Cây Gia Phả\",\"sw\":320,\"sh\":1482,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "tree-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree.html?theme=light",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Cây gia phả — Cây Gia Phả\",\"sw\":320,\"sh\":800,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "tree-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree.html",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Cây gia phả — Cây Gia Phả\",\"sw\":320,\"sh\":800,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "person-detail-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail.html?theme=light",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Hồ sơ thành viên — Cây Gia Phả\",\"sw\":320,\"sh\":2440,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "person-detail-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail.html",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Hồ sơ thành viên — Cây Gia Phả\",\"sw\":320,\"sh\":2440,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "kinship-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/kinship.html?theme=light",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Tính quan hệ — Cây Gia Phả\",\"sw\":320,\"sh\":1664,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "kinship-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/kinship.html",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tính quan hệ — Cây Gia Phả\",\"sw\":320,\"sh\":1664,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "feed-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/feed.html?theme=light",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Bảng tin dòng họ — Cây Gia Phả\",\"sw\":320,\"sh\":1951,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "feed-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/feed.html",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Bảng tin dòng họ — Cây Gia Phả\",\"sw\":320,\"sh\":1951,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "account-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account.html?theme=light",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Tài khoản — Cây Gia Phả\",\"sw\":320,\"sh\":2345,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "account-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account.html",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tài khoản — Cây Gia Phả\",\"sw\":320,\"sh\":2345,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "email-verify-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/email-verify.html?theme=light",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Xác thực email — Cây Gia Phả\",\"sw\":320,\"sh\":1518,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "email-verify-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/email-verify.html",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Xác thực email — Cây Gia Phả\",\"sw\":320,\"sh\":1518,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "oauth-callback-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/oauth-callback.html?theme=light",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Liên kết tài khoản — Cây Gia Phả\",\"sw\":320,\"sh\":1495,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "oauth-callback-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/oauth-callback.html",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Liên kết tài khoản — Cây Gia Phả\",\"sw\":320,\"sh\":1495,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  },
+  {
+    "name": "not-found-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/not-found.html?theme=light",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Không tìm thấy trang — Cây Gia Phả\",\"sw\":320,\"sh\":800,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"\"}"
+  },
+  {
+    "name": "not-found-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/not-found.html",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Không tìm thấy trang — Cây Gia Phả\",\"sw\":320,\"sh\":800,\"scrollY\":0,\"theme\":null,\"hash\":\"\"}"
+  }
+]

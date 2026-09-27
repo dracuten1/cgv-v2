@@ -1,0 +1,716 @@
+[
+  {
+    "name": "tree-states-success-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#success",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":1440,\"sh\":911,\"scrollY\":11,\"theme\":\"light\",\"hash\":\"#success\"}"
+  },
+  {
+    "name": "tree-states-success-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#success",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":1440,\"sh\":911,\"scrollY\":11,\"theme\":null,\"hash\":\"#success\"}"
+  },
+  {
+    "name": "tree-states-success-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#success",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":390,\"sh\":1250,\"scrollY\":360,\"theme\":\"light\",\"hash\":\"#success\"}"
+  },
+  {
+    "name": "tree-states-success-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#success",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":390,\"sh\":1250,\"scrollY\":360,\"theme\":null,\"hash\":\"#success\"}"
+  },
+  {
+    "name": "tree-states-compact-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#compact",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#compact\"}"
+  },
+  {
+    "name": "tree-states-compact-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#compact",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"#compact\"}"
+  },
+  {
+    "name": "tree-states-compact-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#compact",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":390,\"sh\":999,\"scrollY\":155,\"theme\":\"light\",\"hash\":\"#compact\"}"
+  },
+  {
+    "name": "tree-states-compact-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#compact",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":390,\"sh\":999,\"scrollY\":155,\"theme\":null,\"hash\":\"#compact\"}"
+  },
+  {
+    "name": "tree-states-loading-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#loading",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#loading\"}"
+  },
+  {
+    "name": "tree-states-loading-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#loading",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"#loading\"}"
+  },
+  {
+    "name": "tree-states-loading-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#loading",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":390,\"sh\":844,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#loading\"}"
+  },
+  {
+    "name": "tree-states-loading-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#loading",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":390,\"sh\":844,\"scrollY\":0,\"theme\":null,\"hash\":\"#loading\"}"
+  },
+  {
+    "name": "tree-states-error-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#error",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#error\"}"
+  },
+  {
+    "name": "tree-states-error-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#error",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"#error\"}"
+  },
+  {
+    "name": "tree-states-error-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#error",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":390,\"sh\":844,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#error\"}"
+  },
+  {
+    "name": "tree-states-error-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#error",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":390,\"sh\":844,\"scrollY\":0,\"theme\":null,\"hash\":\"#error\"}"
+  },
+  {
+    "name": "tree-states-empty-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#empty",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#empty\"}"
+  },
+  {
+    "name": "tree-states-empty-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#empty",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"#empty\"}"
+  },
+  {
+    "name": "tree-states-empty-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#empty",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":390,\"sh\":844,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#empty\"}"
+  },
+  {
+    "name": "tree-states-empty-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#empty",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":390,\"sh\":844,\"scrollY\":0,\"theme\":null,\"hash\":\"#empty\"}"
+  },
+  {
+    "name": "tree-states-anonymous-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#anonymous",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#anonymous\"}"
+  },
+  {
+    "name": "tree-states-anonymous-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#anonymous",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"#anonymous\"}"
+  },
+  {
+    "name": "tree-states-anonymous-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#anonymous",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":390,\"sh\":938,\"scrollY\":94,\"theme\":\"light\",\"hash\":\"#anonymous\"}"
+  },
+  {
+    "name": "tree-states-anonymous-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#anonymous",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":390,\"sh\":938,\"scrollY\":94,\"theme\":null,\"hash\":\"#anonymous\"}"
+  },
+  {
+    "name": "tree-states-success-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#success",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":320,\"sh\":1330,\"scrollY\":426,\"theme\":\"light\",\"hash\":\"#success\"}"
+  },
+  {
+    "name": "tree-states-success-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#success",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":320,\"sh\":1330,\"scrollY\":426,\"theme\":null,\"hash\":\"#success\"}"
+  },
+  {
+    "name": "tree-states-compact-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#compact",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":320,\"sh\":1080,\"scrollY\":280,\"theme\":\"light\",\"hash\":\"#compact\"}"
+  },
+  {
+    "name": "tree-states-compact-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#compact",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":320,\"sh\":1080,\"scrollY\":280,\"theme\":null,\"hash\":\"#compact\"}"
+  },
+  {
+    "name": "tree-states-loading-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#loading",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":320,\"sh\":808,\"scrollY\":8,\"theme\":\"light\",\"hash\":\"#loading\"}"
+  },
+  {
+    "name": "tree-states-loading-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#loading",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":320,\"sh\":808,\"scrollY\":8,\"theme\":null,\"hash\":\"#loading\"}"
+  },
+  {
+    "name": "tree-states-error-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#error",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":320,\"sh\":848,\"scrollY\":48,\"theme\":\"light\",\"hash\":\"#error\"}"
+  },
+  {
+    "name": "tree-states-error-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#error",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":320,\"sh\":848,\"scrollY\":48,\"theme\":null,\"hash\":\"#error\"}"
+  },
+  {
+    "name": "tree-states-empty-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#empty",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":320,\"sh\":889,\"scrollY\":89,\"theme\":\"light\",\"hash\":\"#empty\"}"
+  },
+  {
+    "name": "tree-states-empty-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#empty",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":320,\"sh\":889,\"scrollY\":89,\"theme\":null,\"hash\":\"#empty\"}"
+  },
+  {
+    "name": "tree-states-anonymous-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html?theme=light#anonymous",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":320,\"sh\":1089,\"scrollY\":289,\"theme\":\"light\",\"hash\":\"#anonymous\"}"
+  },
+  {
+    "name": "tree-states-anonymous-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/tree-states.html#anonymous",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Tree route states — Quiet Clarity\",\"sw\":320,\"sh\":1089,\"scrollY\":289,\"theme\":null,\"hash\":\"#anonymous\"}"
+  },
+  {
+    "name": "account-states-real-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#real",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":1440,\"sh\":940,\"scrollY\":40,\"theme\":\"light\",\"hash\":\"#real\"}"
+  },
+  {
+    "name": "account-states-real-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#real",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":1440,\"sh\":940,\"scrollY\":40,\"theme\":null,\"hash\":\"#real\"}"
+  },
+  {
+    "name": "account-states-real-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#real",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":390,\"sh\":1407,\"scrollY\":426,\"theme\":\"light\",\"hash\":\"#real\"}"
+  },
+  {
+    "name": "account-states-real-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#real",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":390,\"sh\":1407,\"scrollY\":426,\"theme\":null,\"hash\":\"#real\"}"
+  },
+  {
+    "name": "account-states-contacts-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#contacts",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#contacts\"}"
+  },
+  {
+    "name": "account-states-contacts-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#contacts",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"#contacts\"}"
+  },
+  {
+    "name": "account-states-contacts-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#contacts",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":390,\"sh\":1187,\"scrollY\":343,\"theme\":\"light\",\"hash\":\"#contacts\"}"
+  },
+  {
+    "name": "account-states-contacts-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#contacts",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":390,\"sh\":1187,\"scrollY\":343,\"theme\":null,\"hash\":\"#contacts\"}"
+  },
+  {
+    "name": "account-states-unlink-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#unlink",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#unlink\"}"
+  },
+  {
+    "name": "account-states-unlink-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#unlink",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"#unlink\"}"
+  },
+  {
+    "name": "account-states-unlink-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#unlink",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":390,\"sh\":1045,\"scrollY\":201,\"theme\":\"light\",\"hash\":\"#unlink\"}"
+  },
+  {
+    "name": "account-states-unlink-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#unlink",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":390,\"sh\":1045,\"scrollY\":201,\"theme\":null,\"hash\":\"#unlink\"}"
+  },
+  {
+    "name": "account-states-demo-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#demo",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#demo\"}"
+  },
+  {
+    "name": "account-states-demo-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#demo",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"#demo\"}"
+  },
+  {
+    "name": "account-states-demo-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#demo",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":390,\"sh\":1133,\"scrollY\":289,\"theme\":\"light\",\"hash\":\"#demo\"}"
+  },
+  {
+    "name": "account-states-demo-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#demo",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":390,\"sh\":1133,\"scrollY\":289,\"theme\":null,\"hash\":\"#demo\"}"
+  },
+  {
+    "name": "account-states-empty-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#empty",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#empty\"}"
+  },
+  {
+    "name": "account-states-empty-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#empty",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"#empty\"}"
+  },
+  {
+    "name": "account-states-empty-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#empty",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":390,\"sh\":1420,\"scrollY\":426,\"theme\":\"light\",\"hash\":\"#empty\"}"
+  },
+  {
+    "name": "account-states-empty-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#empty",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":390,\"sh\":1420,\"scrollY\":426,\"theme\":null,\"hash\":\"#empty\"}"
+  },
+  {
+    "name": "account-states-real-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#real",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":320,\"sh\":1611,\"scrollY\":426,\"theme\":\"light\",\"hash\":\"#real\"}"
+  },
+  {
+    "name": "account-states-real-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#real",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":320,\"sh\":1611,\"scrollY\":426,\"theme\":null,\"hash\":\"#real\"}"
+  },
+  {
+    "name": "account-states-contacts-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#contacts",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":320,\"sh\":1271,\"scrollY\":426,\"theme\":\"light\",\"hash\":\"#contacts\"}"
+  },
+  {
+    "name": "account-states-contacts-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#contacts",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":320,\"sh\":1271,\"scrollY\":426,\"theme\":null,\"hash\":\"#contacts\"}"
+  },
+  {
+    "name": "account-states-unlink-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#unlink",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":320,\"sh\":1119,\"scrollY\":319,\"theme\":\"light\",\"hash\":\"#unlink\"}"
+  },
+  {
+    "name": "account-states-unlink-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#unlink",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":320,\"sh\":1119,\"scrollY\":319,\"theme\":null,\"hash\":\"#unlink\"}"
+  },
+  {
+    "name": "account-states-demo-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#demo",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":354,\"sh\":1191,\"scrollY\":305,\"theme\":\"light\",\"hash\":\"#demo\"}"
+  },
+  {
+    "name": "account-states-demo-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#demo",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":354,\"sh\":1191,\"scrollY\":305,\"theme\":null,\"hash\":\"#demo\"}"
+  },
+  {
+    "name": "account-states-empty-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html?theme=light#empty",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":320,\"sh\":1507,\"scrollY\":426,\"theme\":\"light\",\"hash\":\"#empty\"}"
+  },
+  {
+    "name": "account-states-empty-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/account-states.html#empty",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái tài khoản — Quiet Clarity\",\"sw\":320,\"sh\":1507,\"scrollY\":426,\"theme\":null,\"hash\":\"#empty\"}"
+  },
+  {
+    "name": "person-detail-states-overview-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#overview",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#overview\"}"
+  },
+  {
+    "name": "person-detail-states-overview-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#overview",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"#overview\"}"
+  },
+  {
+    "name": "person-detail-states-overview-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#overview",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":390,\"sh\":1182,\"scrollY\":338,\"theme\":\"light\",\"hash\":\"#overview\"}"
+  },
+  {
+    "name": "person-detail-states-overview-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#overview",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":390,\"sh\":1182,\"scrollY\":338,\"theme\":null,\"hash\":\"#overview\"}"
+  },
+  {
+    "name": "person-detail-states-relations-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#relations",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":1440,\"sh\":926,\"scrollY\":26,\"theme\":\"light\",\"hash\":\"#relations\"}"
+  },
+  {
+    "name": "person-detail-states-relations-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#relations",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":1440,\"sh\":926,\"scrollY\":26,\"theme\":null,\"hash\":\"#relations\"}"
+  },
+  {
+    "name": "person-detail-states-relations-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#relations",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":390,\"sh\":1196,\"scrollY\":352,\"theme\":\"light\",\"hash\":\"#relations\"}"
+  },
+  {
+    "name": "person-detail-states-relations-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#relations",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":390,\"sh\":1196,\"scrollY\":352,\"theme\":null,\"hash\":\"#relations\"}"
+  },
+  {
+    "name": "person-detail-states-posts-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#posts",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#posts\"}"
+  },
+  {
+    "name": "person-detail-states-posts-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#posts",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"#posts\"}"
+  },
+  {
+    "name": "person-detail-states-posts-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#posts",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":390,\"sh\":864,\"scrollY\":20,\"theme\":\"light\",\"hash\":\"#posts\"}"
+  },
+  {
+    "name": "person-detail-states-posts-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#posts",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":390,\"sh\":864,\"scrollY\":20,\"theme\":null,\"hash\":\"#posts\"}"
+  },
+  {
+    "name": "person-detail-states-edit-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#edit",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":1440,\"sh\":1022,\"scrollY\":122,\"theme\":\"light\",\"hash\":\"#edit\"}"
+  },
+  {
+    "name": "person-detail-states-edit-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#edit",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":1440,\"sh\":1022,\"scrollY\":122,\"theme\":null,\"hash\":\"#edit\"}"
+  },
+  {
+    "name": "person-detail-states-edit-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#edit",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":390,\"sh\":1179,\"scrollY\":335,\"theme\":\"light\",\"hash\":\"#edit\"}"
+  },
+  {
+    "name": "person-detail-states-edit-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#edit",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":390,\"sh\":1179,\"scrollY\":335,\"theme\":null,\"hash\":\"#edit\"}"
+  },
+  {
+    "name": "person-detail-states-delete-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#delete",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#delete\"}"
+  },
+  {
+    "name": "person-detail-states-delete-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#delete",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"#delete\"}"
+  },
+  {
+    "name": "person-detail-states-delete-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#delete",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":390,\"sh\":913,\"scrollY\":69,\"theme\":\"light\",\"hash\":\"#delete\"}"
+  },
+  {
+    "name": "person-detail-states-delete-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#delete",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":390,\"sh\":913,\"scrollY\":69,\"theme\":null,\"hash\":\"#delete\"}"
+  },
+  {
+    "name": "person-detail-states-fallback-desktop-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#fallback",
+    "viewport": "1440x900",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":\"light\",\"hash\":\"#fallback\"}"
+  },
+  {
+    "name": "person-detail-states-fallback-desktop-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#fallback",
+    "viewport": "1440x900",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":1440,\"sh\":900,\"scrollY\":0,\"theme\":null,\"hash\":\"#fallback\"}"
+  },
+  {
+    "name": "person-detail-states-fallback-mobile-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#fallback",
+    "viewport": "390x844",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":390,\"sh\":1199,\"scrollY\":355,\"theme\":\"light\",\"hash\":\"#fallback\"}"
+  },
+  {
+    "name": "person-detail-states-fallback-mobile-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#fallback",
+    "viewport": "390x844",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":390,\"sh\":1199,\"scrollY\":355,\"theme\":null,\"hash\":\"#fallback\"}"
+  },
+  {
+    "name": "person-detail-states-overview-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#overview",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":320,\"sh\":1307,\"scrollY\":400,\"theme\":\"light\",\"hash\":\"#overview\"}"
+  },
+  {
+    "name": "person-detail-states-overview-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#overview",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":320,\"sh\":1307,\"scrollY\":400,\"theme\":null,\"hash\":\"#overview\"}"
+  },
+  {
+    "name": "person-detail-states-relations-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#relations",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":320,\"sh\":1236,\"scrollY\":400,\"theme\":\"light\",\"hash\":\"#relations\"}"
+  },
+  {
+    "name": "person-detail-states-relations-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#relations",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":320,\"sh\":1236,\"scrollY\":400,\"theme\":null,\"hash\":\"#relations\"}"
+  },
+  {
+    "name": "person-detail-states-posts-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#posts",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":320,\"sh\":926,\"scrollY\":126,\"theme\":\"light\",\"hash\":\"#posts\"}"
+  },
+  {
+    "name": "person-detail-states-posts-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#posts",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":320,\"sh\":926,\"scrollY\":126,\"theme\":null,\"hash\":\"#posts\"}"
+  },
+  {
+    "name": "person-detail-states-edit-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#edit",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":320,\"sh\":1199,\"scrollY\":399,\"theme\":\"light\",\"hash\":\"#edit\"}"
+  },
+  {
+    "name": "person-detail-states-edit-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#edit",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":320,\"sh\":1199,\"scrollY\":399,\"theme\":null,\"hash\":\"#edit\"}"
+  },
+  {
+    "name": "person-detail-states-delete-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#delete",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":320,\"sh\":954,\"scrollY\":154,\"theme\":\"light\",\"hash\":\"#delete\"}"
+  },
+  {
+    "name": "person-detail-states-delete-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#delete",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":320,\"sh\":954,\"scrollY\":154,\"theme\":null,\"hash\":\"#delete\"}"
+  },
+  {
+    "name": "person-detail-states-fallback-320-light.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html?theme=light#fallback",
+    "viewport": "320x800",
+    "theme": "light",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":320,\"sh\":1347,\"scrollY\":400,\"theme\":\"light\",\"hash\":\"#fallback\"}"
+  },
+  {
+    "name": "person-detail-states-fallback-320-dark.png",
+    "url": "file:///Users/tuyennguyen/project/cgp-v2/.agents/shared/planning/apple-redesign/mockups/person-detail-states.html#fallback",
+    "viewport": "320x800",
+    "theme": "dark",
+    "probe": "{\"t\":\"Trạng thái hồ sơ — Quiet Clarity\",\"sw\":320,\"sh\":1347,\"scrollY\":400,\"theme\":null,\"hash\":\"#fallback\"}"
+  }
+]

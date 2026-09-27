@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bảng tin dòng họ — Cây Gia Phả</title>
+<script>if(new URLSearchParams(location.search).get("theme")==="light")document.documentElement.dataset.theme="light";</script>
+<link rel="stylesheet" href="assets/tokens.css">
+<style>
+  .feed-layout { max-width:760px; margin-inline:auto; }
+  .feed-head { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:26px; }
+  .feed-head__actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .feed-head__actions .select { width:auto; min-width:148px; }
+  .feed-post { padding:22px; }
+  .feed-post__head { display:flex; align-items:center; gap:12px; }
+  .feed-post__name { font-weight:600; font-size:var(--text-sm); }
+  .feed-post__meta { color:var(--ink-3); font-size:var(--text-xs); }
+  .feed-post__content { margin-top:16px; color:var(--ink-1); line-height:1.65; font-size:var(--text-sm); }
+  .feed-post__image { margin-top:16px; border-radius:var(--r-lg); background:var(--surface-well); min-height:130px; display:flex; align-items:center; justify-content:center; gap:12px; color:var(--ink-3); font-size:var(--text-xs); border:1px solid var(--hairline); }
+  .feed-post__image svg { opacity:.75; }
+  .composer { padding:22px; }
+  .composer__top { display:flex; gap:12px; align-items:flex-start; }
+  .composer__top textarea { flex:1; resize:vertical; min-height:95px; }
+  .composer__footer { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding-top:14px; margin-top:14px; border-top:1px solid var(--hairline); }
+  .composer__actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .feed-stack { display:flex; flex-direction:column; gap:16px; }
+  .feed-banner { background:var(--accent-tint); border:1px solid var(--accent-border); color:var(--accent-fg); border-radius:var(--r-xl); padding:16px 18px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+  @media(max-width:767px){.composer,.feed-post{padding:18px;} .feed-post__image{min-height:110px;} }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="container topbar__inner">
+    <a class="brand" href="tree.html"><span class="brand__mark">Ph</span>Cây Gia Phả</a>
+    <nav class="nav" aria-label="Điều hướng chính">
+      <a href="tree.html">Gia phả</a>
+      <a href="kinship.html">Quan hệ</a>
+      <a href="feed.html" class="is-active" aria-current="page">Bảng tin</a>
+      <a href="account.html">Tài khoản</a>
+    </nav>
+    <div class="row" style="gap:10px;"><span class="chip chip--demo"><span class="badge-dot"></span>Demo</span><span class="avatar avatar--36" aria-hidden="true">NMP</span></div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container feed-layout">
+    <div class="feed-head">
+      <div><p class="page-head__eyebrow">Chuyện nhà</p><h1 class="t-title">Bảng tin dòng họ</h1><p class="page-head__sub t-body">Những câu chuyện mới nhất của gia đình.</p></div>
+      <div class="feed-head__actions">
+        <label class="field" style="gap:4px;"><span class="t-note">Dòng họ</span><select class="select" aria-label="Chọn dòng họ"><option>Họ Nguyễn</option></select></label>
+        <button class="btn btn--secondary btn--sm" type="button" aria-label="Thông báo: đang bật">Thông báo bật</button>
+      </div>
+    </div>
+
+    <div class="feed-stack">
+      <section class="card composer" aria-label="Tạo bài viết">
+        <div class="composer__top"><span class="avatar avatar--44" aria-hidden="true">NMP</span><div class="field" style="flex:1;"><label for="post">Chia sẻ câu chuyện với gia đình</label><textarea class="textarea" id="post" maxlength="2000" placeholder="Kể một câu chuyện, lưu một kỷ niệm…"></textarea></div></div>
+        <div class="composer__footer"><p class="t-note">Bài viết hiển thị cho cả gia đình · 0/2000 ký tự</p><div class="composer__actions"><button class="btn btn--secondary btn--sm" type="button">Thêm URL ảnh</button><button class="btn btn--primary btn--sm" type="button">Đăng bài</button></div></div>
+      </section>
+
+      <article class="card feed-post">
+        <header class="feed-post__head"><span class="avatar avatar--44" aria-hidden="true">NTA</span><div><p class="feed-post__name">Nguyễn Thị Anh</p><p class="feed-post__meta">Họ Nguyễn · 12 tháng 9, 2026</p></div></header>
+        <p class="feed-post__content">Hôm nay cả nhà cùng xem lại những bức ảnh cũ của ông Cường. Mỗi câu chuyện được kể thêm là một cách giữ ký ức của dòng họ ở lại cùng thế hệ sau.</p>
+        <div class="feed-post__image" role="img" aria-label="Vùng minh họa ảnh đính kèm, không phải ảnh thành viên thực">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.4"/><path d="m4 17 5-5 4 4 3-3 4 4"/></svg>
+          <span>Ảnh đính kèm · chỉ minh họa bố cục</span>
+        </div>
+      </article>
+      <article class="card feed-post"><header class="feed-post__head"><span class="avatar avatar--44" aria-hidden="true">NMP</span><div><p class="feed-post__name">Nguyễn Minh Phúc</p><p class="feed-post__meta">Họ Nguyễn · 10 tháng 9, 2026</p></div></header><p class="feed-post__content">Mình đã bổ sung thông tin về bà con trong nhánh gia đình. Nếu mọi người nhớ thêm chi tiết, hãy cùng cập nhật để cây gia phả đầy đủ hơn.</p></article>
+      <div style="text-align:center;"><button type="button" class="btn btn--secondary">Tải thêm bài viết</button></div>
+    </div>
+
+    <section class="state-gallery" aria-label="Trạng thái bảng tin — mẫu thiết kế" style="margin-top:28px;">
+      <div><p class="state-gallery__title">Khách chưa đăng nhập</p><div class="state-card"><h2>Muốn chia sẻ với gia đình?</h2><p>Bạn có thể đọc bảng tin. Đăng nhập để viết bài mới.</p><a class="btn btn--secondary btn--sm" href="login.html" style="margin-top:14px;">Đăng nhập</a></div></div>
+      <div><p class="state-gallery__title">Chưa có bài viết</p><div class="state-card"><h2>Chưa có câu chuyện nào</h2><p>Hãy viết câu chuyện đầu tiên để bắt đầu bảng tin của dòng họ.</p></div></div>
+      <div><p class="state-gallery__title">Không tải được</p><div class="state-card state-card--error" role="alert"><h2>Không tải được bảng tin</h2><p>Kiểm tra kết nối rồi thử tải lại.</p><button class="btn btn--secondary btn--sm" type="button" style="margin-top:14px;">Thử lại</button></div></div>
+      <div><p class="state-gallery__title">Đang tải / đang đăng</p><div class="state-card state-card--loading" role="status"><div style="flex:1;"><h2>Đang tải bài viết…</h2><div class="state-skeleton" style="width:70%; margin-top:12px;"></div></div></div></div>
+    </section>
+  </div>
+</main>
+
+<nav class="tabbar" aria-label="Điều hướng di động">
+  <a href="tree.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2.4"/><circle cx="5" cy="12" r="2.4"/><circle cx="19" cy="12" r="2.4"/><circle cx="8.5" cy="19.5" r="2.4"/><circle cx="15.5" cy="19.5" r="2.4"/><path d="M12 7v2.5M12 9.5H5V12M12 9.5h7V12M8.5 14.4v2.7M15.5 14.4v2.7"/></svg>Gia phả</a>
+  <a href="kinship.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8" r="3"/><path d="M3.5 19c0-3 2.2-5 5-5 1.4 0 2.6.5 3.5 1.3"/><circle cx="16.5" cy="16" r="3"/><path d="M12.5 16.8c-1.4 1-2 2.2-2 3.7"/></svg>Quan hệ</a>
+  <a href="feed.html" class="is-active" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 12.5h8M8 16h5"/></svg>Bảng tin</a>
+  <a href="account.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.2"/><path d="M5 19.5c0-3.4 3-5.5 7-5.5s7 2.1 7 5.5"/></svg>Tài khoản</a>
+</nav>
+</body>
+</html>

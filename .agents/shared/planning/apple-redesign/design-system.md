@@ -1,6 +1,6 @@
 # CGP v2 — Apple-inspired UI design system: **Quiet Clarity**
 
-**Status:** audited static mockup source of truth (2026-09-26); not a shipped app or Open Design sync · **Scope:** six standalone presentation references; `/tree` **surrounding chrome only** · **Audience:** Vue 3 implementers · **Date:** 2026-09-26
+**Status:** original six-page baseline audited; 2026-09-27 all-routes gate addendum below supersedes earlier scope/publication statements · **Scope:** shipped route visual references plus archived concept specimens; `/tree` **surrounding chrome only** · **Audience:** Vue 3 implementers · **Date:** 2026-09-26
 
 > A calm, legible genealogy workspace: content first, restrained warm-paper materials, deep-terracotta actions, and a deliberately distinct amber demo mode. Inspired by Apple's values of clarity, deference and subtle depth—not a copy of Apple's UI or its proprietary typeface.
 
@@ -168,7 +168,7 @@ Fresh canonical captures: `audit-evidence/{dashboard,login,person-detail,persons
 
 **Canonical representation:** the six standalone HTML files listed above plus shared `mockups/assets/tokens.css`. No hash-routed index is maintained. `dashboard.html` and `persons.html` remain *proposed* pages, not shipped Vue routes; `tree.html` shows chrome and accessible renderer placeholder, never card/connector geometry. Other existing Vue routes (kinship/feed/auth callbacks/404) are outside this six-mockup scope. Live OD read-only inspection confirmed project `cgp-v2-apple-redesign`: its `login.html` and `tree.html` are stale against these local files, four requested standalone filenames are missing, and its separate hash-routed `index.html` is an older eight-route concept without dashboard/persons. No callable OD write MCP is available here; nothing was re-published or verified as synchronized. See `design-findings.md` for exact hashes and publication handoff. Refer to `design-findings.md` for per-screen evidence and caveats.
 
-**Implementation-specific state rule:** the sample state cards appended below the main view are a labeled *design specimen gallery* for empty/loading/error, not simultaneous runtime UI. Implement exactly one state at a time, preserve `role=status`/`role=alert` and focus order, and wire controls to application logic. Settings depicts a demo-read-only account: do not enable saves or family-data binding in demo. Only Nguyễn Văn Cường has a full profile specimen; other directory names are not falsely linked to his profile. The tree desktop inspector now shows Nguyễn Văn Cường with matching NVC initials, đời thứ 2, 1952–2020, deceased status, father Nguyễn Văn An and mother Trần Thị Hòa, and an explicitly named link to his `person-detail.html`; it no longer promises Nguyễn Minh Phúc’s profile. Login includes OAuth buttons, magic-link baseline and separate state specimens; auth callback/verification are not designed by these six pages.
+**Implementation-specific state rule:** the sample state cards appended below the main view are a labeled *design specimen gallery* for empty/loading/error, not simultaneous runtime UI. Implement exactly one state at a time, preserve `role=status`/`role=alert` and focus order, and wire controls to application logic. Settings depicts a demo provider-link restriction account: do not enable saves or family-data binding in demo. Only Nguyễn Văn Cường has a full profile specimen; other directory names are not falsely linked to his profile. The tree desktop inspector now shows Nguyễn Văn Cường with matching NVC initials, đời thứ 2, 1952–2020, deceased status, father Nguyễn Văn An and mother Trần Thị Hòa, and an explicitly named link to his `person-detail.html`; it no longer promises Nguyễn Minh Phúc’s profile. Login includes OAuth buttons, magic-link baseline and separate state specimens; auth callback/verification are not designed by these six pages.
 
 **Visual verdict:** six standalone sources and their initial desktop/mobile light/dark states are visually reviewed; **PARTIAL for application/OD completeness** because these are static previews and the additional Vue route/state families remain outside scope. No Vue implementation was changed.
 
@@ -183,3 +183,115 @@ The independent browser report `.agents/tester/RESULTS/2026-09-26-apple-redesign
 ### Independent Reviewer follow-up evidence
 
 After the four-blocker correction, all six standalone pages were re-rendered at 1440×900 and 390×844 in both themes, with updated 24 PNGs, four `contact-*.jpg` sheets, and `audit-evidence/capture-log.txt`. ImageReader inspected all four actual contact sheets; full-resolution `persons-desktop-light.png` verifies Phúc’s new row, and `dashboard-desktop-light.png` verifies increasing bars. The first post-font full-resolution dashboard audit uncovered that a width on inline `.genbar__fill` spans was not actually painting; the final CSS adds `display:block`. Chrome CDP confirms painted fill widths 30/80/156.67/160px on a 160px track, and custom Be Vietnam Pro for ordinary text (`audit-evidence/font-render-and-bar-probe.txt`). See `design-findings.md` for reviewer-by-reviewer disposition. The visible tree inspector shows Cường’s profile; the demo account is Phúc, his **grandson through Anh**, not the inspector selection.
+
+
+## 7. 2026-09-27 all-shipped-routes clarity gate addendum (supersedes six-page scope)
+
+**Gate at inventory:** NEEDS REDESIGN for all-pages. Six published pages were a coherent palette sample, **not** a complete route contract: `/feed`, `/kinship`, `/auth/email/verify`, `/auth/oauth/callback`, and `404` lacked direct canonical references; `settings.html` omitted real account-linked-identity/contact/security surfaces; authenticated navigation incorrectly featured unshipped Dashboard/Persons routes and omitted Kinship/Feed. `/` redirects `/tree` and is not a separate page. This is a scope/IA failure, not a request to mimic Apple's appearance. The original visual premise passes Apple's *clarity values*—information hierarchy, space, restraint and legibility—conditional on route/state coverage below.
+
+**Canonical route set after local correction:** separate HTML entries `login.html`, `tree.html` (chrome/empty placeholder, **not rendered-node/connector design**), `person-detail.html`, `kinship.html`, `feed.html`, `account.html`, `email-verify.html`, `oauth-callback.html`, `not-found.html`, all importing `assets/tokens.css` and bundled Be Vietnam Pro. **Archived visual concepts:** `dashboard.html`, `persons.html`, `settings.html`; these remain inspectable, but are NOT application routes, not linked from the authenticated top/bottom nav, and must not be implemented as part of this gate. `settings.html` is merely a privacy/preferences concept; use **`account.html`** for shipped `/account`. `person-detail.html` remains a one-person specimen; its parent tab is now Gia phả because `/members/:id` is reached through the tree, and unknown other relatives are not falsely linked to a single specimen.
+
+### Shipped-IA and route mapping
+
+| Vue route | Canonical design | Navigation and state contract |
+|---|---|---|
+| `/` | redirect to `/tree` | No dashboard/home page. |
+| `/login` | `login.html` | Guest-only; provider buttons, email magic link pending/sent/error, amber Demo. No authenticated shell. |
+| `/tree` | `tree.html` | Active Gia phả. Chrome/legend/panels only; preserve existing Canvas/cards exactly. Real app needs loading/error/empty/rendered states. |
+| `/members/:id` | `person-detail.html` | Active parent Gia phả; breadcrumb to tree. Selected Nguyễn Văn Cường is a sample; actual data/content/buttons/relations/posts are route-owned. Loading/not-found/empty/event specimens. |
+| `/kinship` | `kinship.html` | Active Quan hệ; select-two, swap, result/path, unrelated, pending, picker failure. The depicted An→Cường→Anh→Phúc path is illustrative; **do not hardcode the sample kinship term**. The actual engine and versioned cache determine labels. |
+| `/feed` | `feed.html` | Active Bảng tin; public read/anonymous prompt, authenticated composer, image-URL affordance, post cards, empty/loading/error/pagination. Do not treat image placeholder as uploaded asset. |
+| `/account` | `account.html` | Active Tài khoản; **guarded** auth, Demo provider-link restricted/amber, identity and contact cards, notification direction, no contacts, pending/error, unlink confirmation specimen. The provider-success example is for real accounts only. |
+| `/auth/email/verify` | `email-verify.html` | Shell-free pending/verified/expired/malformed; new-link request returns to login. Retry current token is not resend. |
+| `/auth/oauth/callback` | `oauth-callback.html` | Shell-free linked-success/provider/invalid-state/already-linked/demo-restricted errors. Outcome derived synchronously from callback params; do not invent loading state. Guard/navigation varies by auth status. |
+| `/:pathMatch(.*)*` | `not-found.html` | Shell-free 404 with actual-tree and kinship recovery actions. |
+
+The **four authenticated nav destinations** are always Gia phả / Quan hệ / Bảng tin / Tài khoản, with one `aria-current="page"` on the corresponding authored page. Person detail belongs to Gia phả. Standalone auth/error pages intentionally lack authenticated shell. Anonymous app shell must show sign-in affordance rather than Demo badge/avatar; visual samples assume Demo data only where stated. Do not copy the static HTML's sample identity to arbitrary users. The conceptual dashboard/person directory retain the shared shipped nav *as archived preview canvases* with no route-active tab; their content is never acceptance criteria.
+
+### Accessibility, theming, and implementation boundaries
+
+The same light/dark semantic tokens, local Be Vietnam Pro, focus-visible treatment, white-on-deep-terracotta primary buttons, explicit amber Demo, Vietnamese line heights, 320px navigation single-line labels, and mobile safe-area clearance apply to every route. System preference is the only theme policy. Static specimens beneath page content are **mutually exclusive visual states**, not simultaneous runtime UI, and buttons/forms in HTML are display references. In Vue use existing `AppLayout`, `AppButton`, `AppInput`, `AppDialog`, `AuthInterstitial`, `PostCard`, `KinshipResult` and all `data-testid`/`aria-*` hooks; preserve each view's business behavior/guards; introduce no route, backend/API, unrelated font/CDN or new UI framework. For `/tree`, no node/connector/layout/Canvas changes. Destructive unlink uses the existing dialog's focus trap, Escape, focus return and last-identity guard, not the specimen's in-flow group.
+
+**Evidence and publication:** Local Chrome CDP captures in `gate-evidence/` cover all nine current route references at 1440×900 and 390×844, light/dark; plus all nine at 320×800 light/dark, with no document horizontal overflow in the final 54-cell capture. `gate-evidence/contact-{desktop,mobile}-{light,dark}.jpg` are route-family overview images; `gate-evidence/contact-{desktop,mobile}-light-states.jpg` show scrolled selected state galleries. These actual image bytes were delivered to ImageReader; do not mistake folds under mobile fixed nav for inaccessible content without a scroll check. `gate-evidence/{kinship,feed,account,person-detail}-mobile-{light,dark}-scrolled.png` demonstrate scrolling (e.g. kinship path readable after 570px). Source statuses and exact evidence per route are in `design-findings.md` below. The new local artifacts are **not yet published to OpenDesign**; before claiming cross-store sync, publish only after this local gate is approved and then re-list and re-read **each** changed OD page and shared token asset. Older OD `index.html`, `account.html`, `feed.html`, `kinship.html`, etc. remain older concepts until explicitly reconciled; neither is a substitute for canonical files.
+
+
+## 8. Complete 9-route runtime state contracts & visual state sheets
+
+To eliminate guesswork before Vue implementation, representative visual state sheets (`mockups/tree-states.html`, `mockups/account-states.html`, and `mockups/person-detail-states.html`) provide distinct hash-routed panels for complex runtime branches, complementing the main page mocks (`mockups/{login,kinship,feed,account,email-verify,oauth-callback,not-found}.html`).
+
+### 8.1 Complete route × state specification
+
+1. **`/login` (`LoginView.vue`):**
+   - *Idle (guest):* 3 OAuth buttons (Google, Facebook, Zalo) + email magic-link input + amber Demo panel (`INV-04/05`).
+   - *Magic link submit:* `magicLinkLoading = true` disables input, primary button shows spinner, magic-sent banner (`.magic-sent`) is hidden.
+   - *Magic link sent:* `.magic-sent` banner displayed with checkmark icon and explanatory text; form input cleared; toast confirmation dispatched.
+   - *Validation / API error:* Email input highlights with red border; toast notification dispatches `formatApiError(err)`.
+   - *Demo login loading / failure:* Demo button shows spinner `demoLoading = true`; failure toast dispatches on error.
+   - *Verified callback notice:* Triggered via `?verified=1` or `?verified=true`; displays emerald confirmation notice at top of auth card.
+   - *Auth redirect guard:* Authenticated users hitting `/login` redirect immediately to `/tree`.
+
+2. **`/tree` (`TreeView.vue` + `TreeVisualizer.vue`):**
+   - *Rendered-tree success (renderer-owned):* One Canvas connector layer; <= 300 visible person-card DOM nodes (`TreeNodeCard.vue`); DPR <= 2 with 16.7M-pixel backing store guard; orthogonal connectors with generation color bands; GPU-accelerated pan/zoom (`translate3d + scale`).
+   - *Low-zoom dot mode:* Below 0.6x zoom, full cards collapse to 14px circular dot buttons (`TreeNodeCard.vue` button marker) matching generation accent color.
+   - *Button pointer-capture guard:* `pointerdown` on `closest('button')` immediately returns without capturing pointers, ensuring compass, zoom, and fit-view controls work reliably.
+   - *Store loading:* Central spinner card replaces canvas viewport (`data-testid="tree-loading"`).
+   - *Store error:* `EmptyState` component with failure message and outline `Thử lại` button (`data-testid="tree-retry"`).
+   - *Empty tree:* `EmptyState` component; `Thêm thành viên` primary CTA visible only when `auth.isAuthenticated`.
+   - *Unlinked user banner:* Blue callout banner (`INV-02`: line-height >= 1.45) prompting user to link account with tree member.
+   - *Anonymous vs Demo behavior:* Anonymous users see tree chrome with `Đăng nhập để chỉnh sửa` hint instead of add button; Demo accounts display amber badge and cannot link to any tree member (backend 403-first binding).
+
+3. **`/members/:id` (`MemberDetailView.vue`):**
+   - *Hero card:* Avatar, member name, generation chip, living status chip, birth-death years, and action buttons (`Sửa`, `Xóa` for authenticated; `Đăng nhập để chỉnh sửa` hint for guest).
+   - *Tab 1: Tổng quan (`overview`):* Definition list displaying family name, gender (`uiGender`), birth date, death date, notes.
+   - *Tab 2: Quan hệ (`relations`):* 4 distinct groups (`Cha mẹ`, `Vợ chồng`, `Anh chị em`, `Con cái`) rendered with generation-striped cards, avatars, gender chips, and individual member profile links; empty groups display italic `group.emptyText`.
+   - *Tab 3: Bảng tin (`posts`):* Displays list of `PostCard` components for this member's posts; empty list displays `Chưa có bài viết nào.`
+   - *Edit modal (`MemberEditDialog.vue`):* Modal dialog with `MemberCardPreview` live preview card, full name input, gender select (`Nam`/`Nữ`), birth date, death date (disabled when `isLiving` checked), living checkbox, notes textarea, form-level API error, and submit button.
+   - *Delete confirm dialog (`AppDialog.vue`):* Modal with risk warning regarding reassignment of children, outline cancel button, and red destructive delete button.
+   - *Loading skeleton / Not-found fallback:* Loading card with spinner (`data-testid="member-loading"`); not-found `EmptyState` with `Về cây gia phả` recovery action.
+
+4. **`/kinship` (`KinshipView.vue` + `KinshipResult.vue`):**
+   - *Initial prompt state:* Before two members are chosen, card prompts user to select two individuals.
+   - *Two-person selection:* Two combobox pickers with avatar, full name, swap button (`swapSelections`), and dialect selector (`Bắc`, `Trung`, `Nam`).
+   - *Quick-demo shortcut:* Amber chip (`INV-04`) to quickly load demo pair (An -> Phúc).
+   - *Calculation in-flight:* Primary button disabled with spinner (`kinshipStore.loading = true`).
+   - *Result display (`KinshipResult.vue`):* Large relationship term (`data-testid="kinship-term"`, terracotta display type), grammar context sentence, metadata chips (lineage, distance, blood/marriage, dialect), and step-by-step path timeline with numbered avatar nodes, generation border colors, and role headings.
+   - *Unrelated state:* Banner explaining no relationship was found in the graph.
+   - *Member list load failure:* Error banner explaining failure to load member list.
+
+5. **`/feed` (`FeedView.vue` + `PostCard.vue`):**
+   - *PWA banner & header:* Install prompt banner, title, family selector dropdown, and push notification toggle.
+   - *Authenticated composer:* Author avatar, borderless textarea, character counter (max 2000 runes), image URL input field with URL chips (including delete button), and submit button.
+   - *Anonymous hint:* Amber/terracotta banner stating `Đăng nhập để đăng bài viết.` with login button.
+   - *Feed loading:* 3-card pulsing skeleton (`data-testid="feed-loading"`).
+   - *Feed error:* Red banner with error copy and outline retry button (`data-testid="feed-error"`).
+   - *Empty feed:* `EmptyState` component for when family has zero posts.
+   - *Feed posts list:* Chronological `PostCard` entries with author avatar, name, date, content text, and `ImageGrid`.
+   - *Pagination:* `Tải thêm` outline button with loading spinner, and page-level error text if cursor fetch fails.
+
+6. **`/account` (`AccountView.vue`):**
+   - *Profile card:* Avatar, display name, Demo badge (if demo), and user ID.
+   - *Demo notice:* Amber panel stating demo accounts are independent and cannot link to real OAuth providers.
+   - *Linked identities list:* Grid of identity cards displaying provider icon/letter, provider name, subject identifier, linked date, and last login date.
+   - *Unlink action & sole-identity guard:* Unlink button disabled with explanatory tooltip when `isSoleIdentity = true`.
+   - *Confirm unlink dialog (`AppDialog.vue`):* Modal confirming disconnection of selected provider with cancel and destructive confirm button.
+   - *Add provider section (real accounts only):* Buttons for Google, Facebook, Zalo; completely hidden for Demo accounts.
+   - *Contact points list:* Rows for email and phone numbers with verification status badges (`Đã xác thực` / `Chưa xác thực`) and verify trigger button.
+   - *Add contact form:* Select kind (`email`/`phone`), input value, and submit button.
+   - *Empty contact state:* Notice displayed when zero contact points exist.
+   - *Route guard:* Unauthenticated users redirect to `/login?redirect=/account`.
+
+7. **`/auth/email/verify` (`EmailVerifyView.vue`):**
+   - *Pending:* Step 2 indicator, spinner disc, `Đang xác thực liên kết...` title, and waiting message.
+   - *Verified (success):* Step 3 indicator, emerald checkmark disc, `Đăng nhập thành công!` title, and 500ms auto-redirect to `/tree`.
+   - *Expired / invalid:* Error disc, failure title, explanatory copy, and retry button (if token exists) or `Về trang đăng nhập` button.
+   - *Missing token:* Direct error state indicating missing authentication code with return to login button.
+
+8. **`/auth/oauth/callback` (`OAuthCallbackView.vue`):**
+   - *Synchronous outcome:* Evaluated immediately from URL parameters `oauth_linked` or `oauth_error`.
+   - *Success state:* Emerald checkmark disc, confirmation of linked provider name, 1.5s auto-redirect to `/account`.
+   - *Error states:* Handled for `invalid_state`, `already_linked`, `provider_error`, `demo_restricted`, `server_error`.
+   - *Navigation target:* Authenticated users see `Quay lại trang tài khoản`; guest users see `Về trang đăng nhập`.
+
+9. **`/:pathMatch(.*)*` (`NotFoundView.vue`):**
+   - *404 Display:* Terracotta icon disc, large 404 numeral, `Không tìm thấy trang` heading, and warm explanation.
+   - *Recovery navigation:* Primary `Về cây gia phả` button, secondary `Tìm người trong họ` (Kinship) button, and browser back link.

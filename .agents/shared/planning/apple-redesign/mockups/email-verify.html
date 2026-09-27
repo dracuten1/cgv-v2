@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Xác thực email — Cây Gia Phả</title><script>if(new URLSearchParams(location.search).get("theme")==="light")document.documentElement.dataset.theme="light";</script><link rel="stylesheet" href="assets/tokens.css"><style>
+.interstitial-page { min-height:100dvh; display:grid; place-items:center; padding:32px 16px; }
+.interstitial-card { width:min(100%,430px); padding:32px; text-align:center; }
+.interstitial-brand { display:flex; align-items:center; justify-content:center; gap:10px; font-weight:700; font-size:var(--text-md); }
+.interstitial-disc { width:56px;height:56px; border-radius:999px; background:var(--accent-tint); color:var(--accent-fg); display:grid; place-items:center; margin:28px auto 16px; }
+.interstitial-disc--success { color:var(--success-fg); background:var(--success-soft); }
+.interstitial-disc--danger { color:var(--danger-fg); background:var(--danger-soft); }
+.interstitial-card .t-body { color:var(--ink-2); margin-top:8px; }
+.interstitial-foot { border-top:1px solid var(--hairline); margin-top:24px; padding-top:20px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+.interstitial-specimens { max-width:1000px; margin:0 auto 64px; padding:0 16px; }
+.interstitial-specimens .state-gallery { margin-top:0; }
+@media(max-width:360px){.interstitial-card{padding:24px 20px;}}
+</style></head><body>
+<main class="interstitial-page"><section class="card interstitial-card" role="status" aria-live="polite"><div class="interstitial-brand"><span class="brand__mark">Ph</span><span>Cây Gia Phả</span></div><p class="t-note" style="margin-top:8px;">Xác thực liên kết email</p><div class="interstitial-disc"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><h1 class="t-head">Đang xác thực liên kết…</h1><p class="t-body">Vui lòng đợi trong giây lát. Chúng tôi đang kiểm tra liên kết đăng nhập của bạn.</p><div class="interstitial-foot"><span class="t-note">Bước 2/3 · Đang xác thực</span></div></section></main>
+<section class="interstitial-specimens" aria-label="Trạng thái xác thực email — mẫu thiết kế"><p class="section-label">Các trạng thái loại trừ nhau · chỉ hiển thị một trạng thái trong ứng dụng</p><div class="state-gallery"><div><p class="state-gallery__title">Đã xác thực</p><div class="state-card" role="status"><div class="interstitial-disc interstitial-disc--success" style="margin:0 0 12px;">✓</div><h2>Đăng nhập thành công!</h2><p>Liên kết đã được xác nhận. Bạn sẽ được chuyển đến cây gia phả.</p><a class="btn btn--primary btn--sm" href="tree.html" style="margin-top:14px;">Vào cây gia phả</a></div></div><div><p class="state-gallery__title">Hết hạn / không hợp lệ / thiếu mã</p><div class="state-card state-card--error" role="alert"><div class="interstitial-disc interstitial-disc--danger" style="margin:0 0 12px;">!</div><h2>Liên kết không hợp lệ</h2><p>Liên kết đã hết hạn hoặc không đúng. Về trang đăng nhập để yêu cầu một liên kết mới; “Thử lại” chỉ xác thực lại mã hiện tại.</p><a class="btn btn--secondary btn--sm" href="login.html" style="margin-top:14px;">Yêu cầu liên kết mới</a></div></div></div></section>
+</body></html>
