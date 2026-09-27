@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"testing"
 	"time"
 
 	"github.com/dracuten1/cgv-v2/api/internal/auth"
@@ -351,9 +352,19 @@ func (f *fakeFeedService) Create(ctx context.Context, familyID string, authorUse
 	return p, nil
 }
 
-type fakeSocialPostRepo struct{}
+type fakeSocialPostRepo struct {
+	t       *testing.T
+	gotDBTX bool
+}
 
 func (s *fakeSocialPostRepo) ListByAuthor(ctx context.Context, dbtx database.DBTX, memberID string, limit int) ([]model.Post, error) {
+	if dbtx == nil {
+		if s.t != nil {
+			s.t.Fatalf("ListByAuthor received nil database executor")
+		}
+		panic("ListByAuthor received nil database executor")
+	}
+	s.gotDBTX = true
 	return []model.Post{}, nil
 }
 

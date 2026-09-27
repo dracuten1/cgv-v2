@@ -309,3 +309,14 @@ func TestOutboxRepo_QueryShapes(t *testing.T) {
 		}
 	})
 }
+
+func TestPostRepository_ListByAuthor_NilExecutor(t *testing.T) {
+	repo := socialrepo.NewPostRepository()
+	posts, err := repo.ListByAuthor(context.Background(), nil, "member-1", 10)
+	if err == nil {
+		t.Fatal("expected error for nil database executor")
+	}
+	if posts != nil {
+		t.Fatalf("expected nil posts, got %#v", posts)
+	}
+}

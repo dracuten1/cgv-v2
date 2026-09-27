@@ -140,6 +140,18 @@ func (a *ExcelImportAdapter) BumpVersion(ctx context.Context, dbtx database.DBTX
 	return a.FamilyRepo.BumpVersion(ctx, dbtx, familyID)
 }
 
+// SocialPostAdapter adapts socialrepo.PostRepository by resolving the executor from the pool.
+type SocialPostAdapter struct {
+	Repo *socialrepo.PostRepository
+	Pool *pgxpool.Pool
+}
+
+// ListByAuthor satisfies SocialPostRepository.
+func (a *SocialPostAdapter) ListByAuthor(ctx context.Context, memberID string, limit int) ([]model.Post, error) {
+	exec := database.GetExecutor(ctx, a.Pool)
+	return a.Repo.ListByAuthor(ctx, exec, memberID, limit)
+}
+
 // FeedPostAdapter adapts socialrepo.PostRepository with GetExecutor(ctx, pool) to feed.PostStore.
 type FeedPostAdapter struct {
 	Repo *socialrepo.PostRepository

@@ -95,6 +95,9 @@ FROM feed_posts WHERE family_id = $1`
 
 // ListByAuthor returns the newest posts authored by the given member.
 func (r *PostRepository) ListByAuthor(ctx context.Context, dbtx database.DBTX, memberID string, limit int) ([]model.Post, error) {
+	if dbtx == nil {
+		return nil, errors.New("cannot list posts by author with nil database executor")
+	}
 	limit = clampFeedLimit(limit)
 	rows, err := dbtx.Query(ctx, `SELECT id, family_id, author_member_id, content, images, created_at
 FROM feed_posts WHERE author_member_id = $1 ORDER BY created_at DESC, id DESC LIMIT $2`, memberID, limit)

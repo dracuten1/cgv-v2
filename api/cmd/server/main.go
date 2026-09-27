@@ -126,6 +126,7 @@ func main() {
 	importRepo := genrepo.NewImportRepository(pool)
 
 	socialPostRepo := socialrepo.NewPostRepository()
+	socialPostAdapter := &handler.SocialPostAdapter{Repo: socialPostRepo, Pool: pool}
 	socialOutboxRepo := socialrepo.NewOutboxRepository()
 	socialPushRepo := socialrepo.NewPushRepository()
 
@@ -212,7 +213,7 @@ func main() {
 		ExcelSvc:       excelSvc,
 		FeedSvc:        feedSvc,
 		FeedNamer:      authorNamer,
-		SocialPostRepo: socialPostRepo,
+		SocialPostRepo: socialPostAdapter,
 		PushSvc:        pushSvc,
 	})
 
