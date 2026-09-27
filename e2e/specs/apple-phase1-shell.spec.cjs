@@ -194,7 +194,7 @@ test('demo-amber uses semantic --demo-button (resolved against root)', async ({ 
     const b = page.locator('[data-testid="demo-login-btn"]');
     await expect(b).toHaveCount(1);
     await expect(b).toBeVisible();
-    const m = await b.evaluate((evaluatorSrc, el) => { const ev = eval(evaluatorSrc); const root = getComputedStyle(document.documentElement); const tokenName = '--demo-button'; const tokenRaw = root.getPropertyValue(tokenName).trim(); const tokenColor = (() => { if (!tokenRaw) return null; const probe = document.createElement('span'); probe.style.color = tokenRaw; document.body.appendChild(probe); const resolved = getComputedStyle(probe).color; probe.remove(); return resolved; })(); const measured = ev.measure(el); return { computedBg: getComputedStyle(el).backgroundColor, tokenRaw, tokenColor, computedFg: getComputedStyle(el).color, ratio: measured.ratio, ancestors: measured.ancestors }; }, CONTRAST_EVALUATOR);
+    const m = await b.evaluate((el, evaluatorSrc) => { const ev = eval(evaluatorSrc); const root = getComputedStyle(document.documentElement); const tokenName = '--demo-button'; const tokenRaw = root.getPropertyValue(tokenName).trim(); const tokenColor = (() => { if (!tokenRaw) return null; const probe = document.createElement('span'); probe.style.color = tokenRaw; document.body.appendChild(probe); const resolved = getComputedStyle(probe).color; probe.remove(); return resolved; })(); const measured = ev.measure(el); return { computedBg: getComputedStyle(el).backgroundColor, tokenRaw, tokenColor, computedFg: getComputedStyle(el).color, ratio: measured.ratio, ancestors: measured.ancestors }; }, CONTRAST_EVALUATOR);
     expect(m.tokenColor).toBeTruthy();
     expect(m.computedBg.toLowerCase()).toBe(m.tokenColor.toLowerCase());
     expect(m.ratio).toBeGreaterThanOrEqual(4.5);
@@ -322,7 +322,7 @@ test('chip-contrast fixture: real AppChip gen1–gen4 both themes via vite dev s
       for (const variant of ['gen1', 'gen2', 'gen3', 'gen4']) {
         const chip = page.locator(`[data-generation="${variant}"]`);
         await expect(chip).toBeVisible();
-        const measured = await chip.evaluate((evaluatorSrc, el) => { const ev = eval(evaluatorSrc); return ev.measure(el); }, CONTRAST_EVALUATOR);
+        const measured = await chip.evaluate((el, evaluatorSrc) => { const ev = eval(evaluatorSrc); return ev.measure(el); }, CONTRAST_EVALUATOR);
         const row = { variant, theme, ratio: measured.ratio, fg: measured.fg, bg: measured.bg, fgRgb: measured.fgRgb, bgRgb: measured.bgRgb, ancestors: measured.ancestors };
         rows.push(row);
         if (!Number.isFinite(measured.ratio) || measured.ratio < 4.5) failures.push(row);
@@ -352,7 +352,7 @@ test('auth-interstitial hover contrast both themes', async ({ browser }) => {
       const link = page.locator('main a').first();
       await expect(link).toBeVisible();
       await link.hover();
-      const measured = await link.evaluate((evaluatorSrc, el) => { const ev = eval(evaluatorSrc); return ev.measure(el); }, CONTRAST_EVALUATOR);
+      const measured = await link.evaluate((el, evaluatorSrc) => { const ev = eval(evaluatorSrc); return ev.measure(el); }, CONTRAST_EVALUATOR);
       const row = { theme, ratio: measured.ratio, fg: measured.fg, bg: measured.bg, fgRgb: measured.fgRgb, bgRgb: measured.bgRgb, ancestors: measured.ancestors };
       rows.push(row);
       if (!Number.isFinite(measured.ratio) || measured.ratio < 4.5) failures.push(row);
