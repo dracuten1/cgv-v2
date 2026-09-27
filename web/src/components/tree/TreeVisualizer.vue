@@ -82,7 +82,7 @@
       <div class="flex flex-col gap-1.5">
         <button
           type="button"
-          class="w-8 h-8 rounded-lg bg-white/95 border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-xs flex items-center justify-center cursor-pointer text-lg leading-none"
+          class="w-8 h-8 rounded-lg bg-card/90 border border-hairline text-ink-1 hover:bg-well shadow-e2 focus-visible:ring-2 focus-visible:ring-accent flex items-center justify-center cursor-pointer text-lg leading-none"
           aria-label="Phóng to"
           data-testid="zoom-in"
           @click="zoomBy(1.2)"
@@ -91,7 +91,7 @@
         </button>
         <button
           type="button"
-          class="w-8 h-8 rounded-lg bg-white/95 border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-xs flex items-center justify-center cursor-pointer text-lg leading-none"
+          class="w-8 h-8 rounded-lg bg-card/90 border border-hairline text-ink-1 hover:bg-well shadow-e2 focus-visible:ring-2 focus-visible:ring-accent flex items-center justify-center cursor-pointer text-lg leading-none"
           aria-label="Thu nhỏ"
           data-testid="zoom-out"
           @click="zoomBy(1 / 1.2)"

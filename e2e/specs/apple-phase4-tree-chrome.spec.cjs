@@ -1,5 +1,30 @@
 const { test, expect } = require('@playwright/test');
+const fs = require('node:fs');
+const path = require('node:path');
+const base = process.env.TREE_CHROME_BASE || 'http://127.0.0.1:14180';
+const out = path.resolve(__dirname, '../../.phase4-tree-evidence'); fs.mkdirSync(out,{recursive:true});
+const FAMILY_A = '11111111-1111-4111-8111-000000000001', FAMILY_B='22222222-2222-4222-8222-000000000002';
+function staged(mode='tree',auth='guest') { return async route => {
+ const u=new URL(route.request().url()),p=u.pathname;
+ if(p==='/api/v1/me') { if(auth==='guest') return route.fulfill({status:401,contentType:'application/json',body:'{}'}); return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({User:{id:'u1',display_name:'Demo',is_demo:auth==='demo',member_id:null},Identities:[],Contacts:[]})}); }
+ if(p==='/api/v1/families')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({families:[FAMILY_A,FAMILY_B].map((id,i)=>({id,name:`Gia đình ${i+1}`,version:1,created_at:'2026-01-01T00:00:00Z'}))})});
+ const m=p.match(/\/api\/v1\/families\/([^/]+)\/tree$/); if(m){if(mode==='loading')return new Promise(()=>{});if(mode==='error')return route.fulfill({status:500,contentType:'application/json',body:JSON.stringify({message:'Lỗi thử nghiệm'})});let roots=mode==='empty'?[]:[{id:'aaaaaaaa-0000-4000-8000-000000000001',full_name:'Nguyễn An',gender:'male',generation_index:1,birth_date:null,death_date:null,is_living:true,spouse_ids:[],children:[]}];return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({family_id:m[1],version:1,generations:[{index:1,label:'Đời thứ 1',count:roots.length}],roots})});}
+ if(p.includes('kinship-label'))return route.fulfill({status:200,contentType:'application/json',body:'{"labels":{}}'});
+ return route.continue();
+};}
+async function visit(page,mode='tree',auth='guest',q=''){await page.route('**/api/**',staged(mode,auth));await page.goto(base+'/tree'+q);}
+test('query preselect matches family and unknown family falls back to first',async({browser})=>{const c=await browser.newContext();const p=await c.newPage();await visit(p,'tree','guest',`?family=${FAMILY_B}`);await expect(p.getByTestId('tree-family-name')).toHaveText('Gia đình 2');await expect(p.locator('select').first()).toHaveValue(FAMILY_B);await p.close();const c2=await browser.newContext();const p2=await c2.newPage();await visit(p2,'tree','guest','?family=00000000-0000-4000-8000-000000000099');await expect(p2.getByTestId('tree-family-name')).toHaveText('Gia đình 1');await c.close();await c2.close();});
+test('loading and error retain loading/retry chrome',async({page})=>{await visit(page,'loading');await expect(page.getByTestId('tree-loading')).toBeVisible();await page.unrouteAll();await visit(page,'error');await expect(page.getByTestId('tree-retry')).toBeVisible();});
+test('empty CTA auth gating, anonymous hint, demo notice, lowzoom dots',async({browser})=>{let c=await browser.newContext();let p=await c.newPage();await visit(p,'empty','guest');await expect(p.getByTestId('tree-add-auth-hint')).toBeVisible();await expect(p.getByTestId('empty-add-member')).toHaveCount(0);await c.close();c=await browser.newContext();p=await c.newPage();await visit(p,'empty','real');await expect(p.getByTestId('empty-add-member')).toBeVisible();await c.close();c=await browser.newContext();p=await c.newPage();await visit(p,'tree','demo');await expect(p.getByTestId('tree-demo-notice')).toBeVisible();await expect(p.getByTestId('link-self')).toHaveCount(0);for(let i=0;i<10;i++)await p.getByTestId('zoom-out').click();await expect(p.locator('[aria-label^="Nguyễn An"]')).toBeVisible();await c.close();});
 
-test('tree chrome targeted pack placeholder', async () => {
-  expect(true).toBe(true);
+test('visual matrix captures all staged tree chrome states across themes and sizes',async({browser})=>{
+ const cells=[]; const states=['tree','loading','error','empty'];
+ for(const state of states)for(const theme of ['light','dark'])for(const [w,h] of [[1440,900],[390,844],[320,568]]){
+  const context=await browser.newContext({viewport:{width:w,height:h},colorScheme:theme});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&!/401/.test(m.text()))errors.push(m.text())});
+  await visit(page,state,'guest');if(state==='loading')await expect(page.getByTestId('tree-loading')).toBeVisible();else if(state==='error')await expect(page.getByTestId('tree-retry')).toBeVisible();else if(state==='empty')await expect(page.getByTestId('tree-add-auth-hint')).toBeVisible();else await expect(page.getByTestId('tree-family-name')).toBeVisible();
+  await page.keyboard.press('Tab');await page.waitForTimeout(250);const focus=await page.evaluate(()=>{const e=document.activeElement,s=e&&getComputedStyle(e);return {tag:e&&e.tagName,outline:s&&s.outlineStyle,shadow:s&&s.boxShadow}});
+  const measure=await page.evaluate(()=>{const parse=s=>{const c=document.createElement('canvas'),x=c.getContext('2d');x.fillStyle=s;x.fillRect(0,0,1,1);return [...x.getImageData(0,0,1,1).data].slice(0,3)};const lum=a=>{const z=a.map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4});return .2126*z[0]+.7152*z[1]+.0722*z[2]};const rows=[];for(const e of document.querySelectorAll('h1,h2,h3,p,span,button,a,select')){if(!e.getClientRects().length||!e.innerText.trim())continue;if(e.closest('.tree-world'))continue;let n=e,bg=[255,255,255];while(n){const s=getComputedStyle(n).backgroundColor;if(s!=='rgba(0, 0, 0, 0)'){bg=parse(s);break}n=n.parentElement}const fg=parse(getComputedStyle(e).color),f=lum(fg),b=lum(bg);rows.push(+((Math.max(f,b)+.05)/(Math.min(f,b)+.05)).toFixed(2))}return {min:Math.min(...rows),count:rows.length,scroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth}});
+  const errorsFiltered=errors.filter(x=>!/api\/v1\/me/.test(x));await page.screenshot({path:path.join(out,`${state}-${w}-${theme}.png`),fullPage:true});cells.push({state,w,h,theme,...measure,focus,errors:errorsFiltered});await context.close();
+ }
+ fs.writeFileSync(path.join(out,'matrix.json'),JSON.stringify(cells,null,2));expect(cells.every(c=>c.min>=4.5)).toBeTruthy();expect(cells.filter(c=>c.w===320).every(c=>c.scroll<=320)).toBeTruthy();expect(cells.every(c=>c.focus.outline!=='none'||c.focus.shadow!=='none')).toBeTruthy();expect(cells.every(c=>c.errors.length===0)).toBeTruthy();
 });

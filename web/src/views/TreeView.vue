@@ -1,7 +1,7 @@
 <template>
   <div class="tree-chrome p-4 md:p-6 max-w-7xl mx-auto space-y-4">
     <!-- Toolbar: family selector + generation filter + actions -->
-    <div class="bg-white rounded-xl shadow-xs border border-slate-200 p-4 space-y-3">
+    <div class="tree-chrome-toolbar bg-white rounded-xl shadow-xs border border-slate-200 p-4 space-y-3">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
           <h1 class="text-xl font-bold font-display text-slate-800 truncate" data-testid="tree-family-name">
@@ -11,7 +11,7 @@
             v-model="selectedFamilyId"
             :options="familyOptions"
             placeholder="Chọn dòng họ"
-            class="md:w-56"
+            class="md:w-56 tree-family-select"
             @update:model-value="onFamilyChange"
           />
         </div>
@@ -45,6 +45,9 @@
         </div>
       </div>
 
+      <div v-if="auth.isDemo" class="tree-demo-notice" data-testid="tree-demo-notice" role="status">
+        Phiên Demo · chức năng “Đây là tôi” không khả dụng; phiên Demo không thể liên kết hồ sơ.
+      </div>
       <!-- Generation filter chips (TreeFilter) -->
       <div
         v-if="store.generations.length > 0"
@@ -102,6 +105,7 @@
     <!-- Error state -->
     <EmptyState
       v-else-if="store.error"
+      class="tree-state tree-error"
       title="Không thể tải cây gia phả"
       :description="store.error"
     >
@@ -115,6 +119,7 @@
     <!-- Empty tree -->
     <EmptyState
       v-else-if="hasLoaded && store.roots.length === 0"
+      class="tree-state tree-empty"
       title="Chưa có dữ liệu gia phả."
       description="Hãy thêm thành viên đầu tiên hoặc nhập từ file Excel."
     >
@@ -122,6 +127,7 @@
         <AppButton
           v-if="auth.isAuthenticated"
           variant="primary"
+          data-testid="empty-add-member"
           @click="addOpen = true"
         >
           Thêm thành viên

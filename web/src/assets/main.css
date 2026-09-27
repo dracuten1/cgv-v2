@@ -399,3 +399,97 @@ h1.font-display, h2.font-display, h3.font-display, h4.font-display, h5.font-disp
 @media (prefers-color-scheme: dark) {
  .tree-chrome > .bg-white.rounded-xl, .tree-chrome [data-testid="tree-loading"] { background: var(--color-card); }
 }
+
+/* Tree-view structural chrome: card-like toolbar and status panels only. */
+.tree-chrome > .bg-white.rounded-xl {
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: 18px;
+  box-shadow: var(--shadow-1);
+}
+.tree-chrome [data-testid="tree-family-name"] { color: var(--ink-1); font: 600 17px/1.45 "Be Vietnam Pro", sans-serif; }
+.tree-chrome .tree-family-select select { min-height: 42px; border-radius: 10px; }
+.tree-chrome [data-testid="tree-add-auth-hint"] { color: var(--ink-2); line-height: 1.6; }
+.tree-chrome [data-testid="tree-generation-filter"] { padding-top: 2px; }
+.tree-chrome [data-testid="tree-generation-filter"] button {
+  min-height: 38px; padding-inline: 14px; border-radius: 10px;
+  background: var(--surface-well); color: var(--ink-2); border-color: var(--hairline-strong);
+  line-height: 1.45;
+}
+.tree-chrome [data-testid="tree-generation-filter"] button:hover { color: var(--accent-fg); border-color: var(--accent); }
+.tree-chrome [data-testid="tree-generation-filter"] button.bg-terracotta {
+  color: var(--accent-fg); background: var(--accent-tint); border-color: var(--accent);
+}
+.tree-chrome [data-testid="unlinked-banner"] {
+  color: var(--ink-2); background: var(--surface-well); border-color: var(--hairline-strong); line-height: 1.6 !important;
+}
+.tree-chrome [data-testid="tree-loading"], .tree-chrome [role="status"], .tree-chrome [role="alert"] {
+  border: 1px solid var(--hairline); border-radius: 18px; background: var(--surface-card);
+  color: var(--ink-1); box-shadow: var(--shadow-1); line-height: 1.6;
+}
+.tree-chrome [data-testid="tree-loading"] p { color: var(--ink-2); }
+.tree-chrome [data-testid="tree-retry"] { min-height: 40px; }
+.tree-chrome > [data-testid="tree-loading"] { min-height: 220px; }
+.tree-chrome .tree-inspector { color: var(--ink-1); background: var(--surface-card); border-color: var(--hairline); }
+.tree-chrome :where(button,a,input,select):focus-visible {
+  outline: 3px solid var(--accent); outline-offset: 2px; box-shadow: 0 0 0 2px var(--surface-card);
+}
+.tree-chrome :where(button,a) { transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease; }
+
+.tree-chrome .tree-empty-state { min-height: 280px; border: 1px solid var(--hairline); border-radius: 18px; background: var(--surface-card); box-shadow: var(--shadow-1); line-height: 1.6; }
+.tree-chrome .tree-empty-state h3 { color: var(--ink-1); line-height: 1.45; }
+.tree-chrome .tree-empty-state p { color: var(--ink-2); line-height: 1.6; }
+.tree-chrome .tree-empty-state > div:first-child { background: var(--accent-tint); color: var(--accent-fg); }
+.tree-chrome [data-testid="empty-add-member"] { min-height: 42px; }
+
+.tree-chrome .tree-demo-notice { border:1px solid var(--demo-border); border-radius:var(--r-lg); padding:10px 12px; background:var(--demo-soft); color:var(--demo-deep); font-size:13px; line-height:1.6; }
+
+.tree-chrome-toolbar { background: var(--surface-card) !important; border-color: var(--hairline) !important; border-radius:18px !important; box-shadow:var(--shadow-1) !important; }
+.tree-chrome .tree-family-select select { background:var(--surface-card); color:var(--ink-1); border-color:var(--hairline-strong); }
+.tree-chrome .tree-compass button, .tree-compass button { min-width:28px; min-height:28px; }
+
+/* Tree chrome accessible focus contrast uses ink-backed terracotta in dark mode. */
+@media (prefers-color-scheme: dark) {
+  .tree-chrome :where(button,a,input,select):focus-visible,
+  .tree-compass :where(button):focus-visible { outline-color:#F2AD89; }
+}
+
+.tree-chrome [data-testid="tree-generation-filter"] button.bg-terracotta { background:var(--surface-well); color:var(--accent-fg); border-color:var(--accent); }
+.tree-chrome .text-slate-500, .tree-chrome .text-slate-600 { color:var(--ink-2); }
+.tree-chrome .tree-empty-state .text-ink-2 { color:var(--ink-2); }
+
+.tree-chrome .tree-empty-state :where(h3,p) { color:var(--ink-1); }
+.tree-chrome .tree-empty-state p { color:var(--ink-2); }
+.tree-chrome .tree-empty-state .text-ink-2 { color:var(--ink-2); }
+
+/* Keep these existing semantic utility classes readable inside the tree chrome. */
+.tree-chrome [class~="text-slate-400"] { color:var(--ink-3); }
+.tree-chrome [class~="text-slate-500"] { color:var(--ink-2); }
+.tree-chrome [class~="text-ink-2"] { color:var(--ink-2); }
+.tree-chrome [class~="text-slate-600"] { color:var(--ink-2); }
+
+/* Legend generation labels are chrome text; use AA text roles, not decorative accents. */
+.tree-chrome [data-testid^="band-gen-"] span { color:var(--ink-2) !important; }
+
+.tree-chrome [data-testid="zoom-in"], .tree-chrome [data-testid="zoom-out"] { color:var(--ink-1) !important; background:var(--surface-card) !important; }
+
+/* Overlay buttons are existing TreeVisualizer chrome; do not touch renderer behavior. */
+.tree-viewport [data-testid="zoom-in"], .tree-viewport [data-testid="zoom-out"], .tree-viewport [data-testid="fit-view"] {
+  color:var(--ink-1) !important; background:var(--surface-card) !important; border-color:var(--hairline) !important;
+  box-shadow:var(--shadow-2) !important;
+}
+.tree-viewport [data-testid="zoom-in"]:focus-visible, .tree-viewport [data-testid="zoom-out"]:focus-visible, .tree-viewport [data-testid="fit-view"]:focus-visible {
+  outline:3px solid var(--accent); outline-offset:2px;
+}
+
+.tree-viewport [data-testid="zoom-in"], .tree-viewport [data-testid="zoom-out"], .tree-viewport [data-testid="fit-view"] { color:var(--ink-1) !important; background:var(--surface-card) !important; }
+
+.tree-viewport[data-view-centered] [data-testid="zoom-in"],
+.tree-viewport[data-view-centered] [data-testid="zoom-out"],
+.tree-viewport[data-view-centered] [data-testid="fit-view"] {
+  color:var(--ink-1) !important; background:var(--surface-card) !important; border-color:var(--hairline) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tree-viewport [data-testid="zoom-in"], .tree-viewport [data-testid="zoom-out"], .tree-viewport [data-testid="fit-view"] { color:#1D1D1F !important; background:#F8F6F2 !important; }
+}
