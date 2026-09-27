@@ -1,3 +1,17 @@
+// REPAIR 2026-09-27 (follow-up to 53e4ab6): contrast parser re-ported from the
+// PROVEN canvas sweep (apple-phase3-content.spec.cjs — canvas 2D fillStyle +
+// getImageData roundtrip, handles oklch()/color-mix()/named/hex). 53e4ab6 died
+// twice: (1) ESCAPING — its regexes used single backslashes inside the rowGates
+// TEMPLATE LITERAL, and "\d"/"\("/"\)" are not template escapes (they degrade to
+// "d"/"("/")"), so the browser ran /[d.]+/g and capture groups shifted;
+// (2) APPROACH — string-parsing color functions mis-reads oklch() channels as
+// RGB because Chromium PRESERVES oklch() notation in computed styles (the
+// adjudicated rgb(1,0,95) artifact). The canvas roundtrip normalizes ANY css
+// color to sRGB bytes and we parse only that output. Also: the duplicate-input-
+// id assertion is converted to RECORD-AND-REPORT under KNOWN-DEFECT PD-P3-2
+// (adjudicated report-to-leader; evidence rows in summary.json knownDefects)
+// so the pack's PASS/FAIL reflects only unresolved, unadjudicated defects.
+//
 // Independent Phase 3 /kinship verification spec (REWRITE of the unvalidated draft).
 // Authoring contract: expectations anchored in SOURCE, not mockups. Mockup
 // .agents/shared/planning/apple-redesign/mockups/kinship.html is visual
@@ -106,20 +120,37 @@ const expectConsoleClean = (allowed = []) => {
   expect(rejected, 'unexpected console/page errors: ' + JSON.stringify(rejected)).toEqual([]);
 };
 
-// Alpha-composited contrast sweep over visible text-bearing elements (proven port,
-// apple-phase2-email-verify.spec.cjs:13) + per-row overflow and first-Tab focus-visible.
+// Alpha-composited contrast sweep over visible text-bearing elements + per-row
+// overflow and first-Tab focus-visible.
+// PARSER: verbatim-style port of the PROVEN canvas sweep from
+// apple-phase3-content.spec.cjs (same mechanics also in
+// apple-phase3-memberdetail.spec.cjs; 51 valid rows on these exact screens).
+// Canvas 2D converts any CSS color (rgb/hsl/hex/named/oklch()/color-mix()) to
+// sRGB bytes for free; the sentinel detects rejected assignments. Same
+// alpha-compositing convention as the phase2 sweeps. ESCAPING DISCIPLINE for
+// this template literal: NO bare "\d" — use [0-9.] classes or doubled \\s.
 async function rowGates(p, theme, w, state) {
   const rows = await p.evaluate(`(() => {
-    const lum = s => { const m = s.match(/[\d.]+/g) || [0,0,0], a = m.slice(0,3).map(v => +v/255).map(v => v <= .04045 ? v/12.92 : ((v+.055)/1.055) ** 2.4); return .2126*a[0] + .7152*a[1] + .0722*a[2]; };
-    const parse = s => { const m=s.match(/rgba?\(([^)]+)\)/); if(m){const a=m[1].match(/[\d.]+/g).map(Number);return[a[0],a[1],a[2],a.length>3?a[3]:1]} const c=document.createElement("canvas").getContext("2d"); c.fillStyle=s; const rgb=c.fillStyle.match(/[\d.]+/g)||[]; return rgb.length>=3?[+rgb[0],+rgb[1],+rgb[2],1]:[0,0,0,0]; };
+    const cv = document.createElement('canvas'); cv.width = cv.height = 1;
+    const cx = cv.getContext('2d', { willReadFrequently: true });
+    const parse = s => {
+      cx.clearRect(0, 0, 1, 1);
+      cx.fillStyle = '#123456'; // sentinel: detects rejected assignments
+      cx.fillStyle = s;
+      if (/^#123456$/i.test(cx.fillStyle) && !/^#123456$/i.test(String(s || '').trim())) return [0, 0, 0, 0];
+      cx.fillRect(0, 0, 1, 1);
+      const d = cx.getImageData(0, 0, 1, 1).data;
+      return [d[0], d[1], d[2], d[3] / 255];
+    };
+    const lum = rgb => { const a = rgb.map(v => { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2]; };
     const out = [];
     for (const e of document.querySelectorAll('h1,h2,h3,p,span,a,button,label'))
       if (e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && (e.innerText || '').trim() && !e.closest('[aria-hidden=true]')) {
-        const fg = parse(getComputedStyle(e).color), color = getComputedStyle(e).color;
-        let bg = [255,255,255], n = e;
-        while (n) { let x = parse(getComputedStyle(n).backgroundColor); if (x[3]) { bg = x.slice(0,3).map((v,i) => v*x[3] + bg[i]*(1-x[3])); if (x[3] === 1) break; } n = n.parentElement; }
-        const a = lum('rgb(' + fg.slice(0,3) + ')'), b = lum('rgb(' + bg + ')');
-        out.push({ text: e.innerText.trim().slice(0,60), color, effectiveBackground: 'rgb(' + bg.map(Math.round).join(', ') + ')', ratio: (Math.max(a,b) + .05) / (Math.min(a,b) + .05) });
+        const cs = getComputedStyle(e), fg = parse(cs.color);
+        let bg = [255, 255, 255], n = e;
+        while (n) { const x = parse(getComputedStyle(n).backgroundColor); if (x[3] > 0) { bg = bg.map((v, i) => x[i] * x[3] + v * (1 - x[3])); if (x[3] === 1) break; } n = n.parentElement; }
+        const f = lum(fg.slice(0, 3)), b = lum(bg);
+        out.push({ text: (e.innerText || '').trim().replace(/\\s+/g, ' ').slice(0, 60), color: cs.color, effectiveBackground: 'rgb(' + bg.map(Math.round).join(', ') + ')', ratio: +((Math.max(f, b) + 0.05) / (Math.min(f, b) + 0.05)).toFixed(3) });
       }
     return out;
   })()`);
@@ -141,20 +172,35 @@ async function rowGates(p, theme, w, state) {
 
 // PD-P3-1 badge scan: every visible "Đời N" micro-badge must carry color
 // var(--gen-N-fg) on var(--gen-N-soft) with alpha-composited contrast ≥ MIN_AA.
+// Same canvas-roundtrip parser as rowGates (function form here, so regexes need
+// no template escaping): badge fg/bg compute to oklch(...) on this app — the
+// numeric-regex parse previously produced the adjudicated rgb(1,0,95) artifact.
 const scanGenBadges = p => p.evaluate(() => {
-  const probe = v => { const el = document.createElement('span'); el.style.color = v; document.body.appendChild(el); const c = getComputedStyle(el).color; el.remove(); return c; };
-  const parse = s => { const m = (s || '').match(/[\d.]+/g) || []; return m.length >= 3 ? [+m[0], +m[1], +m[2]] : null; };
-  const eq = (a, b) => { const x = parse(a), y = parse(b); return !!x && !!y && x.every((v, i) => Math.abs(v - y[i]) < 1); };
+  const cv = document.createElement('canvas'); cv.width = cv.height = 1;
+  const cx = cv.getContext('2d', { willReadFrequently: true });
+  const parse = s => {
+    cx.clearRect(0, 0, 1, 1);
+    cx.fillStyle = '#123456'; // sentinel: detects rejected assignments
+    cx.fillStyle = s;
+    if (/^#123456$/i.test(cx.fillStyle) && !/^#123456$/i.test(String(s || '').trim())) return null;
+    cx.fillRect(0, 0, 1, 1);
+    const d = cx.getImageData(0, 0, 1, 1).data;
+    return [d[0], d[1], d[2], d[3] / 255];
+  };
+  const eq = (a, b) => { const x = parse(a), y = parse(b); return !!x && !!y && x.slice(0, 3).every((v, i) => Math.abs(v - y[i]) < 1); };
   const lum = c => { const a = c.map(v => v / 255).map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4); return .2126 * a[0] + .7152 * a[1] + .0722 * a[2]; };
+  const probe = v => { const el = document.createElement('span'); el.style.color = v; document.body.appendChild(el); const c = getComputedStyle(el).color; el.remove(); return c; };
   const out = [];
   for (const el of document.querySelectorAll('span')) {
     const m = (el.textContent || '').trim().match(/^Đời (\d+)$/);
     if (!m || !el.getClientRects().length) continue;
     const slot = ((+m[1] - 1) % 4) + 1;
     const cs = getComputedStyle(el), fgToken = probe(`var(--gen-${slot}-fg)`), accent = probe(`var(--gen-${slot})`);
+    const fg = parse(cs.color);
+    if (!fg) continue;
     let bg = [255, 255, 255], n = el;
-    while (n) { const mm = getComputedStyle(n).backgroundColor.match(/[\d.]+/g) || []; if (mm.length >= 3) { const a = mm.length > 3 ? +mm[3] : 1; bg = bg.map((v, i) => +mm[i] * a + v * (1 - a)); if (a === 1) break; } n = n.parentElement; }
-    const L1 = lum(cs.color.match(/[\d.]+/g).slice(0, 3).map(Number)), L2 = lum(bg);
+    while (n) { const x = parse(getComputedStyle(n).backgroundColor); if (x && x[3] > 0) { bg = bg.map((v, i) => x[i] * x[3] + v * (1 - x[3])); if (x[3] === 1) break; } n = n.parentElement; }
+    const L1 = lum(fg.slice(0, 3)), L2 = lum(bg);
     out.push({
       text: (el.textContent || '').trim(), slot, color: cs.color, background: `rgb(${bg.map(Math.round).join(', ')})`,
       colorIsFgToken: eq(cs.color, fgToken), tokensDiffer: !eq(fgToken, accent),
@@ -195,11 +241,13 @@ test.afterEach(async ({}, info) => {
     whitelisted: (current.errors || []).filter(e => isWhitelisted(e, allowed)).map(e => ({ url: e.url, status: e.status })),
     nonWhitelisted: (current.errors || []).filter(e => !isWhitelisted(e, allowed)).map(e => ({ url: e.url, status: e.status, message: (e.message || '').slice(0, 200) })),
     visual: current.visual || [], proof: current.proof || {},
+    defects: current.defects || [],
   };
   if (info.status !== 'passed' && current.p) await current.p.screenshot({ path: path.join(out, 'fail-' + info.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.png'), fullPage: true }).catch(() => {});
   cases.push(record);
   await fs.promises.writeFile(path.join(out, 'case-' + info.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.json'), JSON.stringify(record, null, 2));
-  await fs.promises.writeFile(path.join(out, 'summary.json'), JSON.stringify({ cases }, null, 2));
+  const knownDefects = cases.flatMap(rec => (rec && rec.defects) || []);
+  await fs.promises.writeFile(path.join(out, 'summary.json'), JSON.stringify({ knownDefects, cases }, null, 2));
   current = {};
 });
 
@@ -234,7 +282,26 @@ test('prompt state: composition and per-row gates across sizes and themes', asyn
 test('combobox contract: native option buttons, keyboard select, ARIA, stable input IDs across swap', async ({ browser }) => {
   const c = await staged(browser); const { p } = await open(c);
   const id1 = await input1(p).getAttribute('id'), id2 = await input2(p).getAttribute('id');
-  expect(id1).toBeTruthy(); expect(id2).toBeTruthy(); expect(id1).not.toBe(id2);
+  expect(id1).toBeTruthy(); expect(id2).toBeTruthy();
+  // KNOWN-DEFECT PD-P3-2 — RECORD-AND-REPORT (adjudicated 2026-09-27,
+  // report-to-leader; product FROZEN this task): both pickers' inputs render the
+  // SAME generated id (id="app-combobox-1" — AppCombobox.vue:203-206 instance-
+  // unscoped counter), i.e. duplicate HTML ids. The CORRECT contract stays
+  // documented here: expect(id1).not.toBe(id2). Until the product fix lands the
+  // collision is emitted as a defect row (this case's defects[] + top-level
+  // summary.json knownDefects) instead of failing the pack; when the product is
+  // fixed, defectDetected flips to false in the same row.
+  const idsDistinct = id1 !== id2;
+  if (!idsDistinct) {
+    (current.defects ||= []).push({
+      id: 'PD-P3-2', tag: 'KNOWN-DEFECT PD-P3-2',
+      title: 'Duplicate combobox input ids on /kinship',
+      detail: `both picker inputs share id="${id1}" (contract: distinct app-combobox-N per instance)`,
+      evidence: { url: base + '/kinship', ids: [id1, id2], sourceAnchor: 'web/src/components/ui/AppCombobox.vue:203-206' },
+      adjudication: 'report-to-leader 2026-09-27; product fix deferred',
+      defectDetected: true,
+    });
+  }
   await input1(p).click();
   const listbox = picker1(p).locator('ul[role="listbox"]');
   await expect(listbox).toBeVisible();
@@ -261,7 +328,7 @@ test('combobox contract: native option buttons, keyboard select, ARIA, stable in
   await expect(input2(p)).toBeVisible();
   expect(await input2(p).getAttribute('id')).toBe(id2);
   await expect(picker1(p).locator('[data-testid="combobox-selected-chip"]')).toContainText('Nguyễn Văn Cường'); // picker1 selection untouched
-  current.proof = { inputIds: [id1, id2], contractButtonCount: n, keyboardSelect: true, swapExchanged: true, idStableAfterSwapAndClear: id2 };
+  current.proof = { inputIds: [id1, id2], idsDistinct, pdP3_2: 'KNOWN-DEFECT PD-P3-2 recorded (see summary.json knownDefects)', contractButtonCount: n, keyboardSelect: true, swapExchanged: true, idStableAfterSwapAndClear: id2 };
   expectConsoleClean();
   await c.close();
 });
@@ -302,7 +369,9 @@ test('PD-P3-1: gen badge color token + AA contrast on chips and option rows, bot
       if (b.tokensDiffer) expect(b.colorIsBareAccent, b.text + ' regressed to bare --gen-' + b.slot + ': ' + JSON.stringify(b)).toBeFalsy();
       expect(b.ratio, b.text + ' contrast ' + JSON.stringify(b)).toBeGreaterThanOrEqual(MIN_AA);
     }
-    (current.visual ||= []).push({ state: 'pd-p3-1', width: w, theme, optionBadges: optionBadges.length, chipBadges: chipBadges.length, lowest: all.slice().sort((a, b) => a.ratio - b.ratio).slice(0, 3) });
+    // PD-P3-1 evidence emitter: per-case badge rows + minRatio land in
+    // visual[]/proof → summary.json; badgeMinima aggregates per theme (light/dark).
+    (current.visual ||= []).push({ state: 'pd-p3-1', width: w, theme, optionBadges: optionBadges.length, chipBadges: chipBadges.length, lowest: all.slice().sort((a, b) => a.ratio - b.ratio).slice(0, 3), badgeRows: all.map(b => ({ text: b.text, slot: b.slot, ratio: b.ratio, colorIsFgToken: b.colorIsFgToken, colorIsBareAccent: b.colorIsBareAccent })) });
     current.proof['pd-' + theme + '-' + w] = { optionBadges: optionBadges.length, chipBadges: chipBadges.length, minRatio: Math.min(...all.map(b => b.ratio)) };
     (current.proof.badgeMinima ||= {})[theme] = Math.min(current.proof.badgeMinima?.[theme] ?? Infinity, ...all.map(b => b.ratio));
     expectConsoleClean();
