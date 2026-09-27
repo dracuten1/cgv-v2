@@ -367,3 +367,42 @@ test('auth-interstitial hover contrast both themes', async ({ browser }) => {
     await safeClose(ctx);
   }
 });
+
+test('account-direction demo login → /account + contrast 1440 & 390 both themes', async ({ browser }) => {
+  test.setTimeout(20000);
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'vi-VN', colorScheme: 'light' });
+  const page = await ctx.newPage();
+  await recordErrors(page);
+  try {
+    await page.goto(base + '/login', { waitUntil: 'networkidle' });
+    const b = page.locator('[data-testid="demo-login-btn"]');
+    await expect(b).toHaveCount(1);
+    await b.click();
+    await page.waitForURL(/\/tree/, { timeout: 12000 });
+    const observed = [];
+    for (const v of [{ width: 1440, theme: 'light' }, { width: 1440, theme: 'dark' }, { width: 390, theme: 'light' }, { width: 390, theme: 'dark' }]) {
+      await page.setViewportSize({ width: v.width, height: 900 });
+      await page.emulateMedia({ colorScheme: v.theme });
+      await page.goto(base + '/account', { waitUntil: 'networkidle' });
+      await expect(page.locator('#app')).toBeAttached();
+      await expect(page.locator('main')).toBeVisible();
+      expect(new URL(page.url()).pathname).toBe('/account');
+      const overflow = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
+      expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth);
+      const samples = await page.evaluate((evaluatorSrc) => { const ev = eval(evaluatorSrc); const out = []; const walk = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT); let count = 0; while (walk.nextNode() && count < 60) { const n = walk.currentNode, e = n.parentElement; if (!n.textContent.trim() || !e.getClientRects().length) continue; const s = getComputedStyle(e); if (s.visibility === 'hidden' || +s.opacity === 0) continue; out.push({ text: n.textContent.trim().slice(0, 70), ...ev.measure(e) }); count++; } return out; }, CONTRAST_EVALUATOR);
+      expect(samples.length).toBeGreaterThanOrEqual(3);
+      const sampled = samples.slice(0, Math.min(5, samples.length));
+      const failures = sampled.filter(x => !Number.isFinite(x.ratio) || x.ratio < 4.5);
+      expect(failures, JSON.stringify(failures)).toEqual([]);
+      observed.push({ viewport: v.width, theme: v.theme, path: new URL(page.url()).pathname, overflow, sampledCount: sampled.length, minimum: Math.min(...sampled.map(x => x.ratio)), rows: sampled });
+      await appendCase({ name: `account-direction-${v.width}-${v.theme}`, kind: 'route-contrast', viewport: v.width, theme: v.theme, status: 'PASS', overflow, sampledCount: sampled.length, minimum: Math.min(...sampled.map(x => x.ratio)) });
+    }
+    await appendCase({ name: 'account-direction', kind: 'route-contrast', viewport: 'multi', theme: 'both', status: 'PASS', summary: observed.map(o => ({ viewport: o.viewport, theme: o.theme, minimum: o.minimum })) });
+  } catch (e) {
+    await appendCase({ name: 'account-direction', kind: 'route-contrast', viewport: 'multi', theme: 'both', status: 'FAIL', error: String(e.message || e) });
+    throw e;
+  } finally {
+    try { await page.screenshot({ path: path.join(out, 'account-direction.png'), fullPage: true }); } catch {}
+    await safeClose(ctx);
+  }
+});
