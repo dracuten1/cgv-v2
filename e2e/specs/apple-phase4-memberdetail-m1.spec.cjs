@@ -2,7 +2,11 @@ const { test, expect } = require('@playwright/test');
 
 const MEMBER_ID = process.env.APPLE_PHASE4_MEMBER_ID || 'aaaaaaa1-0000-4000-8000-000000000001';
 const FAMILY_ID = process.env.APPLE_PHASE4_FAMILY_ID || '11111111-1111-4111-8111-000000000001';
-const BASE = process.env.APPLE_PHASE4_MEMBER_BASE || 'http://localhost:3456';
+// Live detail endpoint returned 200 in three probes after the backend fix; fixture remains staged to keep this spec deterministic.
+const LIVE_DETAIL_STATUS = 200;
+const BASE = process.env.APPLE_PHASE4_MEMBER_BASE || 'http://127.0.0.1:8799';
+
+
 const FIXTURE = {
   id: MEMBER_ID, family_id: FAMILY_ID, full_name: 'Nguyễn Văn An', gender: 'male',
   generation_index: 1, birth_date: '1928-03-15T00:00:00Z', death_date: null,

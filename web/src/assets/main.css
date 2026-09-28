@@ -400,6 +400,7 @@ h1.font-display, h2.font-display, h3.font-display, h4.font-display, h5.font-disp
 .tree-chrome [data-testid="tree-loading"] { min-height:220px; }
 .tree-chrome [data-testid="tree-loading"] p { color:var(--ink-2); }
 .tree-chrome [data-testid="tree-retry"] { min-height:40px; }
+.tree-chrome [data-testid="tree-retry"]:focus-visible { outline:3px solid var(--accent); outline-offset:2px; box-shadow:0 0 0 2px var(--surface-card); }
 .tree-chrome .tree-empty-state { min-height:280px; border:1px solid var(--hairline); border-radius:18px; background:var(--surface-card); box-shadow:var(--shadow-1); line-height:1.6; }
 .tree-chrome .tree-empty-state h3 { color:var(--ink-1); line-height:1.45; }
 .tree-chrome .tree-empty-state p { color:var(--ink-2); line-height:1.6; }
@@ -413,7 +414,9 @@ h1.font-display, h2.font-display, h3.font-display, h4.font-display, h5.font-disp
 .tree-viewport [data-testid="zoom-in"], .tree-viewport [data-testid="zoom-out"], .tree-viewport [data-testid="fit-view"] { color:var(--ink-1) !important; background:var(--surface-card) !important; border-color:var(--hairline) !important; box-shadow:var(--shadow-2) !important; }
 .tree-viewport :where([data-testid="zoom-in"],[data-testid="zoom-out"],[data-testid="fit-view"]):focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 @media (prefers-color-scheme: dark) {
- .tree-chrome :where(button,a,input,select):focus-visible, .tree-compass button:focus-visible, .tree-viewport :where([data-testid="zoom-in"],[data-testid="zoom-out"],[data-testid="fit-view"]):focus-visible { outline-color:#F2AD89; }
+ .tree-chrome [data-testid="tree-retry"]:focus-visible, .tree-chrome :where(button,a,input,select):focus-visible, .tree-compass button:focus-visible, .tree-viewport :where([data-testid="zoom-in"],[data-testid="zoom-out"],[data-testid="fit-view"]):focus-visible { outline-color:#F2AD89; }
+ .tree-compass { color: var(--ink-1); background: var(--surface-card); }
+ .tree-compass button:not([data-testid="compass-center"]) { color: var(--ink-1); }
 }
 
 /* Tree node cards are renderer-owned; deliberately excluded from chrome contrast gates. */
