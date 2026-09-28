@@ -283,6 +283,9 @@ const onKeyDown = (event: KeyboardEvent) => {
     event.preventDefault();
     isOpen.value = false;
     activeIndex.value = -1;
+    // A4: Escape closes the listbox and returns focus to the combobox trigger
+    // (WAI-ARIA APG). Null-safe: in the selected-chip view the input is unmounted.
+    inputRef.value?.focus();
   }
 };
 

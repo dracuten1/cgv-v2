@@ -10,7 +10,7 @@
     <h3 class="text-base font-semibold text-ink-1 mb-1 font-body">
       {{ title }}
     </h3>
-    <p v-if="description" class="text-sm text-ink-2 max-w-sm mb-6">
+    <p v-if="description" class="text-sm text-ink-2 leading-[1.6] max-w-sm mb-6">
       {{ description }}
     </p>
     <div v-if="$slots.action" class="flex items-center space-x-3">
