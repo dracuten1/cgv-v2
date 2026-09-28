@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative min-h-[calc(100vh-8rem)] flex items-center justify-center p-4 sm:p-6 overflow-hidden min-[960px]:grid min-[960px]:grid-cols-[1.1fr_1fr] min-[960px]:items-stretch min-[960px]:p-0"
+    class="relative min-h-[calc(100vh-8rem)] flex items-center justify-center p-4 max-[400px]:p-2 sm:p-6 overflow-hidden min-[960px]:grid min-[960px]:grid-cols-[1.1fr_1fr] min-[960px]:items-stretch min-[960px]:p-0"
   >
     <!-- Heritage ghost decorations (mockup 01): oversized Fraunces glyph + gen-pastel dot clusters.
          Glyph is pure decoration (WCAG 1.4.3-exempt): rendered via ::before pseudo-content so no
@@ -95,7 +95,7 @@
          grid column with canvas background at >=960px per mockup. -->
     <section class="relative flex min-h-0 w-full items-center justify-center min-[960px]:bg-canvas min-[960px]:px-6 min-[960px]:pb-14 min-[960px]:pt-10">
     <!-- Login card -->
-    <div class="relative w-full max-w-md bg-card rounded-app-xl shadow-e2 border border-hairline p-6 sm:p-8 min-[960px]:max-w-[400px]">
+    <div class="relative w-full max-w-md bg-card rounded-app-xl shadow-e2 border border-hairline p-4 max-[400px]:p-3 sm:p-8 min-[960px]:max-w-[400px]">
       <!-- Brand lockup -->
       <div class="text-center mb-8">
         <div

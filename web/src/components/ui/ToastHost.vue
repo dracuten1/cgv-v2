@@ -1,6 +1,6 @@
 <template>
   <div
-    class="fixed bottom-20 md:bottom-6 left-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none w-auto"
+    class="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:max-w-sm z-50 flex flex-col space-y-2 pointer-events-none w-auto"
     role="region"
     aria-label="Thông báo"
   >
