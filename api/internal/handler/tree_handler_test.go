@@ -6,12 +6,74 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/dracuten1/cgv-v2/api/internal/auth"
+	"github.com/dracuten1/cgv-v2/api/internal/database"
 	"github.com/dracuten1/cgv-v2/api/internal/model"
+	genrepo "github.com/dracuten1/cgv-v2/api/internal/repository/genealogy"
+	"github.com/gin-gonic/gin"
 )
 
+type testPosts struct{}
+
+func (testPosts) ListByAuthor(context.Context, database.DBTX, string, int) ([]model.Post, error) {
+	return []model.Post{{ID: "post-control", Content: "test post"}}, nil
+}
+
+type countingMemberRepo struct {
+	*fakeMemberRepo
+	calls int
+}
+
+func (r *countingMemberRepo) GetByID(ctx context.Context, id string) (*genrepo.MemberWithFamily, error) {
+	r.calls++
+	return r.fakeMemberRepo.GetByID(ctx, id)
+}
+func TestGetMember_UUIDValidationAndStatusControls(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	// Register only the production route path with the instrumented handler.
+	r := gin.New()
+
+	// IDs in the router fixture are symbolic, so use a focused wrapped handler
+	// repo with UUID-keyed data for the valid and unknown controls.
+	memberID := "123e4567-e89b-12d3-a456-426614174000"
+	member := &model.Member{ID: memberID, FamilyID: "123e4567-e89b-12d3-a456-426614174001", FullName: "Test Member"}
+	repo := &fakeMemberRepo{members: map[string]*model.Member{memberID: member}}
+	spy := &countingMemberRepo{fakeMemberRepo: repo}
+	h := &TreeHandler{members: spy, relations: &fakeRelationRepo{}, posts: &testPosts{}}
+	r.GET("/api/v1/members/:id", h.GetMember)
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/v1/members/not-a-uuid", nil))
+	if w.Code != http.StatusBadRequest || !strings.Contains(w.Body.String(), `"code":"VALIDATION_ERROR"`) {
+		t.Fatalf("malformed ID: expected 400 VALIDATION_ERROR, got %d: %s", w.Code, w.Body.String())
+	}
+	if spy.calls != 0 {
+		t.Fatalf("malformed ID unexpectedly called GetByID %d times", spy.calls)
+	}
+
+	spy.calls = 0
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/v1/members/123e4567-e89b-12d3-a456-426614174099", nil))
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("unknown UUID: expected 404, got %d: %s", w.Code, w.Body.String())
+	}
+	if spy.calls != 1 {
+		t.Fatalf("unknown UUID expected one GetByID call, got %d", spy.calls)
+	}
+
+	spy.calls = 0
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/v1/members/"+memberID, nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("known UUID: expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	if !strings.Contains(w.Body.String(), `"id":"post-control"`) {
+		t.Fatalf("known UUID response should include authored posts, got: %s", w.Body.String())
+	}
+}
 func TestLinkMember_Success(t *testing.T) {
 	r, userStore, svc := setupLinkMemberRouter(t)
 	user, err := userStore.Create(context.Background(), "Nguyễn Văn Thật", false)

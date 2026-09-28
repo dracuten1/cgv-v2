@@ -393,6 +393,10 @@ type MemberDetailResponse struct {
 // GetMember handles GET /api/v1/members/:id
 func (h *TreeHandler) GetMember(c *gin.Context) {
 	memberID := c.Param("id")
+	if !uuidPattern.MatchString(memberID) {
+		c.JSON(http.StatusBadRequest, model.NewErrorEnvelope(model.CodeValidationError, "Mã thành viên không hợp lệ"))
+		return
+	}
 
 	member, err := h.members.GetByID(c.Request.Context(), memberID)
 	if err != nil {
