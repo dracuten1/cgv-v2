@@ -200,7 +200,7 @@ After the four-blocker correction, all six standalone pages were re-rendered at 
 | `/` | redirect to `/tree` | No dashboard/home page. |
 | `/login` | `login.html` | Guest-only; provider buttons, email magic link pending/sent/error, amber Demo. No authenticated shell. |
 | `/tree` | `tree.html` | Active Gia phả. Chrome/legend/panels only; preserve existing Canvas/cards exactly. Real app needs loading/error/empty/rendered states. |
-| `/members/:id` | `person-detail.html` | Active parent Gia phả; breadcrumb to tree. Selected Nguyễn Văn Cường is a sample; actual data/content/buttons/relations/posts are route-owned. Loading/not-found/empty/event specimens. |
+| `/members/:id` | `person-detail.html` (visual specimen) + `person-detail-states.html` (composition & state contract) | Active parent Gia phả; breadcrumb “← Gia phả” to tree; “Xem trên cây” secondary action → `/tree?family=<member.family_id>` (node focus deferred — frozen renderer surfaces; see §9 D12/M1). **Canonical composition = hero + 3 tabs (Tổng quan/Quan hệ/Bảng tin)** per `person-detail-states.html` and §8.1-3; the pre-2026-09-27 single-page timeline and “Chia sẻ” specimens are archived visual language, not runtime scope. Loading/not-found/tab-empty specimens. |
 | `/kinship` | `kinship.html` | Active Quan hệ; select-two, swap, result/path, unrelated, pending, picker failure. The depicted An→Cường→Anh→Phúc path is illustrative; **do not hardcode the sample kinship term**. The actual engine and versioned cache determine labels. |
 | `/feed` | `feed.html` | Active Bảng tin; public read/anonymous prompt, authenticated composer, image-URL affordance, post cards, empty/loading/error/pagination. Do not treat image placeholder as uploaded asset. |
 | `/account` | `account.html` | Active Tài khoản; **guarded** auth, Demo provider-link restricted/amber, identity and contact cards, notification direction, no contacts, pending/error, unlink confirmation specimen. The provider-success example is for real accounts only. |
@@ -262,7 +262,7 @@ To eliminate guesswork before Vue implementation, representative visual state sh
 
 5. **`/feed` (`FeedView.vue` + `PostCard.vue`):**
    - *PWA banner & header:* Install prompt banner, title, family selector dropdown, and push notification toggle.
-   - *Authenticated composer:* Author avatar, borderless textarea, character counter (max 2000 runes), image URL input field with URL chips (including delete button), and submit button.
+   - *Authenticated composer:* Author avatar, borderless textarea, character counter (max 5000 runes — parity with backend `feed.MaxContentRunes`; corrected from 2000 on 2026-09-27, see §9), image URL input field with URL chips (including delete button), and submit button.
    - *Anonymous hint:* Amber/terracotta banner stating `Đăng nhập để đăng bài viết.` with login button.
    - *Feed loading:* 3-card pulsing skeleton (`data-testid="feed-loading"`).
    - *Feed error:* Red banner with error copy and outline retry button (`data-testid="feed-error"`).
@@ -297,3 +297,16 @@ To eliminate guesswork before Vue implementation, representative visual state sh
 9. **`/:pathMatch(.*)*` (`NotFoundView.vue`):**
    - *404 Display:* Terracotta icon disc, large 404 numeral, `Không tìm thấy trang` heading, and warm explanation.
    - *Recovery navigation:* Primary `Về cây gia phả` button, secondary `Tìm người trong họ` (Kinship) button, and browser back link.
+
+## 9. 2026-09-27 Phase-3 designer rulings (D12 · M1 · counter drift · OBS-1)
+
+Evidence: fresh-build captures at `.agents/shared/planning/apple-redesign/audit-evidence/phase3-rulings-20260927/` (isolated static server + `/api` proxy to live `:3456`; member-detail GET staged via route interception because the live endpoint currently 500s — backend nil-pointer panic, logged as an out-of-design-scope defect). Vision audit batched (8 images, one `vision` call) against the OD-approved `person-detail.html` / `person-detail-states.html` renders.
+
+1. **D12/M2 — ACCEPT tab composition as canonical.** The implemented `/members/:id` (hero + tabs Tổng quan/Quan hệ/Bảng tin, hero `Sửa`/`Xóa`, per-group `emptyText`, PostCard reuse without composer) matches the approved `person-detail-states.html` contract and §8.1-3; the old single-page timeline composition in `person-detail.html` was a visual specimen, now revised to the tabbed composition (published 2026-09-27). No composition change required of the implementation. Empty/multi-item/dialog disposition (original D12 ask): heading retained + italic `group.emptyText` per group; dialogs remain per `person-detail-states.html` (`MemberEditDialog`, delete confirm with unchanged risk copy).
+2. **M1 — restoration scope (Phase 4 developer; presentation-only):**
+   - **Restore** breadcrumb `← Gia phả` (small accent text link, above page title / hero) — already required by §7 route map.
+   - **Restore** `Xem trên cây` as a secondary button: desktop in page-head right; mobile (≤767px) full-width row under hero meta. Contract: `router-link` → `/tree?family=<member.family_id>`; tree top-bar honors `family` preselect (chrome-level). **Defer** node focus/centering (`&focus=<member_id>`, highlight ring) — it requires frozen `useTree*`/viewport surfaces (phase-4 invariants) and needs separate approval; placement in the mock already reserves it.
+   - **Do not restore** `Chia sẻ` — no app behavior exists; `person-detail-states.html` explicitly excludes it ("không thêm hành động chia sẻ… nếu app không có"). `Chỉnh sửa hồ sơ` is already covered by hero `Sửa`.
+3. **Counter drift — corrected 2000 → 5000.** Backend `feed.MaxContentRunes = 5000` (`api/internal/feed/service.go:21`), web `MAX_CONTENT_RUNES = 5000` (`FeedView.vue:265`), live counter renders `0/5000`. `feed.html` (mockup + OD republication) and this design system updated accordingly; `phase3-content.md` contract line updated.
+4. **OBS-1 — confirmed, no change.** Demo feed POST 201 landing in the demo-family feed matches `feed.html` intent: the mock's composer is the demo-authenticated specimen (NMP avatar + amber Demo chip, "Bài viết hiển thị cho cả gia đình"), i.e. visible and functional for demo with family-scoped visibility and backend demo isolation. Advisory only.
+5. **Advisory (Phase 5 polish candidate, not blocking):** the live demo feed renders one post with a broken image (alt "Ảnh bài viết") — dead external URL in seed data. `feed.html` specifies no broken-image state; if desired, specify an `onerror` placeholder treatment in a future revision rather than ad-hoc styling.

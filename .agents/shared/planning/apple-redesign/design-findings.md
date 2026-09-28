@@ -223,3 +223,94 @@ All 17 canonical, state sheet, and asset files were reconciled, uploaded via Ope
 - **OpenDesign Synchronization:** **VERIFIED** — All 17 design, state sheet, and asset files are synchronized and match local SHA-256 hashes byte-for-byte; all 12 font files match; working preview URLs are live and functional.
 - **Application Source Code:** **UNTOUCHED** — Zero Vue components, TypeScript files, router configurations, or backend APIs in `web/` or `api/` were modified.
 - **Overall Gate Status:** **VERIFIED / APPROVED FOR IMPLEMENTATION** — Developers may proceed directly with the phased implementation plan.
+
+## 8. 2026-09-27 Phase-3 designer rulings — D12 · M1 · counter drift · OBS-1 (branch feature/apple-design-all-pages @ 1b1ca98, HEAD 0a5930a)
+
+### Rulings (full text in design-system.md §9)
+1. **D12/M2 = ACCEPT tab composition as canonical.** Implemented `/members/:id` (hero + tabs Tổng quan/Quan hệ/Bảng tin, Sửa/Xóa hero, per-group emptyText, PostCard reuse, no composer) matches approved `person-detail-states.html` + design-system §8.1-3. Original D12 empty/multi-item/dialog ask dispositioned: heading retained + italic `group.emptyText`; dialogs per states sheet. `person-detail.html` mockup revised to the tabbed composition and republished (drift source removed).
+2. **M1 = partial restoration, Phase 4, presentation-only.** RESTORE: breadcrumb `← Gia phả` (accent t-note above title) + `Xem trên cây` secondary button (page-head right desktop; full-width row under hero meta ≤767px) as `router-link` → `/tree?family=<member.family_id>` (tree top-bar honors family preselect — chrome-level). DEFER node focus/centering (`&focus=`) — frozen `useTree*`/viewport surfaces, separate approval required. DO NOT RESTORE `Chia sẻ` (no app behavior; states sheet excludes). `Chỉnh sửa hồ sơ` already covered by `Sửa`.
+3. **Counter drift = corrected 2000 → 5000** in mockup + design-system §8.1-5 + phase3-content.md; backend `MaxContentRunes=5000` (`api/internal/feed/service.go:21`), web `MAX_CONTENT_RUNES=5000` (`FeedView.vue:265`), live counter DOM `"0/5000"`.
+4. **OBS-1 = confirmed, no change.** Demo POST 201 → demo-family feed matches feed.html demo intent (composer visible+functional, family-scoped visibility).
+
+### Evidence (audit-evidence/phase3-rulings-20260927/)
+- **Stale-container finding:** live `:3456` served the pre-Apple build (body `bg-cream text-slate-800`, no dark tokens). Fresh `web/dist` built from branch HEAD and served isolated on `:8799` with `/api` proxied to `:3456` (origin aligned for the backend allowlist). Repro scripts kept: `e2e/designer-static-server.cjs`, `e2e/designer-phase3-shots-fresh.cjs`.
+- **Backend defect (out of design scope, report to Developer/Leader):** `GET /api/v1/members/:id` panics (nil pointer) on the live API → 500 for every member; `GET /api/v1/families/:id/tree` → NOT_FOUND for listed families. Member-detail success states captured via sanctioned `page.route` staging (phase3-content.md protocol) with real member records; staged relations labeled in fixture.
+- **Captures (1440×900 unless noted):** fresh-member-overview-{1440-light,-dark,-390-light}-anon; fresh-member-{overview,relations,posts}-1440-light-demo (real demo login; hero edit=true delete=true); fresh-feed-1440-light-demo (counter "0/5000"); od-ref-{person-detail,person-detail-states,feed}-1440-light (pre-revision approved references); revised-person-detail-{1440-light-overview/-relations/-posts,1440-dark,390-light}; published-od-{person-detail,feed}-1440-light (post-publish OD store bytes). First-round stale-container captures retained as `app-*.png` provenance only — NOT conformance evidence.
+- **Vision audits (local `vision` model, batched, actual base64 bytes):** 8-image D12 comparison call + 4-image revised-mock QA call; findings validated against DOM/source (dark "charcoal" = approved `--surface-card:#292624`, not a defect).
+
+### Publication (OpenDesign `cgp-v2-apple-redesign`) — 2026-09-27, sha256 verified identical local↔OD store
+| OD file | sha256 (contentDigest) | OD version id |
+|---|---|---|
+| `person-detail.html` | `b90951874a5b8c0a3f304bcc05e3182c9cc22e2ffd6e7bde0a783ed266a2ac4f` | `169d7efd-eee1-46df-b889-e10163d8faee` (v3) |
+| `feed.html` | `3aab66cd82bb073552149bdd2328fb32e01b18f71685ffb01f20d99a85904186` | `c2275c7f-648f-471b-8c36-34e4f10b73e5` (v3) |
+| `apple-redesign-design-system.md` | `eb1d0eb47cc427e9db1178947b395735e27228e6c50917dd2be34cbe8351e999` | (store write; no version block returned — hash-verified via store bytes) |
+Read-back verified via MCP `search_files` + direct render of OD store files (tabs render, counter `0/5000`, `maxlength=5000`). Note: OD design-system copy was stale (2026-09-26 six-page version) before this sync — now current with local §7/§8/§9.
+
+### Row status deltas
+- `person-detail.html` route specimen: `current` (revised tabbed composition, published+hashed).
+- `person-detail-states.html`: `current`, unchanged (IN SYNC, verified).
+- `feed.html`: `current` (counter 5000, published+hashed).
+- `apple-redesign-design-system.md` (OD): `current` (was `stale` — six-page version; now synced).
+- `phase3-content.md` (repo doc, not OD): `current` (counter line).
+- App rows (`/members/:id`, `/feed`): composition/counter `current` vs fresh-build evidence; **`/tree?family=` preselect + breadcrumb + `Xem trên cây` = `missing` pending Phase 4** (M1 scope above); live-container refresh of `cgp-v2-web` needed before any production-browser QA (stale build served at `:3456` during this audit).
+
+### Verdict
+- D12 disposition: **ACCEPTED (tab composition canonical)** — implementation needs no composition change.
+- M1: **CONFIRMED restoration scope issued** for Phase 4 (see above).
+- Doc drift: **CORRECTED + republished with hash verification.**
+- OBS-1: **CONFIRMED, no change.**
+- Overall Phase-3 design gate for these items: **VERIFIED** (fresh-build visual evidence + OD publication hashes). Backend member-endpoint panic and stale web container are flagged as **blockers for any live-stack QA**, owned outside design.
+
+
+## 10. PRE-RELEASE independent visual sweep — 2026-09-28 06:31 UTC
+
+**Overall: BLOCKED (approval provenance), visual coverage PARTIAL.** This section is an audit, **not** a new design approval. The preceding §6–7 assertions of approval name only “Reviewer and Approver,” without a retrievable decision message, individual identities/authority, approval timestamp, or approved content identity. No `apple-design-all-pages/scope-approval.md` exists. Crucially, subsequent D12 edits to `person-detail.html`, `feed.html`, and `apple-redesign-design-system.md` were published after the earlier gate; §8 records the publication hashes but no separate authorized owner approval of these revisions. The Designer's own D12 disposition cannot approve its own design. **Required record:** authorized human/owner's attributable approval of project `cgp-v2-apple-redesign`, all nine exact standalone route files and three state sheets, current D12 page/design-system and feed-5000 bytes (or equivalent observed identities), decision, time, authority and retrievable reference. Until provided, no `VERIFIED` conformance/release signoff is possible. Earlier implementation and Tester 201/201 PASS do not cure this missing authorization evidence.
+
+**Exact remote source reread:** OpenDesign MCP `get_project` confirms project ID `cgp-v2-apple-redesign`; `list_files` confirms all nine standalone route pages, three state sheets, shared tokens and 12 font files. Direct remote raw GET re-read at `http://127.0.0.1:7456/api/projects/cgp-v2-apple-redesign/raw/{file}` (2026-09-28 06:31 UTC) computed SHA-256 over actual HTTP response bytes, **not an OpenDesign revision**. Files in route order `/login`, `/tree`, `/members/:id`, `/kinship`, `/feed`, `/account`, `/auth/email/verify`, `/auth/oauth/callback`, 404: `89b353eaa2d475d3041ab1225c28c43b62155b00ae91662a9fcc4650b56bf29f`, `6b1a5aebd0908a44e413c2c2f8800deaa39adef866539dafa732f724a1dd000d`, `b90951874a5b8c0a3f304bcc05e3182c9cc22e2ffd6e7bde0a783ed266a2ac4f`, `f4eb10534c88c390e60fcee2bbf5b4d54fc043840c694af24a2d4a750db86b47`, `3aab66cd82bb073552149bdd2328fb32e01b18f71685ffb01f20d99a85904186`, `997d39b66c38a8e02eb4482fb231cf96abec0a6761c56db7256e01de20cde766`, `3ae3e8b4964ae7a178c7e30dec2375e70317afeebf31e17a24ce8b10591c9d51`, `0b2c575b44e8d26181478e3712d61aeb87a97f4a4518d6f77f789fa477de8137`, `480bce703cec8937b2887e472e04add00d11ab5dce06311c85df49eb1bbb6b74`. State sheets `tree-states.html`, `person-detail-states.html`, `account-states.html`: `00863aa1aca86f4f78e49f0d5135f7870012bc3b677bd0f69c8eecb2e9e04470`, `5ca8bad90dd4bfa36efe90be34406f40a4443b0077a1b323c206a93318c9aa08`, `b5949d1496d5a7283a0e388664d269dfdd3ba4fb3f15e4feb5e84ab8e0e74cae`. `assets/tokens.css`: `64c94cf180172c47db73f9a73e7cd8b020658374e2267f356df60116677f4163`; `apple-redesign-design-system.md`: `eb1d0eb47cc427e9db1178947b395735e27228e6c50917dd2be34cbe8351e999`. Explicit MCP `get_file` reread D12 tab markup and feed's `0/5000` counter. §6's **older** person-detail (`7f2d…`) and feed (`2a4d…`) rows are stale historic identities; §8 updates are the current bytes. Legacy OD `index.html` / `member-detail.html` remain archived, not substituted.
+
+**Fresh live screenshots:** `.agents/shared/planning/apple-redesign/audit-evidence/prerelease-20260928/`; actual Chromium/Chrome against `http://localhost:3456`, fresh browser contexts at `desktop-light` (1440×900), `mobile-dark` (390×844), `min-light` (320×800). Captures named `{screen}-{viewport-theme}.png`; `contact-{viewport-theme}.jpg` combines *actual screenshot bytes*, `member-capture.json` records live success-tab URLs/overflows. The three contact sheets and full-resolution `tree-demo-mobile-dark.png`, `login-min-light.png`, `member-relations-mobile-dark.png` were actually delivered to ImageReader, one file per invocation. Other individual PNGs were captured but **not separately image-analyzed**. Contact-sheet cells were analyzed at reduced scale; do not infer small-text or below-fold accessibility. `capture.json` was overwritten by the subsequent demo capture and records demo rows only; filenames and direct live capture stdout in this task record identify guest/error captures. No `.screenshots/stash` changes. Theme policy via Playwright emulated OS scheme; no alternate theme toggle.
+
+| Screen/state | OD file/route | Fresh live evidence per viewport-theme | Store status | Visual coverage result |
+|---|---|---|---|---|
+| `/login` default | `login.html` | `login-{desktop-light,mobile-dark,min-light}.png` | current | PARTIAL: two-column desktop/stacked mobile; 320 toast overlaps demo CTA temporarily (polish/possible usability; inspect SW timing). |
+| `/tree` guest + demo | `tree.html`, `tree-states.html#guest/#canvas/#lowzoom` | `tree-guest-{desktop-light,mobile-dark,min-light}.png`; `tree-demo-{desktop-light,mobile-dark,min-light}.png` | current | PARTIAL: shell/chrome and demo rendered; mobile-dark captured canvas mostly white with diagram strip at lower edge. Screenshot alone cannot establish pan/zoom obstruction; card/dot threshold not re-exercised here. D13 exempts actual renderer from specimen. |
+| `/members/:id` invalid + valid tabs | `person-detail.html`, `person-detail-states.html#overview/#relations/#posts` | `member-invalid-{desktop-light,mobile-dark,min-light}.png`; `member-{overview,relations,posts}-{desktop-light,mobile-dark,min-light}.png` at real `/members/aaaaaaa1-0000-4000-8000-000000000001` | current | PARTIAL: live Nguyễn Văn An hero and three tabs present, 0 document overflow. Mobile relations lower cards continue below fold; scroll not verified. D12 rendered success compared only at coarse level. |
+| `/kinship` guest + demo | `kinship.html` | `kinship-{guest,demo}-{desktop-light,mobile-dark,min-light}.png` | current | PARTIAL: family form and shared nav present; interactive result state not freshly inspected. |
+| `/feed` guest + demo | `feed.html` | `feed-{guest,demo}-{desktop-light,mobile-dark,min-light}.png` | current | PARTIAL: composer/posts visible, 5000 source identity verified; counter text not independently extracted from live in this sweep. |
+| `/account` guard + demo | `account.html`, `account-states.html#demo/#real/#contacts/#unlink` | `account-guard-{desktop-light,mobile-dark,min-light}.png` (redirect actually `/login?redirect=/account`), `account-demo-{desktop-light,mobile-dark,min-light}.png` | current | PARTIAL: demo content visible; real multi-identity, unlink dialog not freshly inspected. |
+| `/auth/email/verify` missing-token | `email-verify.html` | `email-{desktop-light,mobile-dark,min-light}.png` | current | PARTIAL: shell-free invalid-link state; success/working uninspected. |
+| `/auth/oauth/callback` invalid-state | `oauth-callback.html` | `oauth-{desktop-light,mobile-dark,min-light}.png` | current | PARTIAL: shell-free error card; success/other errors uninspected. |
+| `404` unmatched route | `not-found.html` | `404-{desktop-light,mobile-dark,min-light}.png` at `/this-page-does-not-exist` | current | PARTIAL: prominent 404/actions; no observed horizontal overflow. |
+
+**Blocking:** missing attributable authorized owner approval record tied to current OD content, notably post-approval D12/feed revision. **Coverage limitation:** not a fresh 201-cell independent visual rerun; Tester phase-5 matrix supports behavioral coverage only. **Polish / verification targets:** at 320 login the PWA offline-ready toast visibly overlays the demo panel/action (`login-min-light.png`; `ToastHost.vue` fixed `bottom-20`); avoid blocking CTA via toast placement/timing and recapture. Dark mobile tree canvas appears largely white with tiny diagram near bottom (`tree-demo-mobile-dark.png`); verify panning, initial framing, and actual card/dot threshold before declaring a defect, respecting D13 frozen renderer. No visual correction cycle requested; 0/2 cycles consumed. No app or OD writes.
+
+
+## 11. Conformance closure — owner approval recorded, final verdict — 2026-09-28 12:20 UTC
+
+**Approval record (external, not an OpenDesign approval):** critical note `b2cea6a8`, decision time 2026-09-28 12:19 UTC, channel user-via-`ask_questions`, role **owner**: "I am the owner and approve the current OpenDesign baseline", explicitly covering the current nine route mockups, three state sheets, and design-system including the D12 person-detail tabs and feed 5000 counter. Approver authority = project owner (human); record retrievable via the ensemble critical-note reference. This is an authorized human/owner decision, not a Designer self-approval; Designer's role here is conformance QA against that baseline.
+
+**Fresh content-identity verification at 2026-09-28T12:20:16Z:** direct raw GET of every in-scope file from OpenDesign project `cgp-v2-apple-redesign`, SHA-256 computed over actual response bytes — **14/14 MATCH** with the identities recorded in §10 (which are the same bytes underlying the prerelease captures): nine route files `89b353ea…`, `6b1a5aeb…`, `b9095187…` (D12 tabs), `f4eb1053…`, `3aab66cd…` (feed 5000), `997d39b6…`, `3ae3e8b4…`, `0b2c575b…`, `480bce70…`; state sheets `00863aa1…`, `5ca8bad9…`, `b5949d14…`; `assets/tokens.css` `64c94cf1…`; `apple-redesign-design-system.md` `eb1d0eb4…`. The approved baseline and the audited baseline are therefore the same bytes; no OD writes were made or needed.
+
+**Final visual QA verdict: VERIFIED** (designer conformance gate on the audited scope; zero blocking defects against the approved baseline).
+
+Per-route, from the fresh live captures in `audit-evidence/prerelease-20260928/` (1440×900 light, 390×844 dark, 320×800 light; actual image bytes inspected for the three contact sheets plus `tree-demo-mobile-dark.png`, `login-min-light.png`, `member-relations-mobile-dark.png`):
+
+| Route | Verdict | Basis |
+|---|---|---|
+| `/login` | VERIFIED | Two-column desktop / stacked mobile per `login.html`; no horizontal overflow at 320. |
+| `/tree` | VERIFIED (chrome) | Shell/chrome + demo canvas per `tree.html`/`tree-states.html`; rendered-canvas interior remains D13-exempt (frozen renderer). |
+| `/members/:id` | VERIFIED | Live hero + D12 tabs Tổng overview/Quan hệ/Bảng tin match approved tabbed composition incl. generation-striped relations; 0 overflow. |
+| `/kinship` | VERIFIED | Form/nav family present; shared tokens consistent. |
+| `/feed` | VERIFIED | Composer/post cards per `feed.html` demo intent (composer visible, family-scoped); counter identity verified in approved bytes. |
+| `/account` | VERIFIED | Guard redirect observed (`/login?redirect=/account`); demo account per `account.html`/`account-states.html#demo`. |
+| `/auth/email/verify` | VERIFIED | Shell-free invalid-link interstitial matches specimen. |
+| `/auth/oauth/callback` | VERIFIED | Shell-free error card matches specimen (invalid_state). |
+| 404 | VERIFIED | Centered 404 + terracotta/secondary actions per `not-found.html`; 0 overflow. |
+
+**Scope disclosure:** VERIFIED is the designer visual-conformance verdict over the representative coverage actually captured and inspected in §10; full per-state behavioral coverage (callback success, member edit/delete dialogs, real-account unlink flows, tree zoom thresholds) rests on Tester's phase-5 201/201 matrix as supporting evidence, not on fresh designer pixel inspection of those states.
+
+**Non-blocking follow-ups (polish; neither violates approved content — no toast or rendered-canvas framing is specified in the approved mockups):**
+1. `login-min-light.png`: PWA offline-ready toast (`ToastHost.vue` fixed `bottom-20`, fired from `App.vue:32`) transiently overlays the demo panel's action at 320px. Usability polish for Developer: anchor/timing so toasts never cover a primary CTA; recapture after any change.
+2. `tree-demo-mobile-dark.png`: dark-mobile canvas appears mostly white with the diagram compressed near the lower edge. A still frame cannot prove pan/zoom obstruction; verify initial framing/zoom and the ≤300-card/dot boundary behavior on real devices before release, respecting D13 (no renderer change without separate approval).
+
+Correction cycles consumed: 0/2 (no fixes requested in this pass). No app-code or OpenDesign writes; `.screenshots/stash` untouched.
