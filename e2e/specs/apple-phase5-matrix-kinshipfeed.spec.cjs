@@ -206,8 +206,14 @@ const LH = `(() => {
     if (!text) continue;
     const cs = getComputedStyle(e);
     const r = parseFloat(cs.lineHeight) / parseFloat(cs.fontSize);
-    const floor = text.length >= 25 ? 1.6 : 1.45;
-    if (r < floor - 0.001) bad.push({ kind: text.length >= 25 ? 'body' : 'meta', tag: 'p', text: text.slice(0, 40), ratio: +r.toFixed(3), floor });
+    // Element identity: the source pins banner/hint/helper metadata at leading-[1.45]
+    // (FeedView.vue:105 composer helper, :136 anonymous-hint hint line; design-system.md
+    // §Legibility "headings/badges ≥1.45" + :242 banner copy pinned at 1.45). An UNPINNED
+    // p is body copy → 1.6 floor (main.css:343 body default). Genuine regressions — a p
+    // that LOSES its pin or drops below its band — still fail.
+    const pinned = (e.getAttribute('class') || '').includes('leading-[1.45]');
+    const floor = pinned ? 1.45 : 1.6;
+    if (r < floor - 0.001) bad.push({ kind: pinned ? 'meta-pinned' : 'body', tag: 'p', text: text.slice(0, 40), ratio: +r.toFixed(3), floor });
   }
   return bad; })()`;
 
@@ -741,14 +747,18 @@ test('M3-F feed matrix — success/empty/loading/error × light/dark × 1440/390
     await expect(err).toBeVisible({ timeout: 8000 });
     const roleAlert = (await err.getAttribute('role')) === 'alert';
     const errText = await err.getByText('Lỗi máy chủ').isVisible().catch(() => false);
-    // error card IS the cell state → screenshot before the retry flip
+    // error card IS the cell state → screenshot + gates run IN the error state
+    // (primary control of this state is the Thử lại retry button), recovery after.
     await p.screenshot({ path: path.join(EVID, 'feed', `error-${theme}-${v.n}.png`), fullPage: true }).catch(() => {});
+    const g = await gates(p, { state: 'error', theme, v, wl });
     const retry = err.getByRole('button', { name: 'Thử lại' });
+    const retryVisible = await retry.isVisible().catch(() => false);
     await retry.click();
     await expect(p.locator('[data-testid="feed-list"] [data-testid="post-author"]').first()).toBeVisible({ timeout: 10000 });
-    const g = await gates(p, { state: 'error', theme, v, wl });
-    const row = { route: 'feed', state: 'error', theme, viewport: v.n, scrollWidth: g.overflow.html, verdict: 'PASS', evidence: `evidence/feed/error-${theme}-${v.n}.png`, staged: 'route-anon', capturedAt: new Date().toISOString(), head: CAPTURE_SHA, failedGates: g.failed, minContrast: g.minContrast, focus: g.focus.tag, errorCard: { roleAlert, errText }, retryRecovered: true };
-    const bad = [...g.failed, ...(roleAlert ? [] : ['role-alert-missing']), ...(errText ? [] : ['error-copy-missing'])];
+    // final console re-check after the retry (gates ran pre-retry)
+    const postRetryBad = (current.errors || []).filter((e) => !isWhitelisted(e, wl));
+    const row = { route: 'feed', state: 'error', theme, viewport: v.n, scrollWidth: g.overflow.html, verdict: 'PASS', evidence: `evidence/feed/error-${theme}-${v.n}.png`, staged: 'route-anon', capturedAt: new Date().toISOString(), head: CAPTURE_SHA, failedGates: g.failed, minContrast: g.minContrast, focus: g.focus.tag, errorCard: { roleAlert, errText }, retryRecovered: true, retryButtonVisible: retryVisible, postRetryConsoleBad: postRetryBad.length };
+    const bad = [...g.failed, ...(roleAlert ? [] : ['role-alert-missing']), ...(errText ? [] : ['error-copy-missing']), ...(retryVisible ? [] : ['retry-missing']), ...(postRetryBad.length ? ['post-retry-console:' + JSON.stringify(postRetryBad.slice(0, 2))] : [])];
     if (bad.length) { row.verdict = 'FAIL'; row.failedGates = bad; failures.push(`error ${theme} ${v.n}: ${bad.join(' | ')}`); }
     appendRow('feed', row);
     await ctx.close();
@@ -760,8 +770,12 @@ test('M3-F feed matrix — success/empty/loading/error × light/dark × 1440/390
     const { ctx, page: p } = await demoLogin(browser, v, theme);
     attachLogging(p, current);
     let postIntercepted = false;
-    await ctx.route(FEED_RE, (route) => {
-      if (route.request().method() !== 'POST') return route.fallback(); // follow-up GET → real backend
+    await ctx.route(FEED_RE, async (route) => {
+      if (route.request().method() !== 'POST') {
+        // GET passthrough via server-side fetch (deterministic; no fallback() semantics)
+        const resp = await route.fetch();
+        return route.fulfill({ response: resp });
+      }
       postIntercepted = true;
       return route.fulfill({
         status: 201, contentType: 'application/json',
