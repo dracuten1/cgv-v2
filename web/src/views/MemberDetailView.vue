@@ -55,7 +55,7 @@
 
           <!-- Actions -->
           <div class="flex items-center gap-2 flex-shrink-0">
-            <AppButton variant="outline" size="sm" :to="{ path: '/tree', query: { family: member.family_id } }" class="hidden md:!inline-flex" data-testid="member-view-tree">
+            <AppButton variant="outline" size="sm" :to="{ path: '/tree', query: { family: member.family_id } }" class="!hidden md:!inline-flex" data-testid="member-view-tree">
               Xem trên cây
             </AppButton>
             <template v-if="auth.isAuthenticated">

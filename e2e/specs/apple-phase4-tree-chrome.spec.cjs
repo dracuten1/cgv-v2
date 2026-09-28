@@ -29,3 +29,62 @@ test('visual matrix captures all staged tree chrome states across themes and siz
  fs.writeFileSync(path.join(out,'matrix.json'),JSON.stringify(cells,null,2));
  fs.writeFileSync(path.join(out,'contrast-failures.json'),JSON.stringify(cells.flatMap(c=>c.failures.map(f=>({state:c.state,width:c.w,theme:c.theme,...f,owner:f.classChain.includes('TreeNodeCard')||f.classChain.includes('tree-world')?'renderer-owned':'chrome-owned'}))),null,2));expect(cells.every(c=>c.min>=4.5)).toBeTruthy();expect(cells.filter(c=>c.w===320).every(c=>c.scroll<=320)).toBeTruthy();expect(cells.every(c=>c.focus.outline!=='none'||c.focus.shadow!=='none')).toBeTruthy();expect(cells.every(c=>c.errors.length===0)).toBeTruthy();
 });
+
+test('conditional-exit evidence: retry focus ring and pixel-sampled compass contrast in both themes', async ({ browser }) => {
+ // Methodology (2026-09-28 conditional exit): contrast is MEASURED by pixel sampling, not computed-style math —
+ // the compass surface is translucent (bg-card/90 + backdrop blur) over layered content, so naive token/RGB
+ // walks misread. Element screenshots @dsf2 are decoded in-page; modal color bucket = composited background,
+ // deviant cluster median = glyph; AA fringe below the 30/255 RGB distance threshold is excluded.
+ // Contexts block service workers: the PWA "offline ready" toast renders bottom-right OVER the compass and
+ // would contaminate samples (and click-block the control while visible).
+ const lum = (v) => { const z = v.map(x => { x /= 255; return x <= .04045 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4; }); return .2126*z[0]+.7152*z[1]+.0722*z[2]; };
+ const wcag = (a, b) => +(((Math.max(a, b) + .05) / (Math.min(a, b) + .05)).toFixed(3));
+ const analyze = (pixels) => {
+  const buckets = new Map();
+  for (const [r, g, b] of pixels) { const k = `${r >> 3},${g >> 3},${b >> 3}`; buckets.set(k, (buckets.get(k) || 0) + 1); }
+  const modalRgb = [...buckets.entries()].sort((x, y) => y[1] - x[1])[0][0].split(',').map(x => +x << 3);
+  const glyph = pixels.filter(([r, g, b]) => Math.hypot(r - modalRgb[0], g - modalRgb[1], b - modalRgb[2]) > 30);
+  if (!glyph.length) return { bg: modalRgb, nGlyph: 0, ratio: 0 };
+  const gl = glyph.map(lum).sort((a, b) => a - b);
+  const med = gl[Math.floor(gl.length / 2)];
+  return { bg: modalRgb, glyphCount: glyph.length, ratio: wcag(med, lum(modalRgb)) };
+ };
+ const rows = [];
+ for (const theme of ['light', 'dark']) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: theme, deviceScaleFactor: 2, serviceWorkers: 'block' });
+  const page = await context.newPage();
+  // (1) tree-retry focus ring — keyboard Tab walk so :focus-visible matches (cold script focus() does not).
+  await visit(page, 'error');
+  await expect(page.getByTestId('tree-retry')).toBeVisible();
+  for (let i = 0; i < 10; i++) { await page.keyboard.press('Tab'); if (await page.evaluate(() => { const e = document.activeElement; return !!e && e.getAttribute('data-testid') === 'tree-retry'; })) break; }
+  await expect(page.getByTestId('tree-retry')).toBeFocused();
+  await page.waitForTimeout(250);
+  const ring = await page.getByTestId('tree-retry').evaluate(e => { const s = getComputedStyle(e); return { outlineColor: s.outlineColor, outlineWidth: s.outlineWidth, outlineStyle: s.outlineStyle, shadow: s.boxShadow }; });
+  expect(ring.outlineWidth).not.toBe('0px');
+  expect(ring.outlineColor).not.toBe('rgba(0, 0, 0, 0)');
+  await page.screenshot({ path: path.join(out, `retry-focus-${theme}.png`) });
+  // (2) compass contrast — pixel-sampled, all five controls, toast-free.
+  await visit(page, 'tree');
+  await expect(page.getByTestId('tree-family-name')).toBeVisible();
+  await page.waitForFunction(() => !document.querySelector('.pointer-events-auto'), null, { timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(500);
+  const compass = page.locator('[data-testid="tree-compass"]');
+  await compass.screenshot({ path: path.join(out, `compass-${theme}.png`) });
+  for (const bt of ['compass-north', 'compass-west', 'compass-center', 'compass-east', 'compass-south']) {
+   const buf = await page.getByTestId(bt).screenshot();
+   const pixels = await page.evaluate(async (du) => {
+    const img = new Image(); img.src = du; await img.decode();
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+    const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0);
+    const d = x.getImageData(0, 0, img.width, img.height).data;
+    const px = []; for (let i = 0; i < d.length; i += 4) px.push([d[i], d[i + 1], d[i + 2]]);
+    return px;
+   }, 'data:image/png;base64,' + buf.toString('base64'));
+   const m = analyze(pixels);
+   rows.push({ theme, control: bt, ...m });
+   expect(m.ratio, `${theme} ${bt} pixel-sampled contrast`).toBeGreaterThanOrEqual(4.5);
+  }
+  await context.close();
+ }
+ console.log('TREE_CHROME_CONDITIONAL_EVIDENCE ' + JSON.stringify(rows));
+});

@@ -409,14 +409,18 @@ h1.font-display, h2.font-display, h3.font-display, h4.font-display, h5.font-disp
 .tree-chrome [data-testid^="band-gen-"] span { color:var(--ink-2) !important; }
 .tree-chrome [class~="text-slate-400"] { color:var(--ink-3); }
 .tree-chrome [class~="text-slate-500"], .tree-chrome [class~="text-slate-600"], .tree-chrome [class~="text-ink-2"] { color:var(--ink-2); }
-.tree-chrome :where(button,a,input,select):focus-visible, .tree-compass button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; box-shadow:0 0 0 2px var(--surface-card); }
+.tree-chrome :where(button,a,input,select):focus-visible, [data-testid="tree-compass"] button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; box-shadow:0 0 0 2px var(--surface-card); }
 .tree-chrome :where(button,a) { transition:background-color 140ms ease,color 140ms ease,border-color 140ms ease; }
 .tree-viewport [data-testid="zoom-in"], .tree-viewport [data-testid="zoom-out"], .tree-viewport [data-testid="fit-view"] { color:var(--ink-1) !important; background:var(--surface-card) !important; border-color:var(--hairline) !important; box-shadow:var(--shadow-2) !important; }
 .tree-viewport :where([data-testid="zoom-in"],[data-testid="zoom-out"],[data-testid="fit-view"]):focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+/* Compass glyphs: ink-1 on the frosted card in BOTH themes (2026-09-28 conditional exit). */
+/* Pixel-sampled evidence; prior `.tree-compass` class rules never matched (element carries */
+/* data-testid only, no such class) — replaced with attribute selectors. */
+[data-testid="tree-compass"] { color: var(--ink-1); }
+[data-testid="tree-compass"] button:not([data-testid="compass-center"]) { color: var(--ink-1); }
 @media (prefers-color-scheme: dark) {
- .tree-chrome [data-testid="tree-retry"]:focus-visible, .tree-chrome :where(button,a,input,select):focus-visible, .tree-compass button:focus-visible, .tree-viewport :where([data-testid="zoom-in"],[data-testid="zoom-out"],[data-testid="fit-view"]):focus-visible { outline-color:#F2AD89; }
- .tree-compass { color: var(--ink-1); background: var(--surface-card); }
- .tree-compass button:not([data-testid="compass-center"]) { color: var(--ink-1); }
+ .tree-chrome [data-testid="tree-retry"]:focus-visible, .tree-chrome :where(button,a,input,select):focus-visible, [data-testid="tree-compass"] button:focus-visible, .tree-viewport :where([data-testid="zoom-in"],[data-testid="zoom-out"],[data-testid="fit-view"]):focus-visible { outline-color:#F2AD89; }
+ [data-testid="tree-compass"] [data-testid="compass-center"] > div { background-color: var(--ink-2); }
 }
 
 /* Tree node cards are renderer-owned; deliberately excluded from chrome contrast gates. */

@@ -3,8 +3,7 @@ const { test, expect } = require('@playwright/test');
 const MEMBER_ID = process.env.APPLE_PHASE4_MEMBER_ID || 'aaaaaaa1-0000-4000-8000-000000000001';
 const FAMILY_ID = process.env.APPLE_PHASE4_FAMILY_ID || '11111111-1111-4111-8111-000000000001';
 // Live detail endpoint returned 200 in three probes after the backend fix; fixture remains staged to keep this spec deterministic.
-const LIVE_DETAIL_STATUS = 200;
-const BASE = process.env.APPLE_PHASE4_MEMBER_BASE || 'http://127.0.0.1:8799';
+const BASE = process.env.APPLE_PHASE4_MEMBER_BASE || 'http://127.0.0.1:14180';
 
 
 const FIXTURE = {
@@ -38,29 +37,59 @@ async function ratioFor(page, locator) {
   });
 }
 
-test('member detail M1 affordances: links, AA contrast, mobile fit and focus', async ({ browser }) => {
+test('M1 journey: CTA hrefs and exactly one visible tree CTA per breakpoint', async ({ browser }) => {
+  for (const colorScheme of ['light', 'dark']) {
+    const context = await browser.newContext({ colorScheme, viewport: { width: 1440, height: 900 }, locale: 'vi-VN', serviceWorkers: 'block' });
+    await stageApi(context);
+    const page = await context.newPage();
+    await page.goto(`${BASE}/members/${MEMBER_ID}`);
+    await expect(page.getByTestId('member-name')).toHaveText(FIXTURE.full_name);
+    const desktop = page.getByTestId('member-view-tree');
+    const desktopMobile = page.getByTestId('member-view-tree-mobile');
+
+    // >=768px: desktop CTA visible in the hero actions row, mobile row hidden.
+    await expect(desktop).toBeVisible();
+    await expect(desktop).toHaveAttribute('href', `/tree?family=${FAMILY_ID}`);
+    await expect(desktopMobile).toBeHidden();
+    const actionsBox = await page.getByTestId('member-view-tree').boundingBox();
+    const heroBox = await page.locator('.bg-card.rounded-app-xl').first().boundingBox();
+    expect(actionsBox && heroBox && actionsBox.y >= heroBox.y && actionsBox.y + actionsBox.height <= heroBox.y + heroBox.height + 2).toBeTruthy();
+
+    // At the md boundary itself (768px) the desktop CTA must already be visible.
+    await page.setViewportSize({ width: 768, height: 900 });
+    await expect(desktop).toBeVisible();
+    await expect(desktopMobile).toBeHidden();
+
+    // <768px: exactly ONE tree CTA visible (the full-width mobile row), desktop CTA hidden.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(desktopMobile).toBeVisible();
+    await expect(desktopMobile).toHaveAttribute('href', `/tree?family=${FAMILY_ID}`);
+    await expect(desktop).toBeHidden();
+    const visibleCtas = await page.locator('[data-testid^="member-view-tree"]').evaluateAll((els) => els.filter(e => e.offsetParent !== null || (e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && getComputedStyle(e).display !== 'none')).length);
+    expect(visibleCtas).toBe(1);
+    await context.close();
+  }
+});
+
+test('M1 affordances: breadcrumb link, AA contrast, mobile fit and focus', async ({ browser }) => {
   const rows = [];
   for (const colorScheme of ['light', 'dark']) {
-    const context = await browser.newContext({ colorScheme, viewport: { width: 1440, height: 900 }, locale: 'vi-VN' });
+    const context = await browser.newContext({ colorScheme, viewport: { width: 1440, height: 900 }, locale: 'vi-VN', serviceWorkers: 'block' });
     await stageApi(context);
     const page = await context.newPage();
     await page.goto(`${BASE}/members/${MEMBER_ID}`);
     await expect(page.getByTestId('member-name')).toHaveText(FIXTURE.full_name);
     const breadcrumb = page.getByTestId('member-tree-breadcrumb');
     const desktop = page.getByTestId('member-view-tree');
-    const desktopMobile = page.getByTestId('member-view-tree-mobile');
     await expect(breadcrumb).toHaveAttribute('href', '/tree');
     await expect(desktop).toHaveAttribute('href', `/tree?family=${FAMILY_ID}`);
-    await expect(desktop).toBeVisible();
-    await expect(desktopMobile).toBeHidden();
     const deskRatios = { breadcrumb: await ratioFor(page, breadcrumb), button: await ratioFor(page, desktop) };
     expect(deskRatios.breadcrumb).toBeGreaterThanOrEqual(4.5);
     expect(deskRatios.button).toBeGreaterThanOrEqual(4.5);
     rows.push({ colorScheme, viewport: 1440, ...deskRatios });
     await page.setViewportSize({ width: 390, height: 844 });
-    const mobile = desktopMobile;
+    const mobile = page.getByTestId('member-view-tree-mobile');
     await expect(mobile).toBeVisible();
-    await expect(mobile).toHaveAttribute('href', `/tree?family=${FAMILY_ID}`);
     const metrics = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
     expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth);
     const mobileRatios = { breadcrumb: await ratioFor(page, breadcrumb), button: await ratioFor(page, mobile) };
