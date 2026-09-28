@@ -785,6 +785,19 @@ test('M3-F feed matrix — success/empty/loading/error × light/dark × 1440/390
     await gotoFeed(p);
     const form = p.locator('[data-testid="composer-form"]');
     await expect(form).toBeVisible();
+    // Serialize: let the initial feed GET settle BEFORE the submit refresh fires —
+    // two concurrent same-session feed GETs are a suspected backend 500 trigger
+    // (nil-DBTX panic class; see D-M3-3). If it still 500s, bodies land in the row.
+    await expect(p.locator('[data-testid="feed-list"] [data-testid="post-author"]').first())
+      .toBeVisible({ timeout: 12000 }).catch(() => {});
+    const feed500s = [];
+    p.on('response', async (r) => {
+      if (FEED_RE.test(r.url()) && r.request().method() === 'GET' && r.status() >= 500) {
+        let body = '';
+        try { body = (await r.text()).slice(0, 300); } catch (e) { body = 'unreadable'; }
+        feed500s.push({ status: r.status(), body });
+      }
+    });
     await form.locator('textarea').fill('M3 staged composer submit — toast path (POST intercepted, no DB write)');
     await form.locator('button[type="submit"]').click();
     await expect(toastRegion(p).getByText('Đã đăng bài viết.').first()).toBeVisible({ timeout: 8000 });
@@ -799,7 +812,8 @@ test('M3-F feed matrix — success/empty/loading/error × light/dark × 1440/390
     await p.screenshot({ path: path.join(EVID, 'feed', `composer-success-${theme}-${v.n}.png`), fullPage: true }).catch(() => {});
     const g = await gates(p, { state: 'composer-success', theme, v, wl: [] });
     const row = { route: 'feed', state: 'composer-success', theme, viewport: v.n, scrollWidth: g.overflow.html, verdict: 'PASS', evidence: `evidence/feed/composer-success-${theme}-${v.n}.png`, staged: 'route-post', capturedAt: new Date().toISOString(), head: CAPTURE_SHA, failedGates: g.failed, minContrast: g.minContrast, focus: g.focus.tag, toastPixel: toast, textareaCleared: cleared === '', counterAfter: counter, postIntercepted, note: '201 POST intercepted → success toast exercised with NO demo-DB write; REAL 201 submit already proven in apple-phase3-feed.spec.cjs last test' };
-    const bad = [...g.failed, ...(cleared === '' ? [] : ['textarea-not-cleared']), ...(counter === '0/5000' ? [] : ['counter:' + counter]), ...(postIntercepted ? [] : ['post-not-intercepted'])];
+    const bad = [...g.failed, ...(cleared === '' ? [] : ['textarea-not-cleared']), ...(counter === '0/5000' ? [] : ['counter:' + counter]), ...(postIntercepted ? [] : ['post-not-intercepted']), ...(feed500s.length ? ['feed-GET-5xx:' + JSON.stringify(feed500s.slice(0, 2))] : [])];
+    row.feedGET5xx = feed500s;
     if (bad.length) { row.verdict = 'FAIL'; row.failedGates = bad; failures.push(`composer-success ${theme} ${v.n}: ${bad.join(' | ')}`); }
     appendRow('feed', row);
     await ctx.close();
