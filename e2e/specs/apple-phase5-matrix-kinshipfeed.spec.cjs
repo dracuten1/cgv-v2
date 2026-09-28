@@ -77,7 +77,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execSync } = require('node:child_process');
 
-const BASE = 'http://localhost:3456';
+const BASE = process.env.APPLE_PHASE5_BASE || 'http://localhost:3456';
 const THEMES = ['light', 'dark'];
 const VIEW = [
   { w: 1440, h: 900, n: '1440x900' },
@@ -718,14 +718,19 @@ test('M3-F feed matrix — success/empty/loading/error × light/dark × 1440/390
     const empty = p.locator('[data-testid="feed-empty"]');
     await expect(empty).toBeVisible({ timeout: 8000 });
     const emptyTitle = await empty.getByText('Chưa có bài viết nào. Hãy chia sẻ bài viết đầu tiên!').isVisible().catch(() => false);
-    const emptyDesc = await empty.getByText('Bài viết sẽ hiển thị tại đây cho cả gia đình cùng xem.').isVisible().catch(() => false);
+    const emptyDescEl = empty.getByText('Bài viết sẽ hiển thị tại đây cho cả gia đình cùng xem.');
+    const emptyDesc = await emptyDescEl.isVisible().catch(() => false);
+    const emptyDescStyle = await emptyDescEl.evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return { tag: el.tagName.toLowerCase(), text: el.textContent.trim(), lineHeight: parseFloat(cs.lineHeight), fontSize: parseFloat(cs.fontSize), ratio: parseFloat(cs.lineHeight) / parseFloat(cs.fontSize) };
+    }).catch(() => null);
     const hint = await p.locator('[data-testid="anonymous-hint"]').isVisible().catch(() => false);
     const ctaHref = await p.locator('[data-testid="login-cta"]').getAttribute('href').catch(() => null);
     const posts = await p.locator('[data-testid="post-author"]').count();
     // empty state IS the cell evidence → capture before gates
     await p.screenshot({ path: path.join(EVID, 'feed', `empty-${theme}-${v.n}.png`), fullPage: true }).catch(() => {});
     const g = await gates(p, { state: 'empty', theme, v, wl: [] });
-    const row = { route: 'feed', state: 'empty', theme, viewport: v.n, scrollWidth: g.overflow.html, verdict: 'PASS', evidence: `evidence/feed/empty-${theme}-${v.n}.png`, staged: 'route-anon', capturedAt: new Date().toISOString(), head: CAPTURE_SHA, failedGates: g.failed, minContrast: g.minContrast, focus: g.focus.tag, emptyTitle, emptyDesc, anonymousHint: hint, loginCta: ctaHref };
+    const row = { route: 'feed', state: 'empty', theme, viewport: v.n, scrollWidth: g.overflow.html, verdict: 'PASS', evidence: `evidence/feed/empty-${theme}-${v.n}.png`, staged: 'route-anon', capturedAt: new Date().toISOString(), head: CAPTURE_SHA, failedGates: g.failed, minContrast: g.minContrast, focus: g.focus.tag, emptyTitle, emptyDesc, emptyDescStyle, anonymousHint: hint, loginCta: ctaHref };
     const bad = [...g.failed,
       ...(emptyTitle ? [] : ['empty-title-missing']), ...(emptyDesc ? [] : ['empty-desc-missing']),
       ...(hint ? [] : ['anonymous-hint-missing']), ...(ctaHref && ctaHref.includes('/login') ? [] : ['login-cta-href:' + ctaHref]),
