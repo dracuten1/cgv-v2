@@ -11,6 +11,14 @@ const familiesPath = '**/api/v1/families*';
 const treePath = '**/api/v1/families/*/tree';
 const transparent = s => s === 'transparent' || /rgba\([^)]*,\s*0\s*\)$/.test(s);
 
+async function demoContext(browser, theme = 'light', viewport = { width: 1440, height: 900 }) {
+  const ctx = await browser.newContext({ colorScheme: theme, viewport, locale: 'vi-VN' });
+  const origin = new URL(BASE).origin;
+  const response = await ctx.request.post(BASE + '/api/v1/auth/demo', { headers: { Origin: origin }, data: '' });
+  if (!response.ok()) throw new Error(`demo login failed: POST /api/v1/auth/demo → ${response.status()} (check proxy Origin rewrite)`);
+  return ctx;
+}
+
 async function measureText(locator) {
   return locator.evaluate(el => {
     const parse = s => { const m = s.match(/[\d.]+/g) || []; return [Number(m[0] || 0), Number(m[1] || 0), Number(m[2] || 0), m.length > 3 ? Number(m[3]) : 1]; };
@@ -37,20 +45,19 @@ async function focusRing(locator) {
 
 for (const theme of themes) for (const [width, height] of viewports) for (const state of states) {
   test(`state matrix ${theme} ${width}x${height} ${state}: contrast, overflow, console, focus`, async ({ browser }) => {
-    const context = await browser.newContext({ colorScheme: theme, viewport: { width, height } });
+    const context = await demoContext(browser, theme, { width, height });
     const page = await context.newPage(), errors = collectErrors(page);
     if (state === 'loading') {
-      await page.route(familiesPath, route => new Promise(() => {}));
       await page.route(treePath, route => new Promise(() => {}));
       await page.goto(BASE + '/tree'); await expect(page.getByTestId('tree-loading')).toBeVisible({ timeout: 5000 });
-      await page.unroute(familiesPath); await page.unroute(treePath);
+      await page.unroute(treePath);
     } else if (state === 'error' || state === 'empty') {
       await stageFailure(page, state);
       if (state === 'empty') await page.route(familiesPath, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ families: [{ id: 'phase4-stage-family', name: 'Gia đình thử nghiệm' }] }) }));
       await page.goto(BASE + '/tree');
-      if (state === 'error') { await expect(page.getByTestId('tree-retry')).toBeVisible(); await page.unroute(treePath); await page.getByTestId('tree-retry').click(); await expect(page.getByTestId('tree-retry')).toHaveCount(0, { timeout: 15000 }); await expect(page.getByTestId('tree-world').or(page.getByTestId('tree-loading'))).toBeVisible(); }
+      if (state === 'error') { await expect(page.getByTestId('tree-retry')).toBeVisible(); await page.unroute(familiesPath); await page.unroute(treePath); await page.getByTestId('tree-retry').click(); await expect(page.getByTestId('tree-retry')).toHaveCount(0, { timeout: 10000 }); await expect(page.getByTestId('tree-world').or(page.getByTestId('tree-loading'))).toBeVisible(); }
       else { await page.unroute(treePath); await page.route(treePath, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ family_id: 'phase4-stage-family', generations: [], roots: [] }) })); await page.reload(); await expect(page.locator('.tree-empty-state')).toBeVisible(); await expect(page.getByTestId('tree-add-auth-hint')).toBeVisible(); }
-    } else { await page.goto(BASE + '/tree'); await expect(page.getByTestId('tree-world')).toBeVisible({ timeout: 20000 }); await expect(page.locator('canvas')).toHaveCount(1); const cards = page.locator('[aria-label*="Đời thứ"]'); expect(await cards.count()).toBeGreaterThan(0); expect(await cards.count()).toBeLessThanOrEqual(300); }
+    } else { await page.goto(BASE + '/tree'); await expect(page.getByTestId('tree-world')).toBeVisible({ timeout: 8000 }); await expect(page.locator('canvas')).toHaveCount(1); const cards = page.locator('[aria-label*="Đời thứ"]'); expect(await cards.count()).toBeGreaterThan(0); expect(await cards.count()).toBeLessThanOrEqual(300); }
     const texts = await chromeText(page, state), overflow = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1);
     expect(overflow, `horizontal overflow ${width}px`).toBeTruthy();
     for (const row of texts) expect(row.ratio, `${row.selector} "${row.text}" contrast ${row.ratio}`).toBeGreaterThanOrEqual(4.5);
@@ -79,14 +86,14 @@ test('live demo notice is accessible Vietnamese status with AA contrast in both 
   for (const theme of themes) { const context = await browser.newContext({ colorScheme: theme }), page = await context.newPage(), errors = collectErrors(page); const login = await page.request.post(BASE + '/api/v1/auth/demo', { headers: { Origin: 'http://localhost:3456' }, data: '' }); expect(login.ok()).toBeTruthy(); await page.goto(BASE + '/tree'); const notice = page.getByTestId('tree-demo-notice'); await expect(notice).toBeVisible(); await expect(notice).toHaveAttribute('role', 'status'); await expect(notice).toContainText('Phiên Demo'); expect(await measureText(notice)).toBeGreaterThanOrEqual(4.5); expect(errors.pageErrors).toEqual([]); expect(errors.consoleErrors).toEqual([]); await context.close(); }
 });
 
-test('live tree invariants: zoom transform, centered compass click, one canvas and card budget', async ({ page }) => {
-  const errors = collectErrors(page); await page.goto(BASE + '/tree'); await expect(page.getByTestId('tree-world')).toBeVisible(); await expect(page.locator('canvas')).toHaveCount(1); const cards = page.locator('[aria-label*="Đời thứ"]'); expect(await cards.count()).toBeGreaterThan(0); expect(await cards.count()).toBeLessThanOrEqual(300);
-  const world = page.getByTestId('tree-world'), scale = async () => Number((await world.getAttribute('style')).match(/scale\(([^)]+)\)/)[1]); const initial = await scale(); await page.getByTestId('zoom-in').click(); await expect.poll(scale).toBeGreaterThan(initial); const zoomed = await scale(); await page.getByTestId('zoom-out').click(); await expect.poll(scale).toBeLessThan(zoomed); await page.getByTestId('compass-center').click(); expect(errors.pageErrors).toEqual([]); expect(errors.consoleErrors).toEqual([]);
+test('live tree invariants: zoom transform, centered compass click, one canvas and card budget', async ({ browser }) => {
+  const context = await demoContext(browser); const page = await context.newPage(); const errors = collectErrors(page); await page.goto(BASE + '/tree'); await expect(page.getByTestId('tree-world')).toBeVisible({ timeout: 8000 }); await expect(page.locator('canvas')).toHaveCount(1); const cards = page.locator('[aria-label*="Đời thứ"]'); expect(await cards.count()).toBeGreaterThan(0); expect(await cards.count()).toBeLessThanOrEqual(300);
+  const world = page.getByTestId('tree-world'), scale = async () => Number((await world.getAttribute('style')).match(/scale\(([^)]+)\)/)[1]); const initial = await scale(); await page.getByTestId('zoom-in').click(); await expect.poll(scale).toBeGreaterThan(initial); const zoomed = await scale(); await page.getByTestId('zoom-out').click(); await expect.poll(scale).toBeLessThan(zoomed); await page.getByTestId('compass-center').click(); expect(errors.pageErrors).toEqual([]); expect(errors.consoleErrors).toEqual([]); await context.close();
 });
 
 test('non-gating rendered card text contrast measurement by theme', async ({ browser }) => {
   const results = {};
-  for (const theme of themes) { const context = await browser.newContext({ colorScheme: theme }), page = await context.newPage(); await page.goto(BASE + '/tree'); await expect(page.getByTestId('tree-world')).toBeVisible(); const cards = page.locator('[aria-label*="Đời thứ"]'); await expect.poll(() => cards.count()).toBeGreaterThanOrEqual(10); const values = { primary: [], secondary: [], kinship: [] };
+  for (const theme of themes) { const context = await demoContext(browser, theme), page = await context.newPage(); await page.goto(BASE + '/tree'); await expect(page.getByTestId('tree-world')).toBeVisible({ timeout: 8000 }); const cards = page.locator('[aria-label*="Đời thứ"]'); await expect.poll(() => cards.count()).toBeGreaterThanOrEqual(10); const values = { primary: [], secondary: [], kinship: [] };
     for (let i = 0; i < Math.min(await cards.count(), 10); i++) { const card = cards.nth(i); for (const [key, selector] of [['primary', 'p'], ['secondary', '[data-testid="years-text"]'], ['kinship', '[data-testid="kinship-badge"]']]) { const el = card.locator(selector).first(); if (await el.count() && await el.isVisible()) values[key].push({ ratio: await measureText(el), example: selector, text: (await el.innerText()).slice(0, 60) }); } }
     results[theme] = {}; for (const [key, rows] of Object.entries(values)) results[theme][key] = { min: rows.length ? Math.min(...rows.map(x => x.ratio)) : null, avg: rows.length ? rows.reduce((a, x) => a + x.ratio, 0) / rows.length : null, examples: rows.slice(0, 3) }; console.log('MEASUREMENT:', JSON.stringify({ theme, ...results[theme] })); await context.close(); }
   fs.writeFileSync(path.join(OUT, 'measurement.json'), JSON.stringify(results, null, 2));
