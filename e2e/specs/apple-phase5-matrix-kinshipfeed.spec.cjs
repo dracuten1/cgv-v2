@@ -115,8 +115,12 @@ function writeCellsJson(route) {
 }
 
 // ---- console capture with url+status attribution (phase3 convention) ----
+// Per-cell scoping: each page records the bucket length at attach time so gates
+// judge only errors from THAT cell's window (a test-wide bucket would leak
+// whitelisted staged-5xx entries from the error cells into later cells' verdicts).
 function attachLogging(page, bucket) {
   const responses = [];
+  page.__m3errBase = bucket.errors.length;
   page.on('response', (r) => responses.push({ url: r.url(), status: r.status() }));
   page.on('pageerror', (e) => bucket.errors.push({ message: e.message, url: null, status: null }));
   page.on('console', (m) => {
@@ -315,7 +319,7 @@ async function gates(p, { state, theme, v, wl }) {
   if (overflow.html > overflow.htmlClient || overflow.body > overflow.htmlClient) failed.push('h-overflow');
   const themeKeys = await p.evaluate(() => Object.keys(localStorage).filter(k => /theme|scheme|color/i.test(k)));
   if (themeKeys.length) failed.push('theme-keys:' + themeKeys.join(','));
-  const errors = (current.errors || []).filter(e => !isWhitelisted(e, wl || []));
+  const errors = (current.errors || []).slice(p.__m3errBase ?? 0).filter(e => !isWhitelisted(e, wl || []));
   if (errors.length) failed.push('console:' + JSON.stringify(errors.slice(0, 2).map(e => ({ s: e.status, u: (e.url || '').slice(-60) }))));
   const nonWlCount = errors.length;
   return { failed, minContrast, swept: sweep.length, lhBad, fixedBad, focus, overflow, themeKeys, nonWlCount };
@@ -756,7 +760,7 @@ test('M3-F feed matrix — success/empty/loading/error × light/dark × 1440/390
     await retry.click();
     await expect(p.locator('[data-testid="feed-list"] [data-testid="post-author"]').first()).toBeVisible({ timeout: 10000 });
     // final console re-check after the retry (gates ran pre-retry)
-    const postRetryBad = (current.errors || []).filter((e) => !isWhitelisted(e, wl));
+    const postRetryBad = (current.errors || []).slice(p.__m3errBase ?? 0).filter((e) => !isWhitelisted(e, wl));
     const row = { route: 'feed', state: 'error', theme, viewport: v.n, scrollWidth: g.overflow.html, verdict: 'PASS', evidence: `evidence/feed/error-${theme}-${v.n}.png`, staged: 'route-anon', capturedAt: new Date().toISOString(), head: CAPTURE_SHA, failedGates: g.failed, minContrast: g.minContrast, focus: g.focus.tag, errorCard: { roleAlert, errText }, retryRecovered: true, retryButtonVisible: retryVisible, postRetryConsoleBad: postRetryBad.length };
     const bad = [...g.failed, ...(roleAlert ? [] : ['role-alert-missing']), ...(errText ? [] : ['error-copy-missing']), ...(retryVisible ? [] : ['retry-missing']), ...(postRetryBad.length ? ['post-retry-console:' + JSON.stringify(postRetryBad.slice(0, 2))] : [])];
     if (bad.length) { row.verdict = 'FAIL'; row.failedGates = bad; failures.push(`error ${theme} ${v.n}: ${bad.join(' | ')}`); }
