@@ -12,7 +12,7 @@ const treePath = '**/api/v1/families/*/tree';
 const transparent = s => s === 'transparent' || /rgba\([^)]*,\s*0\s*\)$/.test(s);
 
 async function demoContext(browser, theme = 'light', viewport = { width: 1440, height: 900 }) {
-  const ctx = await browser.newContext({ colorScheme: theme, viewport, locale: 'vi-VN' });
+  const ctx = await browser.newContext({ colorScheme: theme, viewport, locale: 'vi-VN', serviceWorkers: 'block' });
   const origin = new URL(BASE).origin;
   const response = await ctx.request.post(BASE + '/api/v1/auth/demo', { headers: { Origin: origin }, data: '' });
   if (!response.ok()) throw new Error(`demo login failed: POST /api/v1/auth/demo → ${response.status()} (check proxy Origin rewrite)`);
@@ -38,9 +38,18 @@ async function stageFailure(page, kind) {
   await page.route(familiesPath, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(kind === 'empty' ? { families: [] } : { families: [{ id: 'phase4-stage-family', name: 'Gia đình thử nghiệm' }] }) }));
   await page.route(treePath, route => route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ message: 'Lỗi kiểm tra' }) }));
 }
-async function focusRing(locator) {
-  await locator.focus();
-  return locator.evaluate(el => { const s = getComputedStyle(el); const shadow = s.boxShadow; return el.matches(':focus-visible') || (parseFloat(s.outlineWidth) > 0 && s.outlineStyle !== 'none' && s.outlineColor !== 'transparent') || (shadow !== 'none' && !shadow.includes('rgba(0, 0, 0, 0)')); });
+async function tabWalkFocus(page, target, maxTabs = 25) {
+  for (let i = 0; i < maxTabs; i++) {
+    if (await target.evaluate(el => document.activeElement === el)) break;
+    await page.keyboard.press('Tab');
+  }
+  return target.evaluate(el => {
+    if (document.activeElement !== el) return false;
+    const s = getComputedStyle(el), shadow = s.boxShadow;
+    return el.matches(':focus-visible') ||
+      (parseFloat(s.outlineWidth) > 0 && s.outlineStyle !== 'none' && s.outlineColor !== 'transparent') ||
+      (shadow !== 'none' && !shadow.includes('rgba(0, 0, 0, 0)'));
+  });
 }
 
 for (const theme of themes) for (const [width, height] of viewports) for (const state of states) {
@@ -63,7 +72,7 @@ for (const theme of themes) for (const [width, height] of viewports) for (const 
     for (const row of texts) expect(row.ratio, `${row.selector} "${row.text}" contrast ${row.ratio}`).toBeGreaterThanOrEqual(4.5);
     const controls = ['select', '[data-testid="zoom-in"]', '[data-testid="zoom-out"]', '[data-testid="fit-view"]', '[data-testid="tree-compass"] button'];
     if (state === 'error') controls.push('[data-testid="tree-retry"]');
-    const focus = []; for (const selector of controls) { const loc = page.locator(selector).filter({ visible: true }); if (await loc.count()) { focus.push({ selector, passes: await focusRing(loc.first()) }); } }
+    const focus = []; for (const selector of controls) { const loc = page.locator(selector).filter({ visible: true }); if (await loc.count()) { await page.evaluate(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); }); focus.push({ selector, passes: await tabWalkFocus(page, loc.first()) }); } }
     expect(focus.every(f => f.passes), JSON.stringify(focus)).toBeTruthy();
     expect(errors.pageErrors, 'page errors').toEqual([]); expect(errors.consoleErrors, 'console errors').toEqual([]);
     const record = { theme, width, height, state, minContrast: texts.length ? Math.min(...texts.map(x => x.ratio)) : null, textMeasurements: texts, overflow, focus, pageErrors: errors.pageErrors, consoleErrors: errors.consoleErrors, warnings: errors.warnings };
@@ -83,7 +92,7 @@ test('family preselect live: requested family, default family and invalid-query 
 });
 
 test('live demo notice is accessible Vietnamese status with AA contrast in both themes', async ({ browser }) => {
-  for (const theme of themes) { const context = await browser.newContext({ colorScheme: theme }), page = await context.newPage(), errors = collectErrors(page); const login = await page.request.post(BASE + '/api/v1/auth/demo', { headers: { Origin: 'http://localhost:3456' }, data: '' }); expect(login.ok()).toBeTruthy(); await page.goto(BASE + '/tree'); const notice = page.getByTestId('tree-demo-notice'); await expect(notice).toBeVisible(); await expect(notice).toHaveAttribute('role', 'status'); await expect(notice).toContainText('Phiên Demo'); expect(await measureText(notice)).toBeGreaterThanOrEqual(4.5); expect(errors.pageErrors).toEqual([]); expect(errors.consoleErrors).toEqual([]); await context.close(); }
+  for (const theme of themes) { const context = await browser.newContext({ colorScheme: theme, serviceWorkers: 'block' }), page = await context.newPage(), errors = collectErrors(page); const login = await page.request.post(BASE + '/api/v1/auth/demo', { headers: { Origin: 'http://localhost:3456' }, data: '' }); expect(login.ok()).toBeTruthy(); await page.goto(BASE + '/tree'); const notice = page.getByTestId('tree-demo-notice'); await expect(notice).toBeVisible(); await expect(notice).toHaveAttribute('role', 'status'); await expect(notice).toContainText('Phiên Demo'); expect(await measureText(notice)).toBeGreaterThanOrEqual(4.5); expect(errors.pageErrors).toEqual([]); expect(errors.consoleErrors).toEqual([]); await context.close(); }
 });
 
 test('live tree invariants: zoom transform, centered compass click, one canvas and card budget', async ({ browser }) => {
