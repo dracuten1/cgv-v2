@@ -566,6 +566,8 @@ test('M3-K kinship matrix — success/empty/loading/error × light/dark × 1440/
     const bannerText = (await banner.innerText()).trim();
     await expect(p.locator('[data-testid="kinship-result-container"]')).toHaveCount(0);
     const retryEnabled = await calcBtn(p).isEnabled();
+    // error-banner state IS the cell evidence → capture before gates
+    await p.screenshot({ path: path.join(EVID, 'kinship', `error-${theme}-${v.n}.png`), fullPage: true }).catch(() => {});
     const g = await gates(p, { state: 'error', theme, v, wl });
     const row = { route: 'kinship', state: 'error', theme, viewport: v.n, scrollWidth: g.overflow.html, verdict: 'PASS', evidence: `evidence/kinship/error-${theme}-${v.n}.png`, staged: 'route', capturedAt: new Date().toISOString(), head: CAPTURE_SHA, failedGates: g.failed, minContrast: g.minContrast, focus: g.focus.tag, bannerText: bannerText.slice(0, 60), retryAffordance: retryEnabled, variant: 'api-500' };
     const bad = [...g.failed, ...(bannerText ? [] : ['banner-empty']), ...(retryEnabled ? [] : ['retry-disabled'])];
@@ -709,6 +711,8 @@ test('M3-F feed matrix — success/empty/loading/error × light/dark × 1440/390
     const hint = await p.locator('[data-testid="anonymous-hint"]').isVisible().catch(() => false);
     const ctaHref = await p.locator('[data-testid="login-cta"]').getAttribute('href').catch(() => null);
     const posts = await p.locator('[data-testid="post-author"]').count();
+    // empty state IS the cell evidence → capture before gates
+    await p.screenshot({ path: path.join(EVID, 'feed', `empty-${theme}-${v.n}.png`), fullPage: true }).catch(() => {});
     const g = await gates(p, { state: 'empty', theme, v, wl: [] });
     const row = { route: 'feed', state: 'empty', theme, viewport: v.n, scrollWidth: g.overflow.html, verdict: 'PASS', evidence: `evidence/feed/empty-${theme}-${v.n}.png`, staged: 'route-anon', capturedAt: new Date().toISOString(), head: CAPTURE_SHA, failedGates: g.failed, minContrast: g.minContrast, focus: g.focus.tag, emptyTitle, emptyDesc, anonymousHint: hint, loginCta: ctaHref };
     const bad = [...g.failed,
