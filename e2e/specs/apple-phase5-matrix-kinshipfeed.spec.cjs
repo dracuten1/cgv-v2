@@ -589,6 +589,7 @@ test('M3-K kinship matrix — success/empty/loading/error × light/dark × 1440/
     await btn.click({ force: true, timeout: 3000 }).catch(() => {}); // real-path attempt at coordinates
     await p.waitForTimeout(400);
     const toastAfterForce = await toastRegion(p).locator(':scope > div').count();
+    await p.screenshot({ path: path.join(EVID, 'kinship', `error-validation-${theme}-${v.n}.png`), fullPage: true }).catch(() => {});
     const row = { route: 'kinship', state: 'error-validation', theme, viewport: v.n, scrollWidth: await p.evaluate(() => document.documentElement.scrollWidth), verdict: 'PASS', evidence: `evidence/kinship/error-validation-${theme}-${v.n}.png`, staged: 'real-interaction', capturedAt: new Date().toISOString(), head: CAPTURE_SHA, failedGates: [], guard: { calculateDisabled: disabled, pointerEvents, toastAfterForceClick: toastAfterForce, kinshipRequestsFired: kinshipRequests.length }, note: 'validation toast unreachable live: 4-layer suppression (native disabled + pointer-events-none + AppButton guard + view guard); empty submit hard-blocked — see spec header note 3', toastPixel: null };
     const bad = [];
     if (!disabled) bad.push('calculate-enabled-on-empty');
@@ -780,6 +781,8 @@ test('M3-F feed matrix — success/empty/loading/error × light/dark × 1440/390
       toast = await pixelSample(p, toastItem(p));
       if (!toast || toast.ratio < MIN_AA) failures.push('composer toast pixel-contrast:' + JSON.stringify(toast));
     } catch (e) { failures.push('composer toast-sample:' + String(e).slice(0, 120)); }
+    // composer-success state (toast visible) IS the cell evidence → capture before gates
+    await p.screenshot({ path: path.join(EVID, 'feed', `composer-success-${theme}-${v.n}.png`), fullPage: true }).catch(() => {});
     const g = await gates(p, { state: 'composer-success', theme, v, wl: [] });
     const row = { route: 'feed', state: 'composer-success', theme, viewport: v.n, scrollWidth: g.overflow.html, verdict: 'PASS', evidence: `evidence/feed/composer-success-${theme}-${v.n}.png`, staged: 'route-post', capturedAt: new Date().toISOString(), head: CAPTURE_SHA, failedGates: g.failed, minContrast: g.minContrast, focus: g.focus.tag, toastPixel: toast, textareaCleared: cleared === '', counterAfter: counter, postIntercepted, note: '201 POST intercepted → success toast exercised with NO demo-DB write; REAL 201 submit already proven in apple-phase3-feed.spec.cjs last test' };
     const bad = [...g.failed, ...(cleared === '' ? [] : ['textarea-not-cleared']), ...(counter === '0/5000' ? [] : ['counter:' + counter]), ...(postIntercepted ? [] : ['post-not-intercepted'])];
