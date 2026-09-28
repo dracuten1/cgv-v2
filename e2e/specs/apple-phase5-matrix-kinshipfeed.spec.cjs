@@ -733,6 +733,7 @@ test('M3-F feed matrix — success/empty/loading/error × light/dark × 1440/390
     const row = { route: 'feed', state: 'empty', theme, viewport: v.n, scrollWidth: g.overflow.html, verdict: 'PASS', evidence: `evidence/feed/empty-${theme}-${v.n}.png`, staged: 'route-anon', capturedAt: new Date().toISOString(), head: CAPTURE_SHA, failedGates: g.failed, minContrast: g.minContrast, focus: g.focus.tag, emptyTitle, emptyDesc, emptyDescStyle, anonymousHint: hint, loginCta: ctaHref };
     const bad = [...g.failed,
       ...(emptyTitle ? [] : ['empty-title-missing']), ...(emptyDesc ? [] : ['empty-desc-missing']),
+      ...(emptyDescStyle && emptyDescStyle.tag === 'p' && Math.abs(emptyDescStyle.ratio - 1.6) <= 0.01 ? [] : ['empty-desc-line-height:' + JSON.stringify(emptyDescStyle)]),
       ...(hint ? [] : ['anonymous-hint-missing']), ...(ctaHref && ctaHref.includes('/login') ? [] : ['login-cta-href:' + ctaHref]),
       ...(posts === 0 ? [] : ['unexpected-posts'])];
     if (bad.length) { row.verdict = 'FAIL'; row.failedGates = bad; failures.push(`empty ${theme} ${v.n}: ${bad.join(' | ')}`); }
