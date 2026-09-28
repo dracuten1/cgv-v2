@@ -51,3 +51,51 @@ Infrastructure prep validation only: `bash -n` on the pack and `node --check` on
 **Phase-4 verification reruns (2026-09-28 @ 80ed842+test):** all Phase-1/2/3 packs re-executed green under the portable outer watchdog — shell 16/16, login 5/5, email 5/5, oauth 6/6, memberdetail PASS w/ residual (adjudicated NON-PRODUCT; live 500 record vs live-probe 200 flagged), kinship 10/10 (PD-P3-2 fixed), feed 10/10, misc 8/8; web_vitest_p0 PASS 313/313; web_build_p0 PASS (dist fresh). Logs: `RESULTS/2026-09-27-apple-phase4-*.log`. Full verification report: `RESULTS/2026-09-27-apple-phase4-verification.md`.
 
 **Phase-4 pack harness lessons (2026-09-28):** new browser-pack workers MUST (1) `export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"` (daemon shells lack node), (2) avoid bash-4-only syntax (`${var,,}` breaks under macOS /bin/bash 3.2 — use `printf|tr`), (3) set Content-Type on EVERY static-server response path incl. index.html fallback and 404 (empty MIME on the ES-module bundle = silent blank page), (4) demo-auth contexts for auth-gated CTAs, (5) stage loading by hanging ONLY the tree route, (6) unroute ALL interceptions before retry clicks.
+
+## Phase-5 release-gate runs (2026-09-28 @ fdbce13; lineage = fdbce13 + test-only commits; live :3456 image 6c6b23d3b040)
+
+| Pack | Kind | Result | Log |
+|---|---|---|---|
+| web_vitest_p0 | unit (full) | **PASS 313/313** | RESULTS/2026-09-28-apple-phase5-vitest.log |
+| web_build_p0 | typecheck+build | **PASS** (INV-01 ✓, dist fresh) | …-build.log |
+| go_p0_full_module (`-count=1` edit) | go all-pkgs | **PASS 12/0** (DSN-gated skips by design) | …-go.log |
+| apple_phase1_shell_e2e_test | browser | **PASS 16/16** | …-reg-shell.log |
+| apple_phase2_login_browser_test | browser | **PASS 5/5** | …-reg-login.log |
+| apple_phase2_email_verify_browser_test | browser | **PASS 5/5** | …-reg-email.log |
+| apple_phase2_oauth_callback_browser_test | browser | **PASS 6/6** | …-reg-oauth.log |
+| apple_phase3_memberdetail_browser_test | browser | **PASS-equivalent** (5 residual rows = documented NON-PRODUCT class; live member-detail 200 — PD-P3-3 fixed) | …-reg-member.log |
+| apple_phase3_kinship_browser_test | browser | **PASS 10/10** (PD-P3-2 holds) | …-reg-kinship.log |
+| apple_phase3_feed_browser_test | browser | **PASS 10/10** | …-reg-feed.log |
+| apple_phase3_misc_browser_test | browser | **PASS 8/8** | …-reg-misc.log |
+| apple_phase4_tree_chrome_browser_test | browser | **FAIL-class adjudicated — ZERO NEW** (27/28 in the 7 documented residual classes) | …-reg-treechrome.log |
+| apple_phase4_m1_journey_browser_test | browser | **PASS 5/5** | …-reg-m1journey.log |
+| apple_phase5_j1_live_test (NEW) | live e2e | **PASS 3/3** (demo@localhost, mock@tailnet) | …-j1-live.log |
+| apple_phase5_matrix_login_test (NEW) | matrix | **PASS** 30 cells | …-matrix-login.log |
+| apple_phase5_matrix_email_test (NEW) | matrix | **PASS** 24 cells | …-matrix-email.log |
+| apple_phase5_matrix_oauth_test (NEW) | matrix | **PASS** 12 cells | …-matrix-oauth.log |
+| apple_phase5_matrix_tree_test (NEW) | matrix | 18/24 PASS; 6 tree-success = spec-flow artifact (adjudicated PASS via probe+j1) | …-matrix-tree.log |
+| apple_phase5_matrix_member_test (NEW) | matrix | **PASS 30/30** (after assertion alignment a9abdbf) | …-matrix-member.log |
+| apple_phase5_matrix_kinship_test (NEW) | matrix | **FAIL (honest)** — 8 mobile cells fail on D-M3-1 (ToastHost ≤400px overflow, production defect) | …-matrix-kinship.log |
+| apple_phase5_matrix_feed_test (NEW) | matrix | **FAIL (honest)** — 6 empty cells fail on D-M3-2 (EmptyState line-height 1.429, production defect) | …-matrix-feed.log |
+| apple_phase5_matrix_account404_test (NEW) | matrix | **PASS 40/40** (content criteria; proof-depth gaps disclosed in RESULTS adjudication) | …-matrix-account-404.log |
+| apple_phase5_a11y_depth_test (NEW) | a11y | PASS-class w/ adjudications (A4 🟠 Escape-focus; see a11y adjudication) | …-a11y-depth.log |
+| apple_phase5_console_hygiene_test (NEW) | hygiene | **PASS** (0 console errors / 0 real 5xx / 10 routes) | …-console-hygiene.log |
+
+**Verdict artifact:** `RESULTS/2026-09-28-apple-phase5-release-gate.md` + `RESULTS/2026-09-28-apple-phase5-fix-reverification.md`.
+
+## Fix re-verification runs (2026-09-28 @ 8a73d01; isolated-dist lane + live :3456 backend)
+
+| Pack | Result | Log |
+|---|---|---|
+| web_build_p0 (rebuild @8a73d01) | **PASS** (fix signatures compiled; INV-01 ✓) | …-fix-build.log |
+| apple_phase5_matrix_kinship_test | **8/8 blocker cells FLIPPED PASS** (fixedBad=[]; guards hold); desktop-success toast flags = adjudicated sampler artifacts | …-fix-matrix-kinship.log |
+| apple_phase5_matrix_feed_test | **6/6 blocker cells FLIPPED PASS** (line-height exactly 1.6); empty-L-1440 lookup = transient (3× DOM) ; composer toast flag = sampler artifact | …-fix-matrix-feed.log |
+| apple_phase4_tree_chrome_browser_test | FAIL-class **UNCHANGED, ZERO NEW** (identical residual decomposition) | …-fix-treechrome.log |
+| apple_phase4_m1_journey_browser_test | **PASS 5/5** | …-fix-m1journey.log |
+| apple_phase5_a11y_depth_test | **PASS 7/7** (Escape probe PASS post-fix; pre-fix journals preserved .pre-fix) | …-fix-a11y.log |
+| (adjudication probes) | Toast ground truth: text-vs-card **16.83 L / 13.93 D**; 1.37/1.86 = border-ring sampler artifact (hex-proven); desktop toast = full-width strip 1408×58 | /tmp/toast-contrast.log + RESULTS copies |
+
+**Toast-contrast adjudication (both themes ARTIFACT):** reported fg values are the 1px `border-success/30` ring composited over card fill (#34A853@30%→#C2E5CB light; #32D074@30%→#2B593C dark — exact hex + sampler reproduction). `w-auto` widened cards → text share 0.151%/0.168% fell below the sampler 0.2% floor while the border ring hit 3.46%. **Harness backlog: sampler floor → ~0.05% or percentile selection.**
+| api_server_build_test | API server compile | `.agents/tester/packs/api_server_build_test.sh` → `cd api && go build -o "$tmp" ./cmd/server` | <1m | 270s / 300s | not run (infrastructure prep) | pending |
+
+| api_member_id_live_smoke_test | live API GET-only malformed member-ID smoke | `.agents/tester/packs/api_member_id_live_smoke_test.sh` → localhost:3456 health, malformed IDs, unknown UUID, list-discovered detail | <30s | 120s inner / 300s outer | not run (infrastructure prep) | pending (GET-only; auth-dependent detail may be unavailable) |
