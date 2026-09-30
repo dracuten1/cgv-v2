@@ -1,7 +1,18 @@
 const {test,expect}=require('@playwright/test');
 const BASE=process.env.TREE_RACE_BASE||'http://127.0.0.1:14180';
-const A='22222222-2222-4222-8222-222222220002',B='33333333-3333-4333-8333-333333330003';
-async function login(browser){const c=await browser.newContext({viewport:{width:1440,height:900},locale:'vi-VN',serviceWorkers:'block'});const r=await c.request.post(BASE+'/api/v1/auth/demo',{headers:{Origin:new URL(BASE).origin},data:''});if(!r.ok())throw Error(`demo auth ${r.status()}`);for(const id of [A,B]){const check=await c.request.get(`${BASE}/api/v1/families/${id}/tree`,{headers:{Origin:new URL(BASE).origin}});if(!check.ok())throw Error(`required seeded family unavailable: ${id} (HTTP ${check.status()})`)}return c}
+const A='22222222-2222-4222-8222-000000000002',B='33333333-3333-4333-8333-000000000003';
+async function login(browser){
+ const c=await browser.newContext({viewport:{width:1440,height:900},locale:'vi-VN',serviceWorkers:'block'});
+ const origin=new URL(BASE).origin;
+ const auth=await c.request.post(BASE+'/api/v1/auth/demo',{headers:{Origin:'http://localhost:3456'},data:''});
+ if(!auth.ok()) throw Error(`demo auth POST ${BASE}/api/v1/auth/demo → HTTP ${auth.status()}: ${(await auth.text()).slice(0,500)}`);
+ for(const id of [A,B]){
+  const url=`${BASE}/api/v1/families/${id}/tree`;
+  const check=await c.request.get(url,{headers:{Origin:origin}});
+  if(!check.ok()) throw Error(`required seeded family unavailable: GET ${url} → HTTP ${check.status()}: ${(await check.text()).slice(0,500)}; verify seed IDs, demo auth, and harness API proxy`);
+ }
+ return c;
+}
 async function treeRequests(page){const calls=[];page.on('request',r=>{if(new URL(r.url()).pathname.match(/\/families\/[^/]+\/tree$/))calls.push(new URL(r.url()).pathname)});return calls}
 async function goTree(page,url='/tree'){await page.goto(BASE+url);await expect(page.locator('[data-testid="tree-world"]')).toHaveCount(1,{timeout:15000})}
 test('latest family fetch wins and stale response cannot release newer spinner',async({browser})=>{const c=await login(browser);try{const p=await c.newPage(),calls=await treeRequests(p),holdA=()=>{};let release;const gate=new Promise(r=>release=r);await p.route(`**/api/v1/families/${A}/tree`,async route=>{holdA();await gate;await route.continue()});await goTree(p,`/tree?family=${A}`);await expect.poll(()=>calls.filter(x=>x.endsWith(`/${A}/tree`)).length).toBe(1);await p.evaluate(id=>history.replaceState({},'',`/tree?family=${id}`),B);await p.evaluate(()=>dispatchEvent(new PopStateEvent('popstate')));await expect.poll(()=>calls.filter(x=>x.endsWith(`/${B}/tree`)).length).toBe(1);await expect(p.locator('select').first()).toHaveValue(B);await expect(p.locator('[data-testid="tree-world"]')).toBeVisible();release();await expect.poll(()=>p.locator('[data-testid="tree-world"]').getAttribute('data-family-id')).not.toBe(A);await expect(p.locator('select').first()).toHaveValue(B);expect(calls.filter(x=>x.endsWith(`/${A}/tree`))).toHaveLength(1);expect(calls.filter(x=>x.endsWith(`/${B}/tree`))).toHaveLength(1); }finally{await c.close()}});
