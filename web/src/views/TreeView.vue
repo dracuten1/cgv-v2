@@ -92,9 +92,9 @@
       </div>
     </div>
 
-    <!-- Loading -->
+    <!-- Loading skeleton (only during initial load, not during background refresh) -->
     <div
-      v-if="store.loading"
+      v-if="store.loading && store.roots.length === 0"
       class="bg-white rounded-xl border border-slate-200 py-16 flex flex-col items-center justify-center gap-3"
       data-testid="tree-loading"
     >
@@ -138,7 +138,7 @@
       </template>
     </EmptyState>
 
-    <!-- Visualizer -->
+    <!-- Visualizer (kept mounted during background refresh to preserve transform) -->
     <TreeVisualizer v-else :orientation="orientation" />
 
     <!-- Add member dialog (create mode) -->

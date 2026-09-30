@@ -355,4 +355,80 @@ describe('TreeView', () => {
     expect(kinshipApi.getFamilyKinshipLabels).toHaveBeenCalledWith('f1', 'm-self', undefined);
     expect(treeStore.kinshipLabels['aaaaaaa1-0000-4000-8000-000000000001']).toBe('Thủy tổ');
   });
+
+  it('REGRESSION-PHASE3-REFETCH: preserves TreeVisualizer transform state during same-family invalidate() refetch', async () => {
+    // Regression: at 86e7411, a same-family invalidate() caused TreeView to unmount
+    // TreeVisualizer (loading=true + v-if unmount), which lost hasInitialCentered and
+    // other state; on remount, autoCenterInitial() re-framed the anchor, resetting zoom
+    // to the initial anchor-fit value instead of preserving the user's manual pan/zoom.
+    //
+    // Fix: TreeVisualizer stays mounted during background refresh (roots > 0),
+    // and TreeVisualizer's frameCurrentAnchor() guard prevents re-framing when
+    // family/filter/anchor/orientation unchanged.
+
+    const treeStore = useTreeStore();
+    let resolveInitial!: (v: any) => void;
+    let resolveRefetch!: (v: any) => void;
+
+    // Mock two sequential fetches: initial and refetch
+    familiesApi.getTree
+      .mockImplementationOnce(
+        () => new Promise((res) => (resolveInitial = res))
+      )
+      .mockImplementationOnce(
+        () => new Promise((res) => (resolveRefetch = res))
+      );
+
+    const wrapper = mountTree();
+    expect(treeStore.loading).toBe(true);
+    expect(wrapper.find('[data-testid="tree-loading"]').exists()).toBe(true);
+
+    // Complete initial load
+    resolveInitial({
+      version: 1,
+      roots: [{ id: 'r1', full_name: 'Root', gender: 'male', generation_index: 1, children: [], spouse_ids: [], is_living: true }],
+      generations: [{ index: 1, label: 'Đời 1', count: 1 }],
+    });
+    await flushPromises();
+    expect(treeStore.loading).toBe(false);
+    expect(treeStore.roots.length).toBe(1);
+
+    const visualizer = wrapper.findComponent({ name: 'TreeVisualizer' });
+    expect(visualizer.exists()).toBe(true);
+    const worldBeforePan = visualizer.find('[data-testid="tree-world"]').attributes('style');
+
+    // Simulate user manual pan/zoom (set transform via component)
+    // In real scenario, user would click buttons; here we access the component's vm
+    const vizVm = visualizer.vm as any;
+    vizVm.setTransform(1.5, 100, 200);
+    const worldAfterPan = visualizer.find('[data-testid="tree-world"]').attributes('style');
+    expect(worldAfterPan).not.toBe(worldBeforePan);
+    expect(worldAfterPan).toContain('scale(1.5)');
+
+    // Trigger invalidate (same family, same roots, simulating a member save)
+    familiesApi.getTree.mockClear();
+    familiesApi.getTree.mockImplementationOnce(() => new Promise((res) => (resolveRefetch = res)));
+    const invalidatePromise = treeStore.invalidate();
+
+    // During refetch, loading is true but roots still exist
+    expect(treeStore.loading).toBe(true);
+    // TreeVisualizer should still be mounted (not unmounted by loading skeleton)
+    expect(wrapper.findComponent({ name: 'TreeVisualizer' }).exists()).toBe(true);
+
+    // Complete the refetch with same data
+    resolveRefetch({
+      version: 2, // slightly different version
+      roots: [{ id: 'r1', full_name: 'Root', gender: 'male', generation_index: 1, children: [], spouse_ids: [], is_living: true }],
+      generations: [{ index: 1, label: 'Đời 1', count: 1 }],
+    });
+    await invalidatePromise;
+    await flushPromises();
+
+    expect(treeStore.loading).toBe(false);
+    // Transform should be preserved (frameCurrentAnchor guard prevented re-frame)
+    const worldAfterRefetch = wrapper.findComponent({ name: 'TreeVisualizer' }).find('[data-testid="tree-world"]').attributes('style');
+    expect(worldAfterRefetch).toBe(worldAfterPan);
+    expect(worldAfterRefetch).toContain('scale(1.5)'); // zoom unchanged
+    expect(worldAfterRefetch).toContain('translate3d(100px, 200px'); // pan unchanged
+  });
 });
