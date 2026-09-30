@@ -72,7 +72,7 @@ test('latest family fetch wins and stale response cannot release newer spinner',
   await p.route(`**/api/v1/families/${A}/tree`,async route=>{await gate;await route.continue()});
   await goTree(p,`/tree?family=${A}`,true);
   await expect.poll(()=>callsFor(calls,A)).toBe(1,{timeout:10000});
-  await switchFamily(p,B);
+  await pickFamily(p,B);
   await expect.poll(()=>callsFor(calls,B)).toBe(1,{timeout:10000});
   await expect(p.locator('select').first()).toHaveValue(B);
   await expect(p.getByTestId('tree-world')).toBeVisible();
