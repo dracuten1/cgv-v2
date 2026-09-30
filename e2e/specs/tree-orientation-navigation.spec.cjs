@@ -28,13 +28,26 @@ async function login(browser, theme='light', viewport={width:1440,height:900}) {
 test('orientation toggles, keyboard/focus and per-family persistence',async({browser})=>{
  const c=await login(browser);try{const p=await c.newPage();await ready(p);
  const dọc=p.getByTestId('orientation-vertical'),ngang=p.getByTestId('orientation-horizontal');
+ const familySelect=p.locator('select').first();
+ const families=await p.request.get(BASE+'/api/v1/families');
+ if(!families.ok()) throw new Error(`families API ${families.status()}: ${await families.text()}`);
+ const body=await families.json();
+ const realFamilies=(body.families||[]).filter(f=>f.id && f.id!== '00000000-0000-4000-8000-000000000001');
+ const ids=[...new Set(realFamilies.map(f=>f.id))];
+ const selectorIds=await familySelect.locator('option').evaluateAll(os=>os.map(o=>o.value).filter(Boolean));
+ const usable=ids.filter(id=>selectorIds.includes(id));
+ if(usable.length<2) throw new Error(`FAIL CLOSED: need 2 distinct real family IDs; API IDs=${JSON.stringify(ids)} selector IDs=${JSON.stringify(selectorIds)} usable=${JSON.stringify(usable)}`);
+ const [familyA,familyB]=usable;
+ const choose=async id=>{await familySelect.selectOption(id);await expect.poll(()=>familySelect.inputValue()).toBe(id);await expect(p.getByTestId('tree-family-name')).toBeVisible();};
+ await choose(familyA);
  await expect(dọc).toHaveAttribute('aria-pressed','true');await expect(ngang).toHaveAttribute('aria-pressed','false');
  await dọc.focus();await expect(dọc).toBeFocused();await p.keyboard.press('Tab');await expect(ngang).toBeFocused();await p.keyboard.press('Enter');await expect(ngang).toHaveAttribute('aria-pressed','true');
  await expect(p.locator('[data-testid^="band-gen-"]')).not.toHaveCount(0);await expect(p.locator('[data-testid="tree-world"] canvas')).toHaveCount(1);
  await p.reload();await expect(ngang).toHaveAttribute('aria-pressed','true');
- const familySelect=p.locator('select').filter({has: p.locator('option')}).first();
- const options=await familySelect.locator('option').evaluateAll(os=>os.map(o=>o.value).filter(Boolean));
- if(options.length>1){const currentFamily=await familySelect.inputValue();await familySelect.selectOption(options.find(x=>x!==currentFamily));await expect(p.getByTestId('orientation-vertical')).toHaveAttribute('aria-pressed','true');await familySelect.selectOption(options[0]);await expect(ngang).toHaveAttribute('aria-pressed','true');}
+ await choose(familyB);await expect(dọc).toHaveAttribute('aria-pressed','true');await expect(ngang).toHaveAttribute('aria-pressed','false');
+ await ngang.click();await expect(ngang).toHaveAttribute('aria-pressed','true');
+ await choose(familyA);await expect(ngang).toHaveAttribute('aria-pressed','true');
+ await choose(familyB);await expect(ngang).toHaveAttribute('aria-pressed','true');
  }finally{await c.close();}
 });
 test('generation rail, minimap geometry and controls; mobile hides minimap',async({browser})=>{
