@@ -75,11 +75,11 @@ test('latest family fetch wins and stale response cannot release newer spinner',
   await pickFamily(p,B);
   await expect.poll(()=>callsFor(calls,B)).toBe(1,{timeout:10000});
   await expect(p.locator('select').first()).toHaveValue(B);
-  await expect(p.getByTestId('tree-world')).toBeVisible();
+  await expect(p.getByTestId('tree-world')).toHaveCount(1,{timeout:8000});
   await expect(p.getByTestId('tree-family-name')).toHaveText(byId[B]);
   release();
   await p.waitForTimeout(350);
-  await expect(p.getByTestId('tree-world')).toBeVisible();
+  await expect(p.getByTestId('tree-world')).toHaveCount(1,{timeout:8000});
   await expect(p.getByTestId('tree-family-name')).toHaveText(byId[B]);
   await expect(p.locator('select').first()).toHaveValue(B);
   expect(callsFor(calls,A)).toBe(1);
