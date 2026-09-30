@@ -164,6 +164,8 @@ function onMapKeydown(event: KeyboardEvent) {
     case 'ArrowRight': worldX = stepX; break;
     case 'ArrowUp': worldY = -stepY; break;
     case 'ArrowDown': worldY = stepY; break;
+    case 'PageUp': worldY = -stepY; break;
+    case 'PageDown': worldY = stepY; break;
     case 'Home': worldX = -props.layout.width; worldY = -props.layout.height; break;
     case 'End': worldX = props.layout.width; worldY = props.layout.height; break;
     default: return;
