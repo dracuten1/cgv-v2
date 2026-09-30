@@ -83,6 +83,37 @@ beforeEach(() => {
 });
 
 describe('TreeView', () => {
+  it('persists orientation through the real toggle event and keeps choices isolated per family', async () => {
+    localStorage.clear();
+    const wrapper = mountTree();
+    await flushPromises();
+
+    const horizontal = () => wrapper.find('[data-testid="orientation-horizontal"]');
+    const vertical = () => wrapper.find('[data-testid="orientation-vertical"]');
+    expect(vertical().attributes('aria-pressed')).toBe('true');
+
+    await horizontal().trigger('click');
+    expect(horizontal().attributes('aria-pressed')).toBe('true');
+    expect(localStorage.getItem('cgp_tree_orientation_f1')).toBe('horizontal');
+
+    await wrapper.find('.tree-family-select select').setValue('f2');
+    await flushPromises();
+    expect(vertical().attributes('aria-pressed')).toBe('true');
+    expect(localStorage.getItem('cgp_tree_orientation_f2')).toBeNull();
+
+    await horizontal().trigger('click');
+    await wrapper.find('.tree-family-select select').setValue('f1');
+    await flushPromises();
+    expect(horizontal().attributes('aria-pressed')).toBe('true');
+    expect(localStorage.getItem('cgp_tree_orientation_f1')).toBe('horizontal');
+
+    // Remounting the real view simulates a page reload and rehydrates the selected family's choice.
+    wrapper.unmount();
+    const reloaded = mountTree();
+    await flushPromises();
+    expect(reloaded.find('[data-testid="orientation-horizontal"]').attributes('aria-pressed')).toBe('true');
+  });
+
   it('auto-selects the first family on mount and fetches its tree', async () => {
     const wrapper = mountTree();
     await flushPromises();

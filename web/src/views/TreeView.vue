@@ -18,7 +18,7 @@
 
         <div class="flex items-center gap-2 flex-wrap">
           <!-- Orientation toggle Dọc / Ngang (per-family persistence) -->
-          <TreeOrientationToggle v-model="orientation" />
+          <TreeOrientationToggle v-model="orientation" @update:model-value="setOrientation" />
 
           <!-- Add member (auth-gated) -->
           <AppButton
@@ -178,7 +178,7 @@ const route = useRoute();
 
 const families = ref<Family[]>([]);
 const selectedFamilyId = ref<string>('');
-const { orientation } = useTreeOrientation(selectedFamilyId);
+const { orientation, setOrientation } = useTreeOrientation(selectedFamilyId);
 const addOpen = ref(false);
 /** true once the first fetch attempt resolved (distinguishes empty from initial). */
 const hasLoaded = ref(false);
