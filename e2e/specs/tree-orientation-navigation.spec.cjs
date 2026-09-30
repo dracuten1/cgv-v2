@@ -1,12 +1,30 @@
 const { test, expect } = require('@playwright/test');
 const BASE = process.env.TREE_ORIENT_BASE || 'http://127.0.0.1:14180';
+async function ready(page){
+ const diagnostics={url:null,dom:'',pageErrors:[],consoleErrors:[],failedRequests:[],apiResponses:[]};
+ page.on('pageerror',e=>diagnostics.pageErrors.push(e.message));
+ page.on('console',m=>{if(m.type()==='error')diagnostics.consoleErrors.push(m.text());});
+ page.on('requestfailed',r=>diagnostics.failedRequests.push({url:r.url(),error:r.failure()?.errorText}));
+ page.on('response',r=>{if(r.url().includes('/api/'))diagnostics.apiResponses.push({url:r.url(),status:r.status(),contentType:r.headers()['content-type']||''});});
+ await page.goto(BASE+'/tree');
+ try {
+  await expect(page.locator('[data-testid="tree-world"]')).toHaveCount(1,{timeout:10000});
+  await expect(page.locator('[data-testid="orientation-vertical"]')).toBeVisible();
+ } catch(error) {
+  diagnostics.url=page.url();
+  diagnostics.dom=await page.locator('body').innerText().catch(()=>'<body unavailable>');
+  diagnostics.dom=diagnostics.dom.slice(0,3000);
+  diagnostics.states=await page.evaluate(()=>({title:document.title,html:document.body?.innerHTML.slice(0,5000),families:document.querySelector('select')?.innerHTML,world:!!document.querySelector('[data-testid="tree-world"]')})).catch(e=>({evaluateError:e.message}));
+  console.error('TREE_READY_DIAGNOSTICS '+JSON.stringify(diagnostics));
+  throw new Error(`tree readiness failed; diagnostics=${JSON.stringify(diagnostics)}; cause=${error.message}`);
+ }
+}
 async function login(browser, theme='light', viewport={width:1440,height:900}) {
  const context=await browser.newContext({colorScheme:theme,viewport,locale:'vi-VN',serviceWorkers:'block'});
- const response=await context.request.post(BASE+'/api/v1/auth/demo',{headers:{Origin:new URL(BASE).origin},data:''});
- if(!response.ok()) throw new Error(`demo auth ${response.status()}`);
+ const response=await context.request.post(BASE+'/api/v1/auth/demo',{headers:{Origin:'http://localhost:3456'},data:''});
+ if(!response.ok()) throw new Error(`demo auth ${response.status()} body=${await response.text().catch(()=>'<unavailable>')}`);
  return context;
 }
-async function ready(page){await page.goto(BASE+'/tree');await expect(page.locator('[data-testid="tree-world"]')).toHaveCount(1,{timeout:10000});await expect(page.locator('[data-testid="orientation-vertical"]')).toBeVisible();}
 test('orientation toggles, keyboard/focus and per-family persistence',async({browser})=>{
  const c=await login(browser);try{const p=await c.newPage();await ready(p);
  const dọc=p.getByTestId('orientation-vertical'),ngang=p.getByTestId('orientation-horizontal');
