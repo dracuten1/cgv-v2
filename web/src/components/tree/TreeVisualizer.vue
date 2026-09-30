@@ -91,7 +91,31 @@
         :tier="culled.tier"
         @select="onNodeSelect"
       />
+
+      <!-- Large-family reveal chip (+N thành viên khác / +N khác) -->
+      <TreeRevealChip
+        v-if="hiddenSiblingsInfo && hiddenSiblingsInfo.hiddenCount > 0"
+        ref="revealChipRef"
+        :hidden-count="hiddenSiblingsInfo.hiddenCount"
+        :is-open="isRosterOpen"
+        :compact="isCompactViewport"
+        :anchor-name="hiddenSiblingsInfo.anchorName"
+        :position="revealChipPosition"
+        @toggle="toggleRoster"
+      />
     </div>
+
+    <!-- Sibling roster popover/dialog -->
+    <TreeSiblingRoster
+      v-if="hiddenSiblingsInfo"
+      :open="isRosterOpen"
+      :anchor-name="hiddenSiblingsInfo.anchorName"
+      :members="hiddenSiblingsInfo.hiddenSiblings"
+      :trigger-el="revealChipTriggerEl"
+      :style="rosterPositionStyle"
+      @close="closeRoster"
+      @select="onRosterSelectMember"
+    />
 
     <!-- Generation rail navigation -->
     <TreeGenerationRail
@@ -154,11 +178,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, toRefs, watch, type CSSProperties, type ComponentPublicInstance } from 'vue';
+import { useRouter } from 'vue-router';
 import TreeNodeCard from './TreeNodeCard.vue';
 import TreeCompassControl from './TreeCompassControl.vue';
 import TreeGenerationRail from './TreeGenerationRail.vue';
 import TreeMinimap from './TreeMinimap.vue';
+import TreeRevealChip from './TreeRevealChip.vue';
+import TreeSiblingRoster from './TreeSiblingRoster.vue';
 import { useTreeStore } from '@/stores/tree';
 import { useAuthStore } from '@/stores/auth';
 import {
@@ -167,6 +194,7 @@ import {
   anchorFrameTransform,
   type TreeOrientation,
 } from '@/composables/useTreeLayout';
+import { computeHiddenSiblings } from '@/composables/useTreeHiddenSiblings';
 import { useTreeViewport } from '@/composables/useTreeViewport';
 import { TREE_CONNECTOR_COLOR, TREE_CONNECTOR_NODE_COLOR } from './treeTokens';
 import { availableTreeViewportHeight } from './treeViewportHeight';
@@ -185,9 +213,16 @@ const props = withDefaults(
 
 const store = useTreeStore();
 const authStore = useAuthStore();
+const router = useRouter();
 
 const viewportEl = ref<HTMLElement | null>(null);
 const canvasEl = ref<HTMLCanvasElement | null>(null);
+const revealChipRef = ref<ComponentPublicInstance | null>(null);
+const revealChipTriggerEl = computed<HTMLElement | null>(() => {
+  return (revealChipRef.value?.$el as HTMLElement) ?? null;
+});
+
+const isRosterOpen = ref(false);
 
 const viewportHeight = ref<number | null>(null);
 /** Keep the reading viewport above the actual fixed nav, even when little height remains. */
@@ -276,7 +311,137 @@ function frameCurrentAnchor(): void {
   hasInitialCentered.value = true;
 }
 
-/** Active generation index based on viewport center */
+const isCompactViewport = computed(() => {
+  if (typeof window === 'undefined') return false;
+  const vpWidth = viewportEl.value?.clientWidth || window.innerWidth;
+  return vpWidth <= 360;
+});
+
+const hiddenSiblingsInfo = computed(() => {
+  const currentAnchor = activeAnchor.value || resolveAnchor();
+  if (!currentAnchor) return null;
+
+  const visibleIds = new Set(culled.value.visible.map((n) => n.id));
+  return computeHiddenSiblings(layout.value.nodes, store.roots, currentAnchor, visibleIds);
+});
+
+// Update reserved roster rows whenever roster opens/closes or members change
+watch([isRosterOpen, hiddenSiblingsInfo], () => {
+  if (isRosterOpen.value && hiddenSiblingsInfo.value) {
+    reservedRosterRows.value = hiddenSiblingsInfo.value.hiddenCount;
+  } else {
+    reservedRosterRows.value = 0;
+  }
+});
+
+const revealChipPosition = computed(() => {
+  if (!hiddenSiblingsInfo.value) return null;
+
+  // Find visible siblings in the same generation row
+  const anchorNode = layout.value.nodeById.get(hiddenSiblingsInfo.value.anchorId);
+  const genIndex = hiddenSiblingsInfo.value.generationIndex;
+
+  // Visible members in this generation
+  const visibleGenNodes = culled.value.visible.filter((n) => n.generation_index === genIndex);
+  if (visibleGenNodes.length === 0) {
+    if (anchorNode) {
+      return { x: anchorNode.x + anchorNode.width + 12, y: anchorNode.y + 20 };
+    }
+    return null;
+  }
+
+  if (props.orientation === 'horizontal') {
+    // In horizontal layout, siblings go along Y
+    const maxVisibleY = Math.max(...visibleGenNodes.map((n) => n.y + n.height));
+    const firstX = visibleGenNodes[0].x;
+    return {
+      x: firstX + 16,
+      y: maxVisibleY + 16,
+    };
+  } else {
+    // In vertical layout, siblings go along X
+    const maxVisibleX = Math.max(...visibleGenNodes.map((n) => n.x + n.width));
+    const firstY = visibleGenNodes[0].y;
+    return {
+      x: maxVisibleX + 16,
+      y: firstY + 20,
+    };
+  }
+});
+
+const rosterPositionStyle = computed<CSSProperties>(() => {
+  if (!viewportEl.value || !revealChipPosition.value) {
+    return {
+      left: '16px',
+      top: '64px',
+    };
+  }
+
+  // Screen-fixed overlay placed near chip within viewport bounds
+  const chipWorldX = revealChipPosition.value.x;
+  const chipWorldY = revealChipPosition.value.y;
+
+  // Project chip world coords to viewport CSS pixels
+  const chipScreenX = chipWorldX * transform.zoom + transform.tx;
+  const chipScreenY = chipWorldY * transform.zoom + transform.ty;
+
+  const vpW = viewportEl.value.clientWidth || 800;
+  const vpH = viewportEl.value.clientHeight || 600;
+
+  let left = chipScreenX;
+  let top = chipScreenY + 40;
+
+  // Ensure roster (max-width 320px, height ~280px) stays inside viewport
+  if (left + 320 > vpW - 16) {
+    left = Math.max(16, vpW - 320 - 16);
+  }
+  if (top + 260 > vpH - 16) {
+    top = Math.max(16, chipScreenY - 240);
+  }
+
+  return {
+    left: `${Math.round(left)}px`,
+    top: `${Math.round(top)}px`,
+  };
+});
+
+function toggleRoster(): void {
+  isRosterOpen.value = !isRosterOpen.value;
+}
+
+function closeRoster(): void {
+  isRosterOpen.value = false;
+}
+
+function onRosterSelectMember(memberId: string): void {
+  closeRoster();
+  focusNode(memberId);
+  store.selectMember(memberId);
+
+  // Update URL query ?anchor=<id> if router or window is available
+  if (router) {
+    try {
+      const currentRoute = router.currentRoute.value;
+      router.replace({
+        query: {
+          ...currentRoute?.query,
+          anchor: memberId,
+        },
+      });
+    } catch {
+      // In tests without vue-router mock, fallback to window.history
+    }
+  }
+  if (typeof window !== 'undefined') {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('anchor', memberId);
+      window.history.replaceState({}, '', url.toString());
+    } catch {
+      // ignore in environments with unusual URL formats
+    }
+  }
+}
 const activeGeneration = computed(() => {
   if (layout.value.nodes.length === 0) return null;
   const rect = viewportEl.value?.getBoundingClientRect();
@@ -499,5 +664,17 @@ onUnmounted(() => {
   resizeObserver?.disconnect();
   window.removeEventListener('resize', updateViewportHeight);
   window.removeEventListener('scroll', updateViewportHeight);
+});
+
+defineExpose({
+  focusNode,
+  frameAnchor,
+  fitView,
+  layout,
+  culled,
+  transform,
+  isRosterOpen,
+  toggleRoster,
+  closeRoster,
 });
 </script>
