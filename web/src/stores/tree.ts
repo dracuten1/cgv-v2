@@ -86,6 +86,12 @@ export const useTreeStore = defineStore('tree', () => {
     // BEFORE refetching so a failed refetch never serves old relations.
     kinshipLabels.value = {};
 
+    // Invalidate takes ownership of the loading lifecycle: when it supersedes
+    // an in-flight fetchTree, that fetch's finally skips its clear (seq
+    // mismatch), so invalidate must claim the spinner here and release it in
+    // its own finally — or the spinner sticks on forever (regression f2b5d2e).
+    loading.value = true;
+
     try {
       const res = await familiesApi.getTree(familyId.value);
       if (seq !== requestSeq) return; // superseded (e.g. user switched family mid-refetch)
@@ -95,6 +101,13 @@ export const useTreeStore = defineStore('tree', () => {
     } catch (err) {
       if (seq !== requestSeq) return;
       error.value = formatApiError(err);
+    } finally {
+      // Same latest-wins guard as fetchTree: a stale invalidate finishing
+      // after a newer fetchTree/invalidate started must never flip the newer
+      // request's spinner off.
+      if (seq === requestSeq) {
+        loading.value = false;
+      }
     }
   }
 
@@ -135,6 +148,11 @@ export const useTreeStore = defineStore('tree', () => {
   }
 
   function reset() {
+    // Orphan any in-flight fetchTree()/invalidate(): without this bump a
+    // response landing after reset() would pass the seq guard and repopulate
+    // the cleared store (familyId=null, version 0). Paired with loading=false
+    // below because the orphaned fetch's finally now skips its own clear.
+    requestSeq++;
     familyId.value = null;
     version.value = 0;
     generations.value = [];
@@ -143,6 +161,7 @@ export const useTreeStore = defineStore('tree', () => {
     generationFilter.value = null;
     kinshipLabels.value = {};
     error.value = null;
+    loading.value = false;
   }
 
   return {

@@ -220,6 +220,108 @@ describe('tree store', () => {
     expect(store.error).toBeNull();
   });
 
+  it('invalidate() supersedes an in-flight fetchTree and owns the loading lifecycle (f2b5d2e regression)', async () => {
+    const store = useTreeStore();
+    let resolveFetch!: (v: TreeResponse) => void;
+    let resolveInval!: (v: TreeResponse) => void;
+    mockedGetTree
+      .mockImplementationOnce(() => new Promise<TreeResponse>((res) => (resolveFetch = res)))
+      .mockImplementationOnce(() => new Promise<TreeResponse>((res) => (resolveInval = res)));
+
+    const p1 = store.fetchTree('f1');
+    expect(store.loading).toBe(true);
+
+    // Invalidate fires while the fetch is still in flight — it becomes the
+    // latest seq, so the fetch may never commit state nor clear loading.
+    const p2 = store.invalidate();
+    resolveFetch(treePayloadFor('f1', 3, 'Nguyễn Văn A')); // stale fetch lands mid-invalidate
+    await p1;
+    expect(store.version).toBe(0); // stale fetch must NOT commit
+    expect(store.roots).toEqual([]);
+    expect(store.loading).toBe(true); // invalidate inherited the spinner
+
+    // Inverted completion: invalidate resolves LAST.
+    resolveInval(treePayloadFor('f1', 8, 'Nguyễn Văn A (sau lưu)'));
+    await p2;
+    expect(store.familyId).toBe('f1');
+    expect(store.version).toBe(8); // invalidate commits the refreshed tree
+    expect(store.roots[0].full_name).toBe('Nguyễn Văn A (sau lưu)');
+    expect(store.error).toBeNull();
+    expect(store.loading).toBe(false); // REGRESSION: spinner was stuck on forever before the fix
+  });
+
+  it('a superseded invalidate never clears the newer fetchTree’s spinner', async () => {
+    const store = useTreeStore();
+    await store.fetchTree('f1');
+    mockedGetTree.mockClear();
+
+    let resolveInval!: (v: TreeResponse) => void;
+    let resolveFetch!: (v: TreeResponse) => void;
+    mockedGetTree
+      .mockImplementationOnce(() => new Promise<TreeResponse>((res) => (resolveInval = res)))
+      .mockImplementationOnce(() => new Promise<TreeResponse>((res) => (resolveFetch = res)));
+
+    const pInval = store.invalidate();
+    expect(store.loading).toBe(true); // invalidate owns the spinner while refetching
+
+    const p2 = store.fetchTree('f1'); // newer fetch supersedes the invalidate
+    resolveInval(treePayloadFor('f1', 99, 'Cũ')); // stale invalidate completes FIRST
+    await pInval;
+    expect(store.version).toBe(7); // stale invalidate must NOT commit
+    expect(store.loading).toBe(true); // newer fetch still owns the spinner
+
+    resolveFetch(treePayloadFor('f1', 12, 'Trần Thị B'));
+    await p2;
+    expect(store.version).toBe(12);
+    expect(store.roots[0].full_name).toBe('Trần Thị B');
+    expect(store.error).toBeNull();
+    expect(store.loading).toBe(false); // cleared exactly once, by the current owner
+  });
+
+  it('invalidate() failure surfaces error and still clears loading in finally', async () => {
+    const store = useTreeStore();
+    await store.fetchTree('f1');
+    let rejectInval!: (e: unknown) => void;
+    mockedGetTree.mockImplementationOnce(
+      () => new Promise<TreeResponse>((_, rej) => (rejectInval = rej))
+    );
+
+    const p = store.invalidate();
+    expect(store.loading).toBe(true);
+    rejectInval(new ApiError(500, 'INTERNAL', 'Máy chủ gặp sự cố.'));
+    await p;
+    expect(store.error).toBe('Máy chủ gặp sự cố.');
+    expect(store.loading).toBe(false);
+    // Prior committed tree state is retained on a failed refresh.
+    expect(store.version).toBe(7);
+  });
+
+  it('reset() orphans an in-flight fetchTree: a late response never repopulates the cleared store', async () => {
+    const store = useTreeStore();
+    let resolveFetch!: (v: TreeResponse) => void;
+    mockedGetTree.mockImplementationOnce(
+      () => new Promise<TreeResponse>((res) => (resolveFetch = res))
+    );
+
+    const p = store.fetchTree('f1');
+    expect(store.loading).toBe(true);
+
+    store.reset(); // logout / family teardown while fetch in flight
+    expect(store.familyId).toBeNull();
+    expect(store.version).toBe(0);
+    expect(store.loading).toBe(false);
+
+    resolveFetch(treePayloadFor('f1', 42, 'Nguyễn Văn An')); // late response lands after reset
+    const res = await p;
+    expect(res).toBeNull(); // superseded by reset's seq bump — fetch returns null
+    expect(store.familyId).toBeNull();
+    expect(store.version).toBe(0); // REGRESSION guard: no repopulation
+    expect(store.roots).toEqual([]);
+    expect(store.generations).toEqual([]);
+    expect(store.error).toBeNull();
+    expect(store.loading).toBe(false);
+  });
+
   it('invalidate() refetches the current family', async () => {
     const store = useTreeStore();
     await store.fetchTree('f1');
