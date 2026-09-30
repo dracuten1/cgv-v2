@@ -32,22 +32,31 @@ test('orientation toggles, keyboard/focus and per-family persistence',async({bro
  const families=await p.request.get(BASE+'/api/v1/families');
  if(!families.ok()) throw new Error(`families API ${families.status()}: ${await families.text()}`);
  const body=await families.json();
- const realFamilies=(body.families||[]).filter(f=>f.id && f.id!=='11111111-1111-4111-8111-000000000001');
- const ids=[...new Set(realFamilies.map(f=>f.id))];
+ const FAMILY_A='22222222-2222-4222-8222-000000000002',FAMILY_B='33333333-3333-4333-8333-000000000003';
+ const apiIds=(body.families||[]).map(f=>f.id);
  const selectorIds=await familySelect.locator('option').evaluateAll(os=>os.map(o=>o.value).filter(Boolean));
- const usable=ids.filter(id=>selectorIds.includes(id));
- if(usable.length<2) throw new Error(`FAIL CLOSED: need 2 distinct real family IDs; API IDs=${JSON.stringify(ids)} selector IDs=${JSON.stringify(selectorIds)} usable=${JSON.stringify(usable)}`);
- const [familyA,familyB]=usable;
- const choose=async id=>{await familySelect.selectOption(id);await expect.poll(()=>familySelect.inputValue()).toBe(id);await expect(p.getByTestId('tree-family-name')).toBeVisible();};
+ for(const [name,id] of [['A',FAMILY_A],['B',FAMILY_B]]){
+  if(!apiIds.includes(id)) throw new Error(`FAIL CLOSED: family ${name}=${id} absent from /api/v1/families; API IDs=${JSON.stringify(apiIds)}`);
+  if(!selectorIds.includes(id)) throw new Error(`FAIL CLOSED: family ${name}=${id} absent from family selector; selector IDs=${JSON.stringify(selectorIds)}`);
+ }
+ console.log(`CHECKPOINT gate A=${FAMILY_A} B=${FAMILY_B} present in API+selector`);
+ const familyA=FAMILY_A,familyB=FAMILY_B;
+ const choose=async id=>{await familySelect.selectOption(id);await expect.poll(()=>familySelect.inputValue()).toBe(id);await expect(p.getByTestId('tree-family-name')).toBeVisible();await expect(p).toHaveURL(new RegExp(`[?&]family=${id}`));console.log(`CHECKPOINT select family=${id} url=${p.url()}`);};
  await choose(familyA);
  await expect(dọc).toHaveAttribute('aria-pressed','true');await expect(ngang).toHaveAttribute('aria-pressed','false');
  await dọc.focus();await expect(dọc).toBeFocused();await p.keyboard.press('Tab');await expect(ngang).toBeFocused();await p.keyboard.press('Enter');await expect(ngang).toHaveAttribute('aria-pressed','true');
  await expect(p.locator('[data-testid^="band-gen-"]')).not.toHaveCount(0);await expect(p.locator('[data-testid="tree-world"] canvas')).toHaveCount(1);
- await p.reload();await expect(ngang).toHaveAttribute('aria-pressed','true');
+ console.log(`CHECKPOINT before-reload family=${await familySelect.inputValue()} url=${p.url()} ngang=${await ngang.getAttribute('aria-pressed')}`);
+ await p.reload();
+ await expect(p).toHaveURL(new RegExp(`[?&]family=${familyA}`));
+ await expect(familySelect).toHaveValue(familyA);
+ await expect(ngang).toHaveAttribute('aria-pressed','true');
+ console.log(`CHECKPOINT after-reload family=${await familySelect.inputValue()} url=${p.url()} ngang=${await ngang.getAttribute('aria-pressed')}`);
  await choose(familyB);await expect(dọc).toHaveAttribute('aria-pressed','true');await expect(ngang).toHaveAttribute('aria-pressed','false');
  await ngang.click();await expect(ngang).toHaveAttribute('aria-pressed','true');
  await choose(familyA);await expect(ngang).toHaveAttribute('aria-pressed','true');
  await choose(familyB);await expect(ngang).toHaveAttribute('aria-pressed','true');
+ console.log(`CHECKPOINT isolation-done family=${await familySelect.inputValue()} url=${p.url()} ngang=${await ngang.getAttribute('aria-pressed')}`);
  }finally{await c.close();}
 });
 test('generation rail, minimap geometry and controls; mobile hides minimap',async({browser})=>{
