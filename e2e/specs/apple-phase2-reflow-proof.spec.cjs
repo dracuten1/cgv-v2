@@ -19,16 +19,67 @@ async function readTransform(world) {
 }
 function expectSameTransform(a, b) { expect(Math.abs(a.zoom - b.zoom)).toBeLessThan(1e-6); expect(Math.abs(a.tx - b.tx)).toBeLessThan(1e-4); expect(Math.abs(a.ty - b.ty)).toBeLessThan(1e-4); }
 
-test('initial /tree load renders NAME-tier-or-better for a wide family at 1440x900, 390x844, 320x800 (light+dark)', async ({ browser }) => {
+function viewportNameProof(page) {
+  return page.evaluate(() => {
+    const viewport = document.querySelector('.tree-viewport');
+    const screen = { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+    const rect = r => ({ x: r.left, y: r.top, width: r.width, height: r.height, right: r.right, bottom: r.bottom });
+    const intersect = (a, b) => ({ left: Math.max(a.left, b.left), top: Math.max(a.top, b.top), right: Math.min(a.right, b.right), bottom: Math.min(a.bottom, b.bottom) });
+    const contains = (outer, inner) => inner.left >= outer.left - .5 && inner.top >= outer.top - .5 && inner.right <= outer.right + .5 && inner.bottom <= outer.bottom + .5;
+    const tree = viewport?.getBoundingClientRect();
+    const candidates = [...document.querySelectorAll('.tree-viewport button[aria-label*="Đời thứ"]')].map(control => {
+      const box = control.getBoundingClientRect();
+      const name = control.getAttribute('aria-label').split(', Đời thứ ')[0].trim();
+      const tier = control.querySelector('p.font-display') ? 'full-card' : box.width <= 16 ? 'dot' : control.classList.contains('truncate') ? 'name-only' : 'chip';
+      const nameEl = tier === 'full-card' ? control.querySelector('p.font-display') : control;
+      const textNode = [...(nameEl?.childNodes || [])].find(n => n.nodeType === Node.TEXT_NODE && n.textContent.includes(name));
+      let nameBox = null;
+      if (textNode) { const range = document.createRange(); const at = textNode.textContent.indexOf(name); range.setStart(textNode, at); range.setEnd(textNode, at + name.length); nameBox = range.getBoundingClientRect(); }
+      const css = nameEl && getComputedStyle(nameEl);
+      // Name-only buttons may ellipsize trailing YEARS while the full name remains intact.
+      // Measure the name text range against the padded content box, not total scrollWidth.
+      const content = nameEl?.getBoundingClientRect();
+      const scale = nameEl?.offsetWidth ? content.width / nameEl.offsetWidth : 1;
+      const padLeft = css ? (parseFloat(css.paddingLeft) || 0) * scale : 0;
+      const padRight = css ? (parseFloat(css.paddingRight) || 0) * scale : 0;
+      const clippedText = !!nameEl && (tier === 'name-only' || tier === 'chip'
+        ? !nameBox || nameBox.left < content.left + padLeft - .5 || nameBox.right > content.right - padRight + .5
+        : nameEl.scrollWidth > nameEl.clientWidth + 1);
+      const intersection = tree ? intersect(intersect(box, tree), screen) : null;
+      const nameIntersection = nameBox && tree ? intersect(intersect(intersect(nameBox, box), tree), screen) : null;
+      const fullNameOnScreen = !!nameBox && !!nameIntersection && contains(screen, nameBox) && contains(tree, nameBox) && contains(box, nameBox) && nameBox.width >= 35 && nameBox.height >= 10 && nameIntersection.right - nameIntersection.left >= 35 && nameIntersection.bottom - nameIntersection.top >= 10;
+      const point = nameBox && { x: (nameBox.left + nameBox.right) / 2, y: (nameBox.top + nameBox.bottom) / 2 };
+      const top = point && document.elementFromPoint(point.x, point.y);
+      const unobscured = !!top && (top === control || control.contains(top));
+      return { name, tier, box: rect(box), nameBox: nameBox && rect(nameBox), intersection, nameIntersection,
+        cssTextOverflow: css?.textOverflow, scrollWidth: nameEl?.scrollWidth, clientWidth: nameEl?.clientWidth,
+        clippedText, unobscured, occluder: unobscured ? null : top?.outerHTML.slice(0, 220),
+        readable: tier !== 'dot' && fullNameOnScreen && !clippedText && unobscured };
+    });
+    return { viewport: { width: innerWidth, height: innerHeight }, treeViewport: tree && rect(tree), candidates,
+      readableNames: candidates.filter(c => c.readable).map(c => ({ name: c.name, tier: c.tier, box: c.box, nameBox: c.nameBox, viewportIntersection: c.intersection, nameIntersection: c.nameIntersection })) };
+  });
+}
+
+test('initial /tree load renders on-screen FULL readable NAME at exact viewport sizes (light+dark)', async ({ browser }) => {
+  const cells = [];
   for (const theme of themes) for (const [width, height] of viewports) {
-    const context = await demoContext(browser, theme, { width, height }); const page = await context.newPage(); const errors = collectErrors(page); const network = []; const serverErrors = []; page.on('response', r => { if (r.status() >= 500) serverErrors.push({ url: r.url(), status: r.status() }); }); page.on('response', async r => { if (r.url().includes('/api/v1/families')) network.push({ url: r.url(), status: r.status(), body: await r.text().catch(e => `BODY_ERROR ${e.message}`) }); });
+    const context = await demoContext(browser, theme, { width, height }); const page = await context.newPage(); const errors = collectErrors(page); const network = []; const serverErrors = [];
+    page.on('response', r => { if (r.status() >= 500) serverErrors.push({ url: r.url(), status: r.status() }); });
+    page.on('response', async r => { if (r.url().includes('/api/v1/families')) network.push({ url: r.url(), status: r.status(), body: await r.text().catch(e => `BODY_ERROR ${e.message}`) }); });
     await page.goto(BASE + '/tree'); await expect(page.locator('[data-testid="tree-world"]')).toHaveCount(1, { timeout: 10000 }); await expect(page.locator('button[aria-label*="Đời thứ"]').first()).toBeVisible({ timeout: 10000 });
-    const people = page.locator('button[aria-label*="Đời thứ"]'); await expect(people.first()).toBeVisible();
-    for (let i = 0; i < await people.count(); i++) { const person = people.nth(i); if (!(await person.isVisible())) continue; const box = await person.boundingBox(); expect(box, `visible person ${i} has a box`).toBeTruthy(); expect(Math.abs(box.width - 14) > 1, `person ${i} is dot-sized (${box.width}px) at ${width}x${height} ${theme}`).toBeTruthy(); }
-    await page.screenshot({ path: path.join(OUT, `initial-${theme}-${width}x${height}.png`), fullPage: true });
-    if (!(await page.locator('[data-testid="tree-world"]').isVisible())) { const diagnostic = { url: page.url(), bodyText: await page.locator('body').innerText(), loading: await page.locator('[data-testid="tree-loading"]').count(), error: await page.locator('.tree-error, [data-testid="tree-retry"]').allTextContents(), network, consoleErrors: errors.consoleErrors, pageErrors: errors.pageErrors }; fs.writeFileSync(path.join(OUT, `diagnostic-${theme}-${width}x${height}.json`), JSON.stringify(diagnostic, null, 2)); }
-    expect(serverErrors).toEqual([]); expect(errors.pageErrors).toEqual([]); expect(errors.consoleErrors).toEqual([]); await context.close();
+    const screenshot = path.join(OUT, `viewport-${theme}-${width}x${height}.png`);
+    await page.screenshot({ path: screenshot, fullPage: false });
+    const proof = await viewportNameProof(page);
+    const cell = { theme, expectedViewport: { width, height }, screenshot, ...proof, serverErrors, errors, network,
+      pass: proof.viewport.width === width && proof.viewport.height === height && proof.readableNames.length > 0 && !serverErrors.length && !errors.pageErrors.length && !errors.consoleErrors.length };
+    cells.push(cell);
+    fs.writeFileSync(path.join(OUT, `viewport-${theme}-${width}x${height}.json`), JSON.stringify(cell, null, 2));
+    console.log('VIEWPORT_PROOF ' + JSON.stringify({ theme, viewport: proof.viewport, treeViewport: proof.treeViewport, readableNames: proof.readableNames, candidates: proof.candidates, screenshot, pass: cell.pass }));
+    await context.close();
   }
+  fs.writeFileSync(path.join(OUT, 'viewport-proof.json'), JSON.stringify(cells, null, 2));
+  expect(cells.filter(c => !c.pass).map(c => ({ theme: c.theme, viewport: c.viewport, candidates: c.candidates, errors: c.errors, serverErrors: c.serverErrors })), 'all six viewport cells require an on-screen unobscured full name').toEqual([]);
 });
 
 test('REFLOW-SAME-ANCHOR: same-family tree refetch preserves pan/zoom transform (no auto-refit)', async ({ browser }) => {
