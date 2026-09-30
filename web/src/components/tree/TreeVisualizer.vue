@@ -2,7 +2,7 @@
   <div
     ref="viewportEl"
     class="tree-viewport relative overflow-hidden rounded-xl bg-white border border-slate-200 select-none touch-none"
-    :style="{ height: viewportHeight ? `${viewportHeight}px` : '320px' }"
+    :style="{ height: viewportHeight === null ? '320px' : `${viewportHeight}px` }"
     :data-view-centered="centeredTarget"
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
@@ -127,6 +127,7 @@ import {
 } from '@/composables/useTreeLayout';
 import { useTreeViewport } from '@/composables/useTreeViewport';
 import { TREE_CONNECTOR_COLOR, TREE_CONNECTOR_NODE_COLOR } from './treeTokens';
+import { availableTreeViewportHeight } from './treeViewportHeight';
 import { canvasBackingSize } from './canvasBackingSize';
 
 defineOptions({ name: 'TreeVisualizer' });
@@ -137,13 +138,13 @@ const authStore = useAuthStore();
 const viewportEl = ref<HTMLElement | null>(null);
 const canvasEl = ref<HTMLCanvasElement | null>(null);
 
-const viewportHeight = ref(0);
-/** Only the visible space above AppLayout's fixed mobile nav is a reading viewport. */
+const viewportHeight = ref<number | null>(null);
+/** Keep the reading viewport above the actual fixed nav, even when little height remains. */
 function updateViewportHeight(): void {
   const top = viewportEl.value?.getBoundingClientRect().top ?? 0;
   const nav = document.querySelector<HTMLElement>('nav[aria-label="Điều hướng di động"]');
   const navTop = nav && getComputedStyle(nav).display !== 'none' ? nav.getBoundingClientRect().top : window.innerHeight;
-  viewportHeight.value = Math.max(240, Math.floor(navTop - top - 16));
+  viewportHeight.value = availableTreeViewportHeight(top, navTop);
 }
 
 const { roots: rootsRef, generations: generationsRef, generationFilter: filterRef } = toRefs(store);
@@ -356,17 +357,26 @@ watch(culled, () => {
 let resizeObserver: ResizeObserver | undefined;
 onMounted(() => {
   window.addEventListener('resize', updateViewportHeight);
+  window.addEventListener('scroll', updateViewportHeight, { passive: true });
   if (viewportEl.value && typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(() => {
+      // Ancestor/sibling async reflow can move the viewport without resizing the window.
+      updateViewportHeight();
       // Preserve pan/zoom at unchanged anchor; a new anchor follows the normal policy.
       frameCurrentAnchor();
       drawEdges();
     });
-    resizeObserver.observe(viewportEl.value);
+    for (let el: HTMLElement | null = viewportEl.value; el; el = el.parentElement) {
+      resizeObserver.observe(el);
+      for (let sibling = el.previousElementSibling; sibling; sibling = sibling.previousElementSibling) resizeObserver.observe(sibling);
+    }
+    const nav = document.querySelector<HTMLElement>('nav[aria-label="Điều hướng di động"]');
+    if (nav) resizeObserver.observe(nav);
   }
 });
 onUnmounted(() => {
   resizeObserver?.disconnect();
   window.removeEventListener('resize', updateViewportHeight);
+  window.removeEventListener('scroll', updateViewportHeight);
 });
 </script>

@@ -6,6 +6,16 @@ import {
   TV_ROOT_GENERATIONS, TV_DENSE300_ROOTS, TV_DENSE300_GENERATIONS,
 } from './fixtures/tree-view-fixtures';
 
+import { availableTreeViewportHeight } from '@/components/tree/treeViewportHeight';
+
+describe('tree viewport available height', () => {
+  it('never extends through the nav when fewer than 240px remain', () => {
+    expect(availableTreeViewportHeight(600, 760)).toBe(144);
+    expect(availableTreeViewportHeight(755, 760)).toBe(0);
+    expect(availableTreeViewportHeight(426.4, 734)).toBe(291);
+  });
+});
+
 describe('P2 anchor frame, LOD and combined budget', () => {
   it('GEO-FRAME: centers each fixture anchor, follows the 48px formula and stays NAME or better', () => {
     for (const key of ['TV-ROOT', 'TV-CHILDLESS', 'TV-WIDE8', 'TV-DEEP6'] as const) {
@@ -20,7 +30,16 @@ describe('P2 anchor frame, LOD and combined budget', () => {
         // Narrow reading frames center the admitted neighborhood, not the first root's
         // center (which would clip its adjacent spouse entirely).
         if (width > 360) expect(frame.tx + (anchor.x + anchor.width / 2) * frame.zoom).toBeCloseTo(width / 2);
-        else expect(frame.tx + (anchor.x + anchor.width / 2) * frame.zoom).toBeGreaterThan(0);
+        else {
+          const projected = layout.nodes.map(node => ({
+            left: frame.tx + node.x * frame.zoom,
+            right: frame.tx + (node.x + node.width) * frame.zoom,
+            top: frame.ty + node.y * frame.zoom,
+            bottom: frame.ty + (node.y + node.height) * frame.zoom,
+          }));
+          // A positive center alone can still leave every card (and its name) clipped.
+          expect(projected.some(card => card.left >= 0 && card.right <= width && card.top >= 0 && card.bottom <= height)).toBe(true);
+        }
         expect(frame.ty + (anchor.y + anchor.height / 2) * frame.zoom).toBeCloseTo(height / 2);
       }
     }

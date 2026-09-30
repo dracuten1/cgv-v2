@@ -1,0 +1,1956 @@
+[
+  {
+    "theme": "light",
+    "expectedViewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "screenshot": "tree-p2-hardening-evidence/viewport-light-1440x900.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "treeViewport": {
+      "x": 104,
+      "y": 279.796875,
+      "width": 1232,
+      "height": 604,
+      "right": 1336,
+      "bottom": 883.796875
+    },
+    "mobileNav": null,
+    "candidates": [
+      {
+        "name": "Lê Văn Khải",
+        "tier": "full-card",
+        "box": {
+          "x": 447.76922607421875,
+          "y": 548.6430053710938,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 614.7435913085938,
+          "bottom": 616.95068359375
+        },
+        "nameBox": {
+          "x": 502.79486083984375,
+          "y": 564.5784912109375,
+          "width": 66.4102783203125,
+          "height": 14.2308349609375,
+          "right": 569.2051391601562,
+          "bottom": 578.809326171875
+        },
+        "intersection": {
+          "left": 447.76922607421875,
+          "top": 548.6430053710938,
+          "right": 614.7435913085938,
+          "bottom": 616.95068359375
+        },
+        "nameIntersection": {
+          "left": 502.79486083984375,
+          "top": 564.5784912109375,
+          "right": 569.2051391601562,
+          "bottom": 578.809326171875
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 70,
+        "clientWidth": 70,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Hoàng Thị Phượng",
+        "tier": "full-card",
+        "box": {
+          "x": 637.5128173828125,
+          "y": 548.6430053710938,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 804.4871826171875,
+          "bottom": 616.95068359375
+        },
+        "nameBox": {
+          "x": 692.5384521484375,
+          "y": 564.5784912109375,
+          "width": 103.69189453125,
+          "height": 14.2308349609375,
+          "right": 796.2303466796875,
+          "bottom": 578.809326171875
+        },
+        "intersection": {
+          "left": 637.5128173828125,
+          "top": 548.6430053710938,
+          "right": 804.4871826171875,
+          "bottom": 616.95068359375
+        },
+        "nameIntersection": {
+          "left": 692.5384521484375,
+          "top": 564.5784912109375,
+          "right": 796.2303466796875,
+          "bottom": 578.809326171875
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 109,
+        "clientWidth": 107,
+        "clippedText": true,
+        "unobscured": true,
+        "occluder": null,
+        "readable": false
+      },
+      {
+        "name": "Lê Thị Thảo",
+        "tier": "full-card",
+        "box": {
+          "x": 447.76922607421875,
+          "y": 708.0276489257812,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 614.7435913085938,
+          "bottom": 776.3353271484375
+        },
+        "nameBox": {
+          "x": 502.79486083984375,
+          "y": 723.963134765625,
+          "width": 65.4912109375,
+          "height": 14.23077392578125,
+          "right": 568.2860717773438,
+          "bottom": 738.1939086914062
+        },
+        "intersection": {
+          "left": 447.76922607421875,
+          "top": 708.0276489257812,
+          "right": 614.7435913085938,
+          "bottom": 776.3353271484375
+        },
+        "nameIntersection": {
+          "left": 502.79486083984375,
+          "top": 723.963134765625,
+          "right": 568.2860717773438,
+          "bottom": 738.1939086914062
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 69,
+        "clientWidth": 69,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Nguyễn Văn Kiên",
+        "tier": "full-card",
+        "box": {
+          "x": 637.5128173828125,
+          "y": 708.0276489257812,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 804.4871826171875,
+          "bottom": 776.3353271484375
+        },
+        "nameBox": {
+          "x": 692.5384521484375,
+          "y": 723.963134765625,
+          "width": 95.2572021484375,
+          "height": 14.23077392578125,
+          "right": 787.795654296875,
+          "bottom": 738.1939086914062
+        },
+        "intersection": {
+          "left": 637.5128173828125,
+          "top": 708.0276489257812,
+          "right": 804.4871826171875,
+          "bottom": 776.3353271484375
+        },
+        "nameIntersection": {
+          "left": 692.5384521484375,
+          "top": 723.963134765625,
+          "right": 787.795654296875,
+          "bottom": 738.1939086914062
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 100,
+        "clientWidth": 100,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Nguyễn Văn An",
+        "tier": "full-card",
+        "box": {
+          "x": 1464.794921875,
+          "y": 548.6430053710938,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 1631.769287109375,
+          "bottom": 616.95068359375
+        },
+        "nameBox": {
+          "x": 1519.820556640625,
+          "y": 564.5784912109375,
+          "width": 84.925048828125,
+          "height": 14.2308349609375,
+          "right": 1604.74560546875,
+          "bottom": 578.809326171875
+        },
+        "intersection": {
+          "left": 1464.794921875,
+          "top": 548.6430053710938,
+          "right": 1336,
+          "bottom": 616.95068359375
+        },
+        "nameIntersection": {
+          "left": 1519.820556640625,
+          "top": 564.5784912109375,
+          "right": 1336,
+          "bottom": 578.809326171875
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 90,
+        "clientWidth": 90,
+        "clippedText": false,
+        "unobscured": false,
+        "readable": false
+      },
+      {
+        "name": "Nguyễn Thị Cúc",
+        "tier": "full-card",
+        "box": {
+          "x": 1464.794921875,
+          "y": 708.0276489257812,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 1631.769287109375,
+          "bottom": 776.3353271484375
+        },
+        "nameBox": {
+          "x": 1519.820556640625,
+          "y": 723.963134765625,
+          "width": 87.356201171875,
+          "height": 14.23077392578125,
+          "right": 1607.1767578125,
+          "bottom": 738.1939086914062
+        },
+        "intersection": {
+          "left": 1464.794921875,
+          "top": 708.0276489257812,
+          "right": 1336,
+          "bottom": 776.3353271484375
+        },
+        "nameIntersection": {
+          "left": 1519.820556640625,
+          "top": 723.963134765625,
+          "right": 1336,
+          "bottom": 738.1939086914062
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 92,
+        "clientWidth": 92,
+        "clippedText": false,
+        "unobscured": false,
+        "readable": false
+      },
+      {
+        "name": "Nguyễn Văn Phong",
+        "tier": "full-card",
+        "box": {
+          "x": 1559.666748046875,
+          "y": 867.4122314453125,
+          "width": 166.974365234375,
+          "height": 68.3077392578125,
+          "right": 1726.64111328125,
+          "bottom": 935.719970703125
+        },
+        "nameBox": {
+          "x": 1614.6923828125,
+          "y": 883.3477783203125,
+          "width": 105.14453125,
+          "height": 14.230712890625,
+          "right": 1719.8369140625,
+          "bottom": 897.5784912109375
+        },
+        "intersection": {
+          "left": 1559.666748046875,
+          "top": 867.4122314453125,
+          "right": 1336,
+          "bottom": 883.796875
+        },
+        "nameIntersection": {
+          "left": 1614.6923828125,
+          "top": 883.3477783203125,
+          "right": 1336,
+          "bottom": 883.796875
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 111,
+        "clientWidth": 107,
+        "clippedText": true,
+        "unobscured": false,
+        "readable": false
+      }
+    ],
+    "readableNames": [
+      {
+        "name": "Lê Văn Khải",
+        "tier": "full-card",
+        "box": {
+          "x": 447.76922607421875,
+          "y": 548.6430053710938,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 614.7435913085938,
+          "bottom": 616.95068359375
+        },
+        "nameBox": {
+          "x": 502.79486083984375,
+          "y": 564.5784912109375,
+          "width": 66.4102783203125,
+          "height": 14.2308349609375,
+          "right": 569.2051391601562,
+          "bottom": 578.809326171875
+        },
+        "viewportIntersection": {
+          "left": 447.76922607421875,
+          "top": 548.6430053710938,
+          "right": 614.7435913085938,
+          "bottom": 616.95068359375
+        },
+        "nameIntersection": {
+          "left": 502.79486083984375,
+          "top": 564.5784912109375,
+          "right": 569.2051391601562,
+          "bottom": 578.809326171875
+        }
+      },
+      {
+        "name": "Lê Thị Thảo",
+        "tier": "full-card",
+        "box": {
+          "x": 447.76922607421875,
+          "y": 708.0276489257812,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 614.7435913085938,
+          "bottom": 776.3353271484375
+        },
+        "nameBox": {
+          "x": 502.79486083984375,
+          "y": 723.963134765625,
+          "width": 65.4912109375,
+          "height": 14.23077392578125,
+          "right": 568.2860717773438,
+          "bottom": 738.1939086914062
+        },
+        "viewportIntersection": {
+          "left": 447.76922607421875,
+          "top": 708.0276489257812,
+          "right": 614.7435913085938,
+          "bottom": 776.3353271484375
+        },
+        "nameIntersection": {
+          "left": 502.79486083984375,
+          "top": 723.963134765625,
+          "right": 568.2860717773438,
+          "bottom": 738.1939086914062
+        }
+      },
+      {
+        "name": "Nguyễn Văn Kiên",
+        "tier": "full-card",
+        "box": {
+          "x": 637.5128173828125,
+          "y": 708.0276489257812,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 804.4871826171875,
+          "bottom": 776.3353271484375
+        },
+        "nameBox": {
+          "x": 692.5384521484375,
+          "y": 723.963134765625,
+          "width": 95.2572021484375,
+          "height": 14.23077392578125,
+          "right": 787.795654296875,
+          "bottom": 738.1939086914062
+        },
+        "viewportIntersection": {
+          "left": 637.5128173828125,
+          "top": 708.0276489257812,
+          "right": 804.4871826171875,
+          "bottom": 776.3353271484375
+        },
+        "nameIntersection": {
+          "left": 692.5384521484375,
+          "top": 723.963134765625,
+          "right": 787.795654296875,
+          "bottom": 738.1939086914062
+        }
+      }
+    ],
+    "serverErrors": [],
+    "errors": {
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "expectedViewport": {
+      "width": 390,
+      "height": 844
+    },
+    "screenshot": "tree-p2-hardening-evidence/viewport-light-390x844.png",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "treeViewport": {
+      "x": 16,
+      "y": 405.59375,
+      "width": 358,
+      "height": 357,
+      "right": 374,
+      "bottom": 762.59375
+    },
+    "mobileNav": {
+      "x": 0,
+      "y": 779,
+      "width": 390,
+      "height": 65,
+      "right": 390,
+      "bottom": 844
+    },
+    "candidates": [
+      {
+        "name": "Lê Văn Khải",
+        "tier": "name-only",
+        "box": {
+          "x": 41,
+          "y": 555.4129028320312,
+          "width": 145.10638427734375,
+          "height": 59.3616943359375,
+          "right": 186.10638427734375,
+          "bottom": 614.7745971679688
+        },
+        "nameBox": {
+          "x": 50.069149017333984,
+          "y": 578.1630859375,
+          "width": 63.3552131652832,
+          "height": 13.19146728515625,
+          "right": 113.42436218261719,
+          "bottom": 591.3545532226562
+        },
+        "intersection": {
+          "left": 41,
+          "top": 555.4129028320312,
+          "right": 186.10638427734375,
+          "bottom": 614.7745971679688
+        },
+        "nameIntersection": {
+          "left": 50.069149017333984,
+          "top": 578.1630859375,
+          "right": 113.42436218261719,
+          "bottom": 591.3545532226562
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 177,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Hoàng Thị Phượng",
+        "tier": "name-only",
+        "box": {
+          "x": 205.89361572265625,
+          "y": 555.4129028320312,
+          "width": 145.10638427734375,
+          "height": 59.3616943359375,
+          "right": 351,
+          "bottom": 614.7745971679688
+        },
+        "nameBox": {
+          "x": 214.9627685546875,
+          "y": 578.1630859375,
+          "width": 96.97805786132812,
+          "height": 13.19146728515625,
+          "right": 311.9408264160156,
+          "bottom": 591.3545532226562
+        },
+        "intersection": {
+          "left": 205.89361572265625,
+          "top": 555.4129028320312,
+          "right": 351,
+          "bottom": 614.7745971679688
+        },
+        "nameIntersection": {
+          "left": 214.9627685546875,
+          "top": 578.1630859375,
+          "right": 311.9408264160156,
+          "bottom": 591.3545532226562
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 218,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Lê Thị Thảo",
+        "tier": "name-only",
+        "box": {
+          "x": 41,
+          "y": 693.9235229492188,
+          "width": 145.10638427734375,
+          "height": 59.36175537109375,
+          "right": 186.10638427734375,
+          "bottom": 753.2852783203125
+        },
+        "nameBox": {
+          "x": 50.069149017333984,
+          "y": 716.6737060546875,
+          "width": 62.5307502746582,
+          "height": 13.19146728515625,
+          "right": 112.59989929199219,
+          "bottom": 729.8651733398438
+        },
+        "intersection": {
+          "left": 41,
+          "top": 693.9235229492188,
+          "right": 186.10638427734375,
+          "bottom": 753.2852783203125
+        },
+        "nameIntersection": {
+          "left": 50.069149017333984,
+          "top": 716.6737060546875,
+          "right": 112.59989929199219,
+          "bottom": 729.8651733398438
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 174,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Nguyễn Văn Kiên",
+        "tier": "name-only",
+        "box": {
+          "x": 205.89361572265625,
+          "y": 693.9235229492188,
+          "width": 145.10638427734375,
+          "height": 59.36175537109375,
+          "right": 351,
+          "bottom": 753.2852783203125
+        },
+        "nameBox": {
+          "x": 214.9627685546875,
+          "y": 716.6737060546875,
+          "width": 90.06024169921875,
+          "height": 13.19146728515625,
+          "right": 305.02301025390625,
+          "bottom": 729.8651733398438
+        },
+        "intersection": {
+          "left": 205.89361572265625,
+          "top": 693.9235229492188,
+          "right": 351,
+          "bottom": 753.2852783203125
+        },
+        "nameIntersection": {
+          "left": 214.9627685546875,
+          "top": 716.6737060546875,
+          "right": 305.02301025390625,
+          "bottom": 729.8651733398438
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 177,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      }
+    ],
+    "readableNames": [
+      {
+        "name": "Lê Văn Khải",
+        "tier": "name-only",
+        "box": {
+          "x": 41,
+          "y": 555.4129028320312,
+          "width": 145.10638427734375,
+          "height": 59.3616943359375,
+          "right": 186.10638427734375,
+          "bottom": 614.7745971679688
+        },
+        "nameBox": {
+          "x": 50.069149017333984,
+          "y": 578.1630859375,
+          "width": 63.3552131652832,
+          "height": 13.19146728515625,
+          "right": 113.42436218261719,
+          "bottom": 591.3545532226562
+        },
+        "viewportIntersection": {
+          "left": 41,
+          "top": 555.4129028320312,
+          "right": 186.10638427734375,
+          "bottom": 614.7745971679688
+        },
+        "nameIntersection": {
+          "left": 50.069149017333984,
+          "top": 578.1630859375,
+          "right": 113.42436218261719,
+          "bottom": 591.3545532226562
+        }
+      },
+      {
+        "name": "Hoàng Thị Phượng",
+        "tier": "name-only",
+        "box": {
+          "x": 205.89361572265625,
+          "y": 555.4129028320312,
+          "width": 145.10638427734375,
+          "height": 59.3616943359375,
+          "right": 351,
+          "bottom": 614.7745971679688
+        },
+        "nameBox": {
+          "x": 214.9627685546875,
+          "y": 578.1630859375,
+          "width": 96.97805786132812,
+          "height": 13.19146728515625,
+          "right": 311.9408264160156,
+          "bottom": 591.3545532226562
+        },
+        "viewportIntersection": {
+          "left": 205.89361572265625,
+          "top": 555.4129028320312,
+          "right": 351,
+          "bottom": 614.7745971679688
+        },
+        "nameIntersection": {
+          "left": 214.9627685546875,
+          "top": 578.1630859375,
+          "right": 311.9408264160156,
+          "bottom": 591.3545532226562
+        }
+      },
+      {
+        "name": "Lê Thị Thảo",
+        "tier": "name-only",
+        "box": {
+          "x": 41,
+          "y": 693.9235229492188,
+          "width": 145.10638427734375,
+          "height": 59.36175537109375,
+          "right": 186.10638427734375,
+          "bottom": 753.2852783203125
+        },
+        "nameBox": {
+          "x": 50.069149017333984,
+          "y": 716.6737060546875,
+          "width": 62.5307502746582,
+          "height": 13.19146728515625,
+          "right": 112.59989929199219,
+          "bottom": 729.8651733398438
+        },
+        "viewportIntersection": {
+          "left": 41,
+          "top": 693.9235229492188,
+          "right": 186.10638427734375,
+          "bottom": 753.2852783203125
+        },
+        "nameIntersection": {
+          "left": 50.069149017333984,
+          "top": 716.6737060546875,
+          "right": 112.59989929199219,
+          "bottom": 729.8651733398438
+        }
+      },
+      {
+        "name": "Nguyễn Văn Kiên",
+        "tier": "name-only",
+        "box": {
+          "x": 205.89361572265625,
+          "y": 693.9235229492188,
+          "width": 145.10638427734375,
+          "height": 59.36175537109375,
+          "right": 351,
+          "bottom": 753.2852783203125
+        },
+        "nameBox": {
+          "x": 214.9627685546875,
+          "y": 716.6737060546875,
+          "width": 90.06024169921875,
+          "height": 13.19146728515625,
+          "right": 305.02301025390625,
+          "bottom": 729.8651733398438
+        },
+        "viewportIntersection": {
+          "left": 205.89361572265625,
+          "top": 693.9235229492188,
+          "right": 351,
+          "bottom": 753.2852783203125
+        },
+        "nameIntersection": {
+          "left": 214.9627685546875,
+          "top": 716.6737060546875,
+          "right": 305.02301025390625,
+          "bottom": 729.8651733398438
+        }
+      }
+    ],
+    "serverErrors": [],
+    "errors": {
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "expectedViewport": {
+      "width": 320,
+      "height": 800
+    },
+    "screenshot": "tree-p2-hardening-evidence/viewport-light-320x800.png",
+    "viewport": {
+      "width": 320,
+      "height": 800
+    },
+    "treeViewport": {
+      "x": 16,
+      "y": 426.390625,
+      "width": 288,
+      "height": 292,
+      "right": 304,
+      "bottom": 718.390625
+    },
+    "mobileNav": {
+      "x": 0,
+      "y": 735,
+      "width": 320,
+      "height": 65,
+      "right": 320,
+      "bottom": 800
+    },
+    "candidates": [
+      {
+        "name": "Lê Văn Khải",
+        "tier": "name-only",
+        "box": {
+          "x": 38.723575592041016,
+          "y": 549.9760131835938,
+          "width": 114.47154235839844,
+          "height": 46.82928466796875,
+          "right": 153.19511795043945,
+          "bottom": 596.8052978515625
+        },
+        "nameBox": {
+          "x": 45.878047943115234,
+          "y": 567.9231567382812,
+          "width": 49.979671478271484,
+          "height": 10.406494140625,
+          "right": 95.85771942138672,
+          "bottom": 578.3296508789062
+        },
+        "intersection": {
+          "left": 38.723575592041016,
+          "top": 549.9760131835938,
+          "right": 153.19511795043945,
+          "bottom": 596.8052978515625
+        },
+        "nameIntersection": {
+          "left": 45.878047943115234,
+          "top": 567.9231567382812,
+          "right": 95.85771942138672,
+          "bottom": 578.3296508789062
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 177,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Hoàng Thị Phượng",
+        "tier": "name-only",
+        "box": {
+          "x": 168.80487060546875,
+          "y": 549.9760131835938,
+          "width": 114.47152709960938,
+          "height": 46.82928466796875,
+          "right": 283.2763977050781,
+          "bottom": 596.8052978515625
+        },
+        "nameBox": {
+          "x": 175.95933532714844,
+          "y": 567.9231567382812,
+          "width": 76.50405883789062,
+          "height": 10.406494140625,
+          "right": 252.46339416503906,
+          "bottom": 578.3296508789062
+        },
+        "intersection": {
+          "left": 168.80487060546875,
+          "top": 549.9760131835938,
+          "right": 283.2763977050781,
+          "bottom": 596.8052978515625
+        },
+        "nameIntersection": {
+          "left": 175.95933532714844,
+          "top": 567.9231567382812,
+          "right": 252.46339416503906,
+          "bottom": 578.3296508789062
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 218,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": false,
+        "occluder": "<div class=\"flex flex-col items-center bg-card/90 backdrop-blur-xl rounded-2xl shadow-xl border border-hairline p-1.5 select-none\" data-testid=\"tree-compass\"><button type=\"button\" class=\"w-6 h-6 flex items-center justify",
+        "readable": false
+      },
+      {
+        "name": "Lê Thị Thảo",
+        "tier": "name-only",
+        "box": {
+          "x": 38.723575592041016,
+          "y": 659.2442626953125,
+          "width": 114.47154235839844,
+          "height": 46.82928466796875,
+          "right": 153.19511795043945,
+          "bottom": 706.0735473632812
+        },
+        "nameBox": {
+          "x": 45.878047943115234,
+          "y": 677.19140625,
+          "width": 49.32926559448242,
+          "height": 10.406494140625,
+          "right": 95.20731353759766,
+          "bottom": 687.597900390625
+        },
+        "intersection": {
+          "left": 38.723575592041016,
+          "top": 659.2442626953125,
+          "right": 153.19511795043945,
+          "bottom": 706.0735473632812
+        },
+        "nameIntersection": {
+          "left": 45.878047943115234,
+          "top": 677.19140625,
+          "right": 95.20731353759766,
+          "bottom": 687.597900390625
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 174,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Nguyễn Văn Kiên",
+        "tier": "name-only",
+        "box": {
+          "x": 168.80487060546875,
+          "y": 659.2442626953125,
+          "width": 114.47152709960938,
+          "height": 46.82928466796875,
+          "right": 283.2763977050781,
+          "bottom": 706.0735473632812
+        },
+        "nameBox": {
+          "x": 175.95933532714844,
+          "y": 677.19140625,
+          "width": 71.0467529296875,
+          "height": 10.406494140625,
+          "right": 247.00608825683594,
+          "bottom": 687.597900390625
+        },
+        "intersection": {
+          "left": 168.80487060546875,
+          "top": 659.2442626953125,
+          "right": 283.2763977050781,
+          "bottom": 706.0735473632812
+        },
+        "nameIntersection": {
+          "left": 175.95933532714844,
+          "top": 677.19140625,
+          "right": 247.00608825683594,
+          "bottom": 687.597900390625
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 177,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": false,
+        "occluder": "<div class=\"absolute right-3 bottom-3 flex flex-col items-center gap-2 z-10\"><div class=\"flex flex-col items-center bg-card/90 backdrop-blur-xl rounded-2xl shadow-xl border border-hairline p-1.5 select-none\" data-testid=",
+        "readable": false
+      }
+    ],
+    "readableNames": [
+      {
+        "name": "Lê Văn Khải",
+        "tier": "name-only",
+        "box": {
+          "x": 38.723575592041016,
+          "y": 549.9760131835938,
+          "width": 114.47154235839844,
+          "height": 46.82928466796875,
+          "right": 153.19511795043945,
+          "bottom": 596.8052978515625
+        },
+        "nameBox": {
+          "x": 45.878047943115234,
+          "y": 567.9231567382812,
+          "width": 49.979671478271484,
+          "height": 10.406494140625,
+          "right": 95.85771942138672,
+          "bottom": 578.3296508789062
+        },
+        "viewportIntersection": {
+          "left": 38.723575592041016,
+          "top": 549.9760131835938,
+          "right": 153.19511795043945,
+          "bottom": 596.8052978515625
+        },
+        "nameIntersection": {
+          "left": 45.878047943115234,
+          "top": 567.9231567382812,
+          "right": 95.85771942138672,
+          "bottom": 578.3296508789062
+        }
+      },
+      {
+        "name": "Lê Thị Thảo",
+        "tier": "name-only",
+        "box": {
+          "x": 38.723575592041016,
+          "y": 659.2442626953125,
+          "width": 114.47154235839844,
+          "height": 46.82928466796875,
+          "right": 153.19511795043945,
+          "bottom": 706.0735473632812
+        },
+        "nameBox": {
+          "x": 45.878047943115234,
+          "y": 677.19140625,
+          "width": 49.32926559448242,
+          "height": 10.406494140625,
+          "right": 95.20731353759766,
+          "bottom": 687.597900390625
+        },
+        "viewportIntersection": {
+          "left": 38.723575592041016,
+          "top": 659.2442626953125,
+          "right": 153.19511795043945,
+          "bottom": 706.0735473632812
+        },
+        "nameIntersection": {
+          "left": 45.878047943115234,
+          "top": 677.19140625,
+          "right": 95.20731353759766,
+          "bottom": 687.597900390625
+        }
+      }
+    ],
+    "serverErrors": [],
+    "errors": {
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "expectedViewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "screenshot": "tree-p2-hardening-evidence/viewport-dark-1440x900.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "treeViewport": {
+      "x": 104,
+      "y": 279.796875,
+      "width": 1232,
+      "height": 604,
+      "right": 1336,
+      "bottom": 883.796875
+    },
+    "mobileNav": null,
+    "candidates": [
+      {
+        "name": "Lê Văn Khải",
+        "tier": "full-card",
+        "box": {
+          "x": 447.76922607421875,
+          "y": 548.6430053710938,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 614.7435913085938,
+          "bottom": 616.95068359375
+        },
+        "nameBox": {
+          "x": 502.79486083984375,
+          "y": 564.5784912109375,
+          "width": 66.4102783203125,
+          "height": 14.2308349609375,
+          "right": 569.2051391601562,
+          "bottom": 578.809326171875
+        },
+        "intersection": {
+          "left": 447.76922607421875,
+          "top": 548.6430053710938,
+          "right": 614.7435913085938,
+          "bottom": 616.95068359375
+        },
+        "nameIntersection": {
+          "left": 502.79486083984375,
+          "top": 564.5784912109375,
+          "right": 569.2051391601562,
+          "bottom": 578.809326171875
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 70,
+        "clientWidth": 70,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Hoàng Thị Phượng",
+        "tier": "full-card",
+        "box": {
+          "x": 637.5128173828125,
+          "y": 548.6430053710938,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 804.4871826171875,
+          "bottom": 616.95068359375
+        },
+        "nameBox": {
+          "x": 692.5384521484375,
+          "y": 564.5784912109375,
+          "width": 103.69189453125,
+          "height": 14.2308349609375,
+          "right": 796.2303466796875,
+          "bottom": 578.809326171875
+        },
+        "intersection": {
+          "left": 637.5128173828125,
+          "top": 548.6430053710938,
+          "right": 804.4871826171875,
+          "bottom": 616.95068359375
+        },
+        "nameIntersection": {
+          "left": 692.5384521484375,
+          "top": 564.5784912109375,
+          "right": 796.2303466796875,
+          "bottom": 578.809326171875
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 109,
+        "clientWidth": 107,
+        "clippedText": true,
+        "unobscured": true,
+        "occluder": null,
+        "readable": false
+      },
+      {
+        "name": "Lê Thị Thảo",
+        "tier": "full-card",
+        "box": {
+          "x": 447.76922607421875,
+          "y": 708.0276489257812,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 614.7435913085938,
+          "bottom": 776.3353271484375
+        },
+        "nameBox": {
+          "x": 502.79486083984375,
+          "y": 723.963134765625,
+          "width": 65.4912109375,
+          "height": 14.23077392578125,
+          "right": 568.2860717773438,
+          "bottom": 738.1939086914062
+        },
+        "intersection": {
+          "left": 447.76922607421875,
+          "top": 708.0276489257812,
+          "right": 614.7435913085938,
+          "bottom": 776.3353271484375
+        },
+        "nameIntersection": {
+          "left": 502.79486083984375,
+          "top": 723.963134765625,
+          "right": 568.2860717773438,
+          "bottom": 738.1939086914062
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 69,
+        "clientWidth": 69,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Nguyễn Văn Kiên",
+        "tier": "full-card",
+        "box": {
+          "x": 637.5128173828125,
+          "y": 708.0276489257812,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 804.4871826171875,
+          "bottom": 776.3353271484375
+        },
+        "nameBox": {
+          "x": 692.5384521484375,
+          "y": 723.963134765625,
+          "width": 95.2572021484375,
+          "height": 14.23077392578125,
+          "right": 787.795654296875,
+          "bottom": 738.1939086914062
+        },
+        "intersection": {
+          "left": 637.5128173828125,
+          "top": 708.0276489257812,
+          "right": 804.4871826171875,
+          "bottom": 776.3353271484375
+        },
+        "nameIntersection": {
+          "left": 692.5384521484375,
+          "top": 723.963134765625,
+          "right": 787.795654296875,
+          "bottom": 738.1939086914062
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 100,
+        "clientWidth": 100,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Nguyễn Văn An",
+        "tier": "full-card",
+        "box": {
+          "x": 1464.794921875,
+          "y": 548.6430053710938,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 1631.769287109375,
+          "bottom": 616.95068359375
+        },
+        "nameBox": {
+          "x": 1519.820556640625,
+          "y": 564.5784912109375,
+          "width": 84.925048828125,
+          "height": 14.2308349609375,
+          "right": 1604.74560546875,
+          "bottom": 578.809326171875
+        },
+        "intersection": {
+          "left": 1464.794921875,
+          "top": 548.6430053710938,
+          "right": 1336,
+          "bottom": 616.95068359375
+        },
+        "nameIntersection": {
+          "left": 1519.820556640625,
+          "top": 564.5784912109375,
+          "right": 1336,
+          "bottom": 578.809326171875
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 90,
+        "clientWidth": 90,
+        "clippedText": false,
+        "unobscured": false,
+        "readable": false
+      },
+      {
+        "name": "Nguyễn Thị Cúc",
+        "tier": "full-card",
+        "box": {
+          "x": 1464.794921875,
+          "y": 708.0276489257812,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 1631.769287109375,
+          "bottom": 776.3353271484375
+        },
+        "nameBox": {
+          "x": 1519.820556640625,
+          "y": 723.963134765625,
+          "width": 87.356201171875,
+          "height": 14.23077392578125,
+          "right": 1607.1767578125,
+          "bottom": 738.1939086914062
+        },
+        "intersection": {
+          "left": 1464.794921875,
+          "top": 708.0276489257812,
+          "right": 1336,
+          "bottom": 776.3353271484375
+        },
+        "nameIntersection": {
+          "left": 1519.820556640625,
+          "top": 723.963134765625,
+          "right": 1336,
+          "bottom": 738.1939086914062
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 92,
+        "clientWidth": 92,
+        "clippedText": false,
+        "unobscured": false,
+        "readable": false
+      },
+      {
+        "name": "Nguyễn Văn Phong",
+        "tier": "full-card",
+        "box": {
+          "x": 1559.666748046875,
+          "y": 867.4122314453125,
+          "width": 166.974365234375,
+          "height": 68.3077392578125,
+          "right": 1726.64111328125,
+          "bottom": 935.719970703125
+        },
+        "nameBox": {
+          "x": 1614.6923828125,
+          "y": 883.3477783203125,
+          "width": 105.14453125,
+          "height": 14.230712890625,
+          "right": 1719.8369140625,
+          "bottom": 897.5784912109375
+        },
+        "intersection": {
+          "left": 1559.666748046875,
+          "top": 867.4122314453125,
+          "right": 1336,
+          "bottom": 883.796875
+        },
+        "nameIntersection": {
+          "left": 1614.6923828125,
+          "top": 883.3477783203125,
+          "right": 1336,
+          "bottom": 883.796875
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 111,
+        "clientWidth": 107,
+        "clippedText": true,
+        "unobscured": false,
+        "readable": false
+      }
+    ],
+    "readableNames": [
+      {
+        "name": "Lê Văn Khải",
+        "tier": "full-card",
+        "box": {
+          "x": 447.76922607421875,
+          "y": 548.6430053710938,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 614.7435913085938,
+          "bottom": 616.95068359375
+        },
+        "nameBox": {
+          "x": 502.79486083984375,
+          "y": 564.5784912109375,
+          "width": 66.4102783203125,
+          "height": 14.2308349609375,
+          "right": 569.2051391601562,
+          "bottom": 578.809326171875
+        },
+        "viewportIntersection": {
+          "left": 447.76922607421875,
+          "top": 548.6430053710938,
+          "right": 614.7435913085938,
+          "bottom": 616.95068359375
+        },
+        "nameIntersection": {
+          "left": 502.79486083984375,
+          "top": 564.5784912109375,
+          "right": 569.2051391601562,
+          "bottom": 578.809326171875
+        }
+      },
+      {
+        "name": "Lê Thị Thảo",
+        "tier": "full-card",
+        "box": {
+          "x": 447.76922607421875,
+          "y": 708.0276489257812,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 614.7435913085938,
+          "bottom": 776.3353271484375
+        },
+        "nameBox": {
+          "x": 502.79486083984375,
+          "y": 723.963134765625,
+          "width": 65.4912109375,
+          "height": 14.23077392578125,
+          "right": 568.2860717773438,
+          "bottom": 738.1939086914062
+        },
+        "viewportIntersection": {
+          "left": 447.76922607421875,
+          "top": 708.0276489257812,
+          "right": 614.7435913085938,
+          "bottom": 776.3353271484375
+        },
+        "nameIntersection": {
+          "left": 502.79486083984375,
+          "top": 723.963134765625,
+          "right": 568.2860717773438,
+          "bottom": 738.1939086914062
+        }
+      },
+      {
+        "name": "Nguyễn Văn Kiên",
+        "tier": "full-card",
+        "box": {
+          "x": 637.5128173828125,
+          "y": 708.0276489257812,
+          "width": 166.974365234375,
+          "height": 68.30767822265625,
+          "right": 804.4871826171875,
+          "bottom": 776.3353271484375
+        },
+        "nameBox": {
+          "x": 692.5384521484375,
+          "y": 723.963134765625,
+          "width": 95.2572021484375,
+          "height": 14.23077392578125,
+          "right": 787.795654296875,
+          "bottom": 738.1939086914062
+        },
+        "viewportIntersection": {
+          "left": 637.5128173828125,
+          "top": 708.0276489257812,
+          "right": 804.4871826171875,
+          "bottom": 776.3353271484375
+        },
+        "nameIntersection": {
+          "left": 692.5384521484375,
+          "top": 723.963134765625,
+          "right": 787.795654296875,
+          "bottom": 738.1939086914062
+        }
+      }
+    ],
+    "serverErrors": [],
+    "errors": {
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "expectedViewport": {
+      "width": 390,
+      "height": 844
+    },
+    "screenshot": "tree-p2-hardening-evidence/viewport-dark-390x844.png",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "treeViewport": {
+      "x": 16,
+      "y": 405.59375,
+      "width": 358,
+      "height": 357,
+      "right": 374,
+      "bottom": 762.59375
+    },
+    "mobileNav": {
+      "x": 0,
+      "y": 779,
+      "width": 390,
+      "height": 65,
+      "right": 390,
+      "bottom": 844
+    },
+    "candidates": [
+      {
+        "name": "Lê Văn Khải",
+        "tier": "name-only",
+        "box": {
+          "x": 41,
+          "y": 555.4129028320312,
+          "width": 145.10638427734375,
+          "height": 59.3616943359375,
+          "right": 186.10638427734375,
+          "bottom": 614.7745971679688
+        },
+        "nameBox": {
+          "x": 50.069149017333984,
+          "y": 578.1630859375,
+          "width": 63.3552131652832,
+          "height": 13.19146728515625,
+          "right": 113.42436218261719,
+          "bottom": 591.3545532226562
+        },
+        "intersection": {
+          "left": 41,
+          "top": 555.4129028320312,
+          "right": 186.10638427734375,
+          "bottom": 614.7745971679688
+        },
+        "nameIntersection": {
+          "left": 50.069149017333984,
+          "top": 578.1630859375,
+          "right": 113.42436218261719,
+          "bottom": 591.3545532226562
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 177,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Hoàng Thị Phượng",
+        "tier": "name-only",
+        "box": {
+          "x": 205.89361572265625,
+          "y": 555.4129028320312,
+          "width": 145.10638427734375,
+          "height": 59.3616943359375,
+          "right": 351,
+          "bottom": 614.7745971679688
+        },
+        "nameBox": {
+          "x": 214.9627685546875,
+          "y": 578.1630859375,
+          "width": 96.97805786132812,
+          "height": 13.19146728515625,
+          "right": 311.9408264160156,
+          "bottom": 591.3545532226562
+        },
+        "intersection": {
+          "left": 205.89361572265625,
+          "top": 555.4129028320312,
+          "right": 351,
+          "bottom": 614.7745971679688
+        },
+        "nameIntersection": {
+          "left": 214.9627685546875,
+          "top": 578.1630859375,
+          "right": 311.9408264160156,
+          "bottom": 591.3545532226562
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 218,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Lê Thị Thảo",
+        "tier": "name-only",
+        "box": {
+          "x": 41,
+          "y": 693.9235229492188,
+          "width": 145.10638427734375,
+          "height": 59.36175537109375,
+          "right": 186.10638427734375,
+          "bottom": 753.2852783203125
+        },
+        "nameBox": {
+          "x": 50.069149017333984,
+          "y": 716.6737060546875,
+          "width": 62.5307502746582,
+          "height": 13.19146728515625,
+          "right": 112.59989929199219,
+          "bottom": 729.8651733398438
+        },
+        "intersection": {
+          "left": 41,
+          "top": 693.9235229492188,
+          "right": 186.10638427734375,
+          "bottom": 753.2852783203125
+        },
+        "nameIntersection": {
+          "left": 50.069149017333984,
+          "top": 716.6737060546875,
+          "right": 112.59989929199219,
+          "bottom": 729.8651733398438
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 174,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Nguyễn Văn Kiên",
+        "tier": "name-only",
+        "box": {
+          "x": 205.89361572265625,
+          "y": 693.9235229492188,
+          "width": 145.10638427734375,
+          "height": 59.36175537109375,
+          "right": 351,
+          "bottom": 753.2852783203125
+        },
+        "nameBox": {
+          "x": 214.9627685546875,
+          "y": 716.6737060546875,
+          "width": 90.06024169921875,
+          "height": 13.19146728515625,
+          "right": 305.02301025390625,
+          "bottom": 729.8651733398438
+        },
+        "intersection": {
+          "left": 205.89361572265625,
+          "top": 693.9235229492188,
+          "right": 351,
+          "bottom": 753.2852783203125
+        },
+        "nameIntersection": {
+          "left": 214.9627685546875,
+          "top": 716.6737060546875,
+          "right": 305.02301025390625,
+          "bottom": 729.8651733398438
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 177,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      }
+    ],
+    "readableNames": [
+      {
+        "name": "Lê Văn Khải",
+        "tier": "name-only",
+        "box": {
+          "x": 41,
+          "y": 555.4129028320312,
+          "width": 145.10638427734375,
+          "height": 59.3616943359375,
+          "right": 186.10638427734375,
+          "bottom": 614.7745971679688
+        },
+        "nameBox": {
+          "x": 50.069149017333984,
+          "y": 578.1630859375,
+          "width": 63.3552131652832,
+          "height": 13.19146728515625,
+          "right": 113.42436218261719,
+          "bottom": 591.3545532226562
+        },
+        "viewportIntersection": {
+          "left": 41,
+          "top": 555.4129028320312,
+          "right": 186.10638427734375,
+          "bottom": 614.7745971679688
+        },
+        "nameIntersection": {
+          "left": 50.069149017333984,
+          "top": 578.1630859375,
+          "right": 113.42436218261719,
+          "bottom": 591.3545532226562
+        }
+      },
+      {
+        "name": "Hoàng Thị Phượng",
+        "tier": "name-only",
+        "box": {
+          "x": 205.89361572265625,
+          "y": 555.4129028320312,
+          "width": 145.10638427734375,
+          "height": 59.3616943359375,
+          "right": 351,
+          "bottom": 614.7745971679688
+        },
+        "nameBox": {
+          "x": 214.9627685546875,
+          "y": 578.1630859375,
+          "width": 96.97805786132812,
+          "height": 13.19146728515625,
+          "right": 311.9408264160156,
+          "bottom": 591.3545532226562
+        },
+        "viewportIntersection": {
+          "left": 205.89361572265625,
+          "top": 555.4129028320312,
+          "right": 351,
+          "bottom": 614.7745971679688
+        },
+        "nameIntersection": {
+          "left": 214.9627685546875,
+          "top": 578.1630859375,
+          "right": 311.9408264160156,
+          "bottom": 591.3545532226562
+        }
+      },
+      {
+        "name": "Lê Thị Thảo",
+        "tier": "name-only",
+        "box": {
+          "x": 41,
+          "y": 693.9235229492188,
+          "width": 145.10638427734375,
+          "height": 59.36175537109375,
+          "right": 186.10638427734375,
+          "bottom": 753.2852783203125
+        },
+        "nameBox": {
+          "x": 50.069149017333984,
+          "y": 716.6737060546875,
+          "width": 62.5307502746582,
+          "height": 13.19146728515625,
+          "right": 112.59989929199219,
+          "bottom": 729.8651733398438
+        },
+        "viewportIntersection": {
+          "left": 41,
+          "top": 693.9235229492188,
+          "right": 186.10638427734375,
+          "bottom": 753.2852783203125
+        },
+        "nameIntersection": {
+          "left": 50.069149017333984,
+          "top": 716.6737060546875,
+          "right": 112.59989929199219,
+          "bottom": 729.8651733398438
+        }
+      },
+      {
+        "name": "Nguyễn Văn Kiên",
+        "tier": "name-only",
+        "box": {
+          "x": 205.89361572265625,
+          "y": 693.9235229492188,
+          "width": 145.10638427734375,
+          "height": 59.36175537109375,
+          "right": 351,
+          "bottom": 753.2852783203125
+        },
+        "nameBox": {
+          "x": 214.9627685546875,
+          "y": 716.6737060546875,
+          "width": 90.06024169921875,
+          "height": 13.19146728515625,
+          "right": 305.02301025390625,
+          "bottom": 729.8651733398438
+        },
+        "viewportIntersection": {
+          "left": 205.89361572265625,
+          "top": 693.9235229492188,
+          "right": 351,
+          "bottom": 753.2852783203125
+        },
+        "nameIntersection": {
+          "left": 214.9627685546875,
+          "top": 716.6737060546875,
+          "right": 305.02301025390625,
+          "bottom": 729.8651733398438
+        }
+      }
+    ],
+    "serverErrors": [],
+    "errors": {
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "expectedViewport": {
+      "width": 320,
+      "height": 800
+    },
+    "screenshot": "tree-p2-hardening-evidence/viewport-dark-320x800.png",
+    "viewport": {
+      "width": 320,
+      "height": 800
+    },
+    "treeViewport": {
+      "x": 16,
+      "y": 426.390625,
+      "width": 288,
+      "height": 292,
+      "right": 304,
+      "bottom": 718.390625
+    },
+    "mobileNav": {
+      "x": 0,
+      "y": 735,
+      "width": 320,
+      "height": 65,
+      "right": 320,
+      "bottom": 800
+    },
+    "candidates": [
+      {
+        "name": "Lê Văn Khải",
+        "tier": "name-only",
+        "box": {
+          "x": 38.723575592041016,
+          "y": 549.9760131835938,
+          "width": 114.47154235839844,
+          "height": 46.82928466796875,
+          "right": 153.19511795043945,
+          "bottom": 596.8052978515625
+        },
+        "nameBox": {
+          "x": 45.878047943115234,
+          "y": 567.9231567382812,
+          "width": 49.979671478271484,
+          "height": 10.406494140625,
+          "right": 95.85771942138672,
+          "bottom": 578.3296508789062
+        },
+        "intersection": {
+          "left": 38.723575592041016,
+          "top": 549.9760131835938,
+          "right": 153.19511795043945,
+          "bottom": 596.8052978515625
+        },
+        "nameIntersection": {
+          "left": 45.878047943115234,
+          "top": 567.9231567382812,
+          "right": 95.85771942138672,
+          "bottom": 578.3296508789062
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 177,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Hoàng Thị Phượng",
+        "tier": "name-only",
+        "box": {
+          "x": 168.80487060546875,
+          "y": 549.9760131835938,
+          "width": 114.47152709960938,
+          "height": 46.82928466796875,
+          "right": 283.2763977050781,
+          "bottom": 596.8052978515625
+        },
+        "nameBox": {
+          "x": 175.95933532714844,
+          "y": 567.9231567382812,
+          "width": 76.50405883789062,
+          "height": 10.406494140625,
+          "right": 252.46339416503906,
+          "bottom": 578.3296508789062
+        },
+        "intersection": {
+          "left": 168.80487060546875,
+          "top": 549.9760131835938,
+          "right": 283.2763977050781,
+          "bottom": 596.8052978515625
+        },
+        "nameIntersection": {
+          "left": 175.95933532714844,
+          "top": 567.9231567382812,
+          "right": 252.46339416503906,
+          "bottom": 578.3296508789062
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 218,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": false,
+        "occluder": "<div class=\"flex flex-col items-center bg-card/90 backdrop-blur-xl rounded-2xl shadow-xl border border-hairline p-1.5 select-none\" data-testid=\"tree-compass\"><button type=\"button\" class=\"w-6 h-6 flex items-center justify",
+        "readable": false
+      },
+      {
+        "name": "Lê Thị Thảo",
+        "tier": "name-only",
+        "box": {
+          "x": 38.723575592041016,
+          "y": 659.2442626953125,
+          "width": 114.47154235839844,
+          "height": 46.82928466796875,
+          "right": 153.19511795043945,
+          "bottom": 706.0735473632812
+        },
+        "nameBox": {
+          "x": 45.878047943115234,
+          "y": 677.19140625,
+          "width": 49.32926559448242,
+          "height": 10.406494140625,
+          "right": 95.20731353759766,
+          "bottom": 687.597900390625
+        },
+        "intersection": {
+          "left": 38.723575592041016,
+          "top": 659.2442626953125,
+          "right": 153.19511795043945,
+          "bottom": 706.0735473632812
+        },
+        "nameIntersection": {
+          "left": 45.878047943115234,
+          "top": 677.19140625,
+          "right": 95.20731353759766,
+          "bottom": 687.597900390625
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 174,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": true,
+        "occluder": null,
+        "readable": true
+      },
+      {
+        "name": "Nguyễn Văn Kiên",
+        "tier": "name-only",
+        "box": {
+          "x": 168.80487060546875,
+          "y": 659.2442626953125,
+          "width": 114.47152709960938,
+          "height": 46.82928466796875,
+          "right": 283.2763977050781,
+          "bottom": 706.0735473632812
+        },
+        "nameBox": {
+          "x": 175.95933532714844,
+          "y": 677.19140625,
+          "width": 71.0467529296875,
+          "height": 10.406494140625,
+          "right": 247.00608825683594,
+          "bottom": 687.597900390625
+        },
+        "intersection": {
+          "left": 168.80487060546875,
+          "top": 659.2442626953125,
+          "right": 283.2763977050781,
+          "bottom": 706.0735473632812
+        },
+        "nameIntersection": {
+          "left": 175.95933532714844,
+          "top": 677.19140625,
+          "right": 247.00608825683594,
+          "bottom": 687.597900390625
+        },
+        "cssTextOverflow": "ellipsis",
+        "scrollWidth": 177,
+        "clientWidth": 174,
+        "clippedText": false,
+        "unobscured": false,
+        "occluder": "<div class=\"absolute right-3 bottom-3 flex flex-col items-center gap-2 z-10\"><div class=\"flex flex-col items-center bg-card/90 backdrop-blur-xl rounded-2xl shadow-xl border border-hairline p-1.5 select-none\" data-testid=",
+        "readable": false
+      }
+    ],
+    "readableNames": [
+      {
+        "name": "Lê Văn Khải",
+        "tier": "name-only",
+        "box": {
+          "x": 38.723575592041016,
+          "y": 549.9760131835938,
+          "width": 114.47154235839844,
+          "height": 46.82928466796875,
+          "right": 153.19511795043945,
+          "bottom": 596.8052978515625
+        },
+        "nameBox": {
+          "x": 45.878047943115234,
+          "y": 567.9231567382812,
+          "width": 49.979671478271484,
+          "height": 10.406494140625,
+          "right": 95.85771942138672,
+          "bottom": 578.3296508789062
+        },
+        "viewportIntersection": {
+          "left": 38.723575592041016,
+          "top": 549.9760131835938,
+          "right": 153.19511795043945,
+          "bottom": 596.8052978515625
+        },
+        "nameIntersection": {
+          "left": 45.878047943115234,
+          "top": 567.9231567382812,
+          "right": 95.85771942138672,
+          "bottom": 578.3296508789062
+        }
+      },
+      {
+        "name": "Lê Thị Thảo",
+        "tier": "name-only",
+        "box": {
+          "x": 38.723575592041016,
+          "y": 659.2442626953125,
+          "width": 114.47154235839844,
+          "height": 46.82928466796875,
+          "right": 153.19511795043945,
+          "bottom": 706.0735473632812
+        },
+        "nameBox": {
+          "x": 45.878047943115234,
+          "y": 677.19140625,
+          "width": 49.32926559448242,
+          "height": 10.406494140625,
+          "right": 95.20731353759766,
+          "bottom": 687.597900390625
+        },
+        "viewportIntersection": {
+          "left": 38.723575592041016,
+          "top": 659.2442626953125,
+          "right": 153.19511795043945,
+          "bottom": 706.0735473632812
+        },
+        "nameIntersection": {
+          "left": 45.878047943115234,
+          "top": 677.19140625,
+          "right": 95.20731353759766,
+          "bottom": 687.597900390625
+        }
+      }
+    ],
+    "serverErrors": [],
+    "errors": {
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    "pass": true
+  }
+]

@@ -27,6 +27,8 @@ function viewportNameProof(page) {
     const intersect = (a, b) => ({ left: Math.max(a.left, b.left), top: Math.max(a.top, b.top), right: Math.min(a.right, b.right), bottom: Math.min(a.bottom, b.bottom) });
     const contains = (outer, inner) => inner.left >= outer.left - .5 && inner.top >= outer.top - .5 && inner.right <= outer.right + .5 && inner.bottom <= outer.bottom + .5;
     const tree = viewport?.getBoundingClientRect();
+    const nav = document.querySelector('nav[aria-label="Điều hướng di động"]');
+    const navRect = nav && getComputedStyle(nav).display !== 'none' ? nav.getBoundingClientRect() : null;
     const candidates = [...document.querySelectorAll('.tree-viewport button[aria-label*="Đời thứ"]')].map(control => {
       const box = control.getBoundingClientRect();
       const name = control.getAttribute('aria-label').split(', Đời thứ ')[0].trim();
@@ -56,7 +58,7 @@ function viewportNameProof(page) {
         clippedText, unobscured, occluder: unobscured ? null : top?.outerHTML.slice(0, 220),
         readable: tier !== 'dot' && fullNameOnScreen && !clippedText && unobscured };
     });
-    return { viewport: { width: innerWidth, height: innerHeight }, treeViewport: tree && rect(tree), candidates,
+    return { viewport: { width: innerWidth, height: innerHeight }, treeViewport: tree && rect(tree), mobileNav: navRect && rect(navRect), candidates,
       readableNames: candidates.filter(c => c.readable).map(c => ({ name: c.name, tier: c.tier, box: c.box, nameBox: c.nameBox, viewportIntersection: c.intersection, nameIntersection: c.nameIntersection })) };
   });
 }
@@ -73,7 +75,8 @@ test('initial /tree load renders on-screen FULL readable NAME at exact viewport 
     const proof = await viewportNameProof(page);
     if (width === 320) {
       expect(proof.readableNames.length, `${theme} 320×800 must show an unclipped, unobscured full person name above mobile nav`).toBeGreaterThanOrEqual(1);
-      expect(proof.treeViewport.bottom, `${theme} tree viewport must end above the fixed mobile nav`).toBeLessThanOrEqual(height - 64);
+      expect(proof.mobileNav, `${theme} fixed mobile nav must be measured`).toBeTruthy();
+      expect(proof.treeViewport.bottom, `${theme} tree viewport must end above the measured fixed mobile nav`).toBeLessThanOrEqual(proof.mobileNav.y - 15);
     }
     const cell = { theme, expectedViewport: { width, height }, screenshot, ...proof, serverErrors, errors, network,
       pass: proof.viewport.width === width && proof.viewport.height === height && proof.readableNames.length > 0 && !serverErrors.length && !errors.pageErrors.length && !errors.consoleErrors.length };
