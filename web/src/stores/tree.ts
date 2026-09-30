@@ -28,7 +28,19 @@ export const useTreeStore = defineStore('tree', () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
 
+  /**
+   * Monotonic request token for latest-wins fetch arbitration: only the most
+   * recently initiated fetchTree()/invalidate() may commit tree state. Overlap
+   * is real (route watcher + family selector + member-save invalidate), and an
+   * older in-flight response would otherwise commit the WRONG family's
+   * roots/generations/version after the selection changed (review MAJOR,
+   * b71b66d iteration 2). Commits are therefore atomic with the selected
+   * family; superseded results (and their errors) are dropped silently.
+   */
+  let requestSeq = 0;
+
   async function fetchTree(id: string): Promise<TreeResponse | null> {
+    const seq = ++requestSeq;
     familyId.value = id;
     loading.value = true;
     error.value = null;
@@ -36,30 +48,39 @@ export const useTreeStore = defineStore('tree', () => {
 
     try {
       const res = await familiesApi.getTree(id);
+      if (seq !== requestSeq) return null; // superseded — never commit stale family state
+
       version.value = res.version;
       generations.value = res.generations || [];
       roots.value = res.roots || [];
 
       // Auto-refetch kinship labels when the signed-in user is linked to a
-      // member (Phase 1 M5) — failures never break the tree render.
+      // member (Phase 1 M5) — failures never break the tree render. The seq
+      // guard stops a superseded request from overwriting the newer family's
+      // labels when its label response lands late.
       const authStore = useAuthStore();
       const linkedMemberId = authStore.user?.member_id;
       if (linkedMemberId) {
-        await fetchKinshipLabels(id, linkedMemberId);
+        await fetchKinshipLabels(id, linkedMemberId, undefined, seq);
       }
 
       return res;
     } catch (err) {
-      const msg = formatApiError(err);
-      error.value = msg;
+      if (seq !== requestSeq) return null; // superseded failure — newer request owns error/loading
+      error.value = formatApiError(err);
       return null;
     } finally {
-      loading.value = false;
+      // Only the current request may clear loading; a stale request finishing
+      // late must not flip the spinner off while the newer one is in flight.
+      if (seq === requestSeq) {
+        loading.value = false;
+      }
     }
   }
 
   async function invalidate(): Promise<void> {
     if (!familyId.value) return;
+    const seq = ++requestSeq;
 
     // M5: cached labels are stale the moment the tree mutates — drop them
     // BEFORE refetching so a failed refetch never serves old relations.
@@ -67,10 +88,12 @@ export const useTreeStore = defineStore('tree', () => {
 
     try {
       const res = await familiesApi.getTree(familyId.value);
+      if (seq !== requestSeq) return; // superseded (e.g. user switched family mid-refetch)
       version.value = res.version;
       generations.value = res.generations || [];
       roots.value = res.roots || [];
     } catch (err) {
+      if (seq !== requestSeq) return;
       error.value = formatApiError(err);
     }
   }
@@ -79,15 +102,23 @@ export const useTreeStore = defineStore('tree', () => {
    * fetchKinshipLabels (Decision 2C): populate the memberID → kinship term
    * dictionary relative to fromMemberId. A labels failure is cosmetic —
    * the tree still renders — so errors are swallowed, never thrown.
+   *
+   * `expectedSeq` is internal: fetchTree passes its request token so a label
+   * response landing after a newer fetchTree started cannot commit labels for
+   * the wrong family. Direct callers (auth link flow) omit it — behavior
+   * identical to the unguarded path.
    */
   async function fetchKinshipLabels(
     famId: string,
     fromMemberId: string,
-    dialect?: 'bac' | 'trung' | 'nam' | string
+    dialect?: 'bac' | 'trung' | 'nam' | string,
+    expectedSeq?: number
   ): Promise<void> {
+    if (expectedSeq !== undefined && expectedSeq !== requestSeq) return;
     kinshipLabels.value = {};
     try {
       const res = await kinshipApi.getFamilyKinshipLabels(famId, fromMemberId, dialect);
+      if (expectedSeq !== undefined && expectedSeq !== requestSeq) return; // superseded
       kinshipLabels.value = res.labels ?? {};
     } catch (err) {
       // Surface for diagnostics only.

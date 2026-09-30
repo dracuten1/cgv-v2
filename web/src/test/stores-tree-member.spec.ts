@@ -78,6 +78,23 @@ const treePayload = (): TreeResponse => ({
   ],
 });
 
+const treePayloadFor = (familyId: string, version: number, rootName: string): TreeResponse => ({
+  family_id: familyId,
+  version,
+  generations: [{ index: 1, label: 'Đời thứ 1', count: 1 }],
+  roots: [
+    {
+      id: `root-${familyId}`,
+      full_name: rootName,
+      gender: 'male',
+      generation_index: 1,
+      is_living: false,
+      spouse_ids: [],
+      children: [],
+    },
+  ],
+});
+
 const memberPayload = (): MemberDetailResponse => ({
   id: 'member-9',
   family_id: 'f1',
@@ -150,6 +167,57 @@ describe('tree store', () => {
     const failed = await store.fetchTree('f1');
     expect(failed).toBeNull();
     expect(store.error).toBe('Máy chủ gặp sự cố.');
+  });
+
+  it('fetchTree is latest-wins: a superseded f1 response landing after f2 never commits stale state', async () => {
+    const store = useTreeStore();
+    let resolveF1!: (v: TreeResponse) => void;
+    let resolveF2!: (v: TreeResponse) => void;
+    mockedGetTree
+      .mockImplementationOnce(() => new Promise<TreeResponse>((res) => (resolveF1 = res)))
+      .mockImplementationOnce(() => new Promise<TreeResponse>((res) => (resolveF2 = res)));
+
+    // Overlap: route watcher + family selector both initiate; f1 in flight when f2 starts.
+    const p1 = store.fetchTree('f1');
+    const p2 = store.fetchTree('f2');
+    expect(store.familyId).toBe('f2'); // newest selection owns the store immediately
+
+    resolveF2(treePayloadFor('f2', 11, 'Trần Thị B')); // newer response lands FIRST
+    await p2;
+    resolveF1(treePayloadFor('f1', 3, 'Nguyễn Văn A')); // stale response lands LAST
+    await p1;
+
+    // Final store must match the CURRENT family — no stale roots/version/generations.
+    expect(store.familyId).toBe('f2');
+    expect(store.version).toBe(11);
+    expect(store.roots[0].full_name).toBe('Trần Thị B');
+    expect(store.generations).toHaveLength(1);
+    expect(store.loading).toBe(false);
+    expect(store.error).toBeNull();
+  });
+
+  it('a superseded fetchTree failure never clobbers the newer request’s loading/error state', async () => {
+    const store = useTreeStore();
+    let rejectF1!: (e: unknown) => void;
+    let resolveF2!: (v: TreeResponse) => void;
+    mockedGetTree
+      .mockImplementationOnce(() => new Promise<TreeResponse>((_, rej) => (rejectF1 = rej)))
+      .mockImplementationOnce(() => new Promise<TreeResponse>((res) => (resolveF2 = res)));
+
+    const p1 = store.fetchTree('f1');
+    const p2 = store.fetchTree('f2');
+
+    rejectF1(new ApiError(500, 'INTERNAL', 'Máy chủ gặp sự cố.')); // stale failure mid-flight
+    await expect(p1).resolves.toBeNull();
+    expect(store.error).toBeNull(); // must not surface the superseded family's error
+    expect(store.loading).toBe(true); // newer request still owns the spinner
+
+    resolveF2(treePayloadFor('f2', 11, 'Trần Thị B'));
+    await p2;
+    expect(store.familyId).toBe('f2');
+    expect(store.version).toBe(11);
+    expect(store.loading).toBe(false);
+    expect(store.error).toBeNull();
   });
 
   it('invalidate() refetches the current family', async () => {

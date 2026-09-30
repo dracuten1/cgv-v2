@@ -1,7 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-const routeState = vi.hoisted(() => ({ query: {} as Record<string, any>, hash: '' }));
-const routerMock = vi.hoisted(() => ({ replace: vi.fn(async (to: any) => { routeState.query = to.query; routeState.hash = to.hash || ''; }) }));
-vi.mock('vue-router', () => ({ useRoute: () => routeState, useRouter: () => routerMock }));
+
+// Route/router mock MUST be reactive: TreeView watches () => route.query.family,
+// and a plain object (pre-b71b66d-review harness) never triggers that watcher,
+// so every route-mutation path was untested. Built inside async vi.hoisted so
+// `reactive` (from vue) is available before the vue-router mock factory runs.
+const { buildRouteState } = await vi.hoisted(async () => {
+  const { reactive } = await import('vue');
+  const buildRouteState = () => {
+    const routeState = reactive({ query: {} as Record<string, any>, hash: '' });
+    const routerMock = {
+      replace: vi.fn(async (to: any) => {
+        routeState.query = to.query;
+        routeState.hash = to.hash || '';
+      }),
+    };
+    return { routeState, routerMock };
+  };
+  return { buildRouteState };
+});
+
+// Fresh state per test: leaked (never-unmounted) instances from earlier tests
+// keep watching the OLD reactive object, which is never mutated again — so a
+// query mutation can only ever reach the CURRENT test's view.
+let routeState: ReturnType<typeof buildRouteState>['routeState'];
+let routerMock: ReturnType<typeof buildRouteState>['routerMock'];
+
+vi.mock('vue-router', () => ({
+  useRoute: () => routeState,
+  useRouter: () => routerMock,
+}));
 import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import TreeView from '@/views/TreeView.vue';
@@ -74,8 +101,8 @@ const mountTree = () =>
 
 beforeEach(() => {
   vi.clearAllMocks();
-  routeState.query = {};
-  routeState.hash = '';
+  ({ routeState, routerMock } = buildRouteState());
+  localStorage.clear();
   setActivePinia(createPinia());
   mockedListFamilies.mockResolvedValue({
     families: [
@@ -139,6 +166,51 @@ describe('TreeView', () => {
     await flushPromises();
     expect(mockedGetTree).toHaveBeenLastCalledWith('f2');
     expect(selected.find('[data-testid="orientation-horizontal"]').attributes('aria-pressed')).toBe('true');
+  });
+
+  it('reacts to back/forward navigation: the route watcher selects the family and rehydrates its persisted orientation', async () => {
+    localStorage.clear();
+    localStorage.setItem('cgp_tree_orientation_f2', 'horizontal');
+    const wrapper = mountTree();
+    await flushPromises();
+    expect(mockedGetTree).toHaveBeenCalledTimes(1);
+    expect(mockedGetTree).toHaveBeenCalledWith('f1');
+    expect(wrapper.find('[data-testid="orientation-vertical"]').attributes('aria-pressed')).toBe('true');
+
+    // Simulated "back": router swaps route.query in place; the view must react.
+    routeState.query = { family: 'f2' };
+    await flushPromises();
+    expect(mockedGetTree).toHaveBeenCalledTimes(2); // exactly one fetch per navigation — no duplicates
+    expect(mockedGetTree).toHaveBeenLastCalledWith('f2');
+    expect(wrapper.find('[data-testid="orientation-horizontal"]').attributes('aria-pressed')).toBe('true');
+
+    // Simulated "forward": back to f1, which kept its own horizontal choice.
+    routeState.query = { family: 'f1' };
+    await flushPromises();
+    expect(mockedGetTree).toHaveBeenCalledTimes(3);
+    expect(mockedGetTree).toHaveBeenLastCalledWith('f1');
+    expect(wrapper.find('[data-testid="orientation-vertical"]').attributes('aria-pressed')).toBe('true');
+  });
+
+  it('canonicalizes an invalid post-mount family mutation preserving unrelated query and hash, without looping or refetching', async () => {
+    mountTree();
+    await flushPromises();
+    expect(mockedGetTree).toHaveBeenCalledTimes(1); // initial mount fetch only
+    const replacesAfterMount = routerMock.replace.mock.calls.length;
+
+    routeState.query = { family: 'ghost', page: '2', keep: 'x' };
+    routeState.hash = '#tab-2';
+    await flushPromises();
+    await flushPromises(); // second flush proves the watcher converged — no canonicalization loop
+
+    expect(routeState.query).toEqual({ family: 'f1', page: '2', keep: 'x' });
+    expect(routeState.hash).toBe('#tab-2');
+    expect(routerMock.replace).toHaveBeenCalledTimes(replacesAfterMount + 1);
+    const lastReplace = routerMock.replace.mock.calls.at(-1)![0] as { query: Record<string, any>; hash: string };
+    expect(lastReplace.query).toEqual({ family: 'f1', page: '2', keep: 'x' });
+    expect(lastReplace.hash).toBe('#tab-2');
+    // Selected family already resolved (f1): canonicalization must NOT refetch.
+    expect(mockedGetTree).toHaveBeenCalledTimes(1);
   });
 
   it('auto-selects the first family on mount and fetches its tree', async () => {
