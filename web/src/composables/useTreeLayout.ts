@@ -541,6 +541,24 @@ export function layoutTree(
     }
 
     // Bands carry the generation axis coordinate; horizontal renderers consume coord as x.
+    // Derive each horizontal band from the actual transposed card bounds so uneven,
+    // sparse, and extreme generations stay aligned with their nodes.
+    const nodesByGeneration = new Map<number, PositionedNode[]>();
+    for (const node of nodes) {
+      const generationNodes = nodesByGeneration.get(node.generation_index) ?? [];
+      generationNodes.push(node);
+      nodesByGeneration.set(node.generation_index, generationNodes);
+    }
+    for (const band of bands) {
+      const generationNodes = nodesByGeneration.get(band.index);
+      if (!generationNodes?.length) continue;
+      const minX = Math.min(...generationNodes.map((node) => node.x));
+      const maxX = Math.max(...generationNodes.map((node) => node.x + node.width));
+      band.coord = minX;
+      band.size = maxX - minX;
+      band.y = minX;
+      band.height = band.size;
+    }
   }
 
   let maxX = 0;

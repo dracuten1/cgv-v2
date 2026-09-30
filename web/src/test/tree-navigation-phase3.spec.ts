@@ -61,6 +61,18 @@ describe('Phase 3: Orientation, Rail, and Minimap', () => {
       const hLayout = layoutTree(TV_ORIENTATION_LANDSCAPE_PREFERRED, sampleGenerations, null, null, 'horizontal');
 
       expect(hLayout.orientation).toBe('horizontal');
+      for (const band of hLayout.bands) {
+        const generationNodes = hLayout.nodes.filter((node) => node.generation_index === band.index);
+        if (!generationNodes.length) continue; // retain metadata-only empty bands
+        expect(band.coord).toBe(Math.min(...generationNodes.map((node) => node.x)));
+        expect(band.coord + band.size).toBe(Math.max(...generationNodes.map((node) => node.x + node.width)));
+        expect(band.y).toBe(band.coord);
+        expect(band.height).toBe(band.size);
+      }
+      for (const band of vLayout.bands) {
+        expect(band.coord).toBe((band.index - 1) * BAND_HEIGHT);
+        expect(band.size).toBe(BAND_HEIGHT);
+      }
 
       // For every node in horizontal layout, its (x, y) should equal (origY, origX)
       for (const hNode of hLayout.nodes) {
@@ -252,6 +264,15 @@ describe('Phase 3: Orientation, Rail, and Minimap', () => {
 
       const map = wrapper.find('[data-testid="minimap-map"]');
       expect(map.exists()).toBe(true);
+      expect(map.attributes('tabindex')).toBe('0');
+      expect(map.attributes('role')).toBe('application');
+      expect(map.attributes('aria-label')).toContain('mũi tên');
+      await map.trigger('keydown', { key: 'ArrowRight' });
+      expect(wrapper.emitted('panTo')).toHaveLength(1);
+      await map.trigger('keydown', { key: 'Home' });
+      expect(wrapper.emitted('panTo')).toHaveLength(2);
+      await map.trigger('keydown', { key: 'End' });
+      expect(wrapper.emitted('panTo')).toHaveLength(3);
 
       // Mock getBoundingClientRect on map element
       vi.spyOn(map.element, 'getBoundingClientRect').mockReturnValue({
@@ -274,7 +295,7 @@ describe('Phase 3: Orientation, Rail, and Minimap', () => {
       });
 
       expect(wrapper.emitted('panTo')).toBeDefined();
-      const [panX, panY] = wrapper.emitted('panTo')![0] as [number, number];
+      const [panX, panY] = wrapper.emitted('panTo')!.at(-1) as [number, number];
       expect(panX).toBeCloseTo(layout.width * 0.5, 0);
       expect(panY).toBeCloseTo(layout.height * 0.5, 0);
     });

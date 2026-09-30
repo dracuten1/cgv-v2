@@ -14,8 +14,12 @@
     <!-- Map preview container -->
     <div
       ref="mapEl"
-      class="tr-minimap__map relative h-16 w-full rounded border border-hairline bg-surface-well overflow-hidden cursor-crosshair"
+      class="tr-minimap__map relative h-16 w-full rounded border border-hairline bg-surface-well overflow-hidden cursor-crosshair focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+      role="application"
+      tabindex="0"
+      aria-label="Sơ đồ cây. Dùng các phím mũi tên để di chuyển khung nhìn, Home để về đầu, End để đến cuối."
       data-testid="minimap-map"
+      @keydown="onMapKeydown"
       @pointerdown="onMapPointerDown"
     >
       <!-- Generation bands -->
@@ -148,6 +152,27 @@ function handleMapInteraction(event: PointerEvent) {
   const targetWorldY = clickYPct * props.layout.height;
 
   emit('panTo', targetWorldX, targetWorldY);
+}
+
+function onMapKeydown(event: KeyboardEvent) {
+  const stepX = props.viewportWidth * 0.75;
+  const stepY = props.viewportHeight * 0.75;
+  let worldX: number | undefined;
+  let worldY: number | undefined;
+  switch (event.key) {
+    case 'ArrowLeft': worldX = -stepX; break;
+    case 'ArrowRight': worldX = stepX; break;
+    case 'ArrowUp': worldY = -stepY; break;
+    case 'ArrowDown': worldY = stepY; break;
+    case 'Home': worldX = -props.layout.width; worldY = -props.layout.height; break;
+    case 'End': worldX = props.layout.width; worldY = props.layout.height; break;
+    default: return;
+  }
+  event.preventDefault();
+  const zoom = Math.max(0.01, props.transform.zoom);
+  emit('panTo',
+    Math.max(0, Math.min(props.layout.width, -props.transform.tx / zoom + (worldX ?? 0))),
+    Math.max(0, Math.min(props.layout.height, -props.transform.ty / zoom + (worldY ?? 0))));
 }
 
 function onMapPointerDown(event: PointerEvent) {
