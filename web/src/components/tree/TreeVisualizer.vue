@@ -29,25 +29,48 @@
       data-testid="tree-world"
     >
       <!-- Generation bands (background stripes + "Đời thứ N" labels) -->
-      <div
-        v-for="band in layout.bands"
-        :key="`band-${band.index}`"
-        class="absolute left-0"
-        :style="{
-          top: `${band.y}px`,
-          width: `${layout.width}px`,
-          height: `${band.height}px`,
-          backgroundColor: `var(${band.colorSoftVar}, transparent)`,
-        }"
-        :data-testid="`band-gen-${band.index}`"
-      >
-        <span
-          class="absolute left-4 top-2 text-xs font-semibold font-display uppercase tracking-wide"
-          :style="{ color: `var(${band.colorVar}, #64748B)` }"
+      <template v-if="layout.orientation === 'horizontal'">
+        <div
+          v-for="band in layout.bands"
+          :key="`band-${band.index}`"
+          class="absolute top-0"
+          :style="{
+            left: `${band.coord}px`,
+            width: `${band.size}px`,
+            height: `${layout.height}px`,
+            backgroundColor: `var(${band.colorSoftVar}, transparent)`,
+          }"
+          :data-testid="`band-gen-${band.index}`"
         >
-          {{ band.label }}
-        </span>
-      </div>
+          <span
+            class="absolute left-4 top-2 text-xs font-semibold font-display uppercase tracking-wide"
+            :style="{ color: `var(${band.colorVar}, #64748B)` }"
+          >
+            {{ band.label }}
+          </span>
+        </div>
+      </template>
+      <template v-else>
+        <div
+          v-for="band in layout.bands"
+          :key="`band-${band.index}`"
+          class="absolute left-0"
+          :style="{
+            top: `${band.coord}px`,
+            width: `${layout.width}px`,
+            height: `${band.size}px`,
+            backgroundColor: `var(${band.colorSoftVar}, transparent)`,
+          }"
+          :data-testid="`band-gen-${band.index}`"
+        >
+          <span
+            class="absolute left-4 top-2 text-xs font-semibold font-display uppercase tracking-wide"
+            :style="{ color: `var(${band.colorVar}, #64748B)` }"
+          >
+            {{ band.label }}
+          </span>
+        </div>
+      </template>
 
       <!-- Canvas connector layer (parent→child curves + spouse links) -->
       <canvas
@@ -69,6 +92,22 @@
         @select="onNodeSelect"
       />
     </div>
+
+    <!-- Generation rail navigation -->
+    <TreeGenerationRail
+      :bands="layout.bands"
+      :active-gen="activeGeneration"
+      @jump="jumpToGeneration"
+    />
+
+    <!-- Minimap (focus + context) -->
+    <TreeMinimap
+      :layout="layout"
+      :transform="transform"
+      :viewport-width="viewportEl?.clientWidth || 800"
+      :viewport-height="viewportEl?.clientHeight || 600"
+      @pan-to="panToWorld"
+    />
 
     <!-- Floating navigation & zoom controls (bottom-right cluster) -->
     <div class="absolute right-3 bottom-3 flex flex-col items-center gap-2 z-10">
@@ -118,12 +157,15 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
 import TreeNodeCard from './TreeNodeCard.vue';
 import TreeCompassControl from './TreeCompassControl.vue';
+import TreeGenerationRail from './TreeGenerationRail.vue';
+import TreeMinimap from './TreeMinimap.vue';
 import { useTreeStore } from '@/stores/tree';
 import { useAuthStore } from '@/stores/auth';
 import {
   useTreeLayout,
   cullVisibleNodes,
   anchorFrameTransform,
+  type TreeOrientation,
 } from '@/composables/useTreeLayout';
 import { useTreeViewport } from '@/composables/useTreeViewport';
 import { TREE_CONNECTOR_COLOR, TREE_CONNECTOR_NODE_COLOR } from './treeTokens';
@@ -131,6 +173,15 @@ import { availableTreeViewportHeight } from './treeViewportHeight';
 import { canvasBackingSize } from './canvasBackingSize';
 
 defineOptions({ name: 'TreeVisualizer' });
+
+const props = withDefaults(
+  defineProps<{
+    orientation?: TreeOrientation;
+  }>(),
+  {
+    orientation: 'vertical',
+  }
+);
 
 const store = useTreeStore();
 const authStore = useAuthStore();
@@ -149,9 +200,10 @@ function updateViewportHeight(): void {
 
 const { roots: rootsRef, generations: generationsRef, generationFilter: filterRef } = toRefs(store);
 const linkedMemberRef = computed(() => authStore.user?.member_id);
+const orientationRef = computed(() => props.orientation);
 
-/** MEMOIZED: re-runs only when roots, generationFilter, or linkedMemberId change. */
-const layout = useTreeLayout(rootsRef, generationsRef, filterRef, linkedMemberRef);
+/** MEMOIZED: re-runs only when roots, generationFilter, linkedMemberId, or orientation change. */
+const layout = useTreeLayout(rootsRef, generationsRef, filterRef, linkedMemberRef, orientationRef);
 
 const {
   transform,
@@ -200,18 +252,87 @@ function frameAnchor(anchorId: string): void {
   if (frame) setTransform(frame.zoom, frame.tx, frame.ty);
 }
 
+const activeOrientation = ref<TreeOrientation>(props.orientation);
+
 function frameCurrentAnchor(): void {
   const next = resolveAnchor();
   if (!next) return;
   const family = store.familyId;
   const filter = store.generationFilter;
-  if (activeAnchor.value === next && activeFamily.value === family && activeFilter.value === filter && hasInitialCentered.value) return;
+  const orient = props.orientation;
+  if (
+    activeAnchor.value === next &&
+    activeFamily.value === family &&
+    activeFilter.value === filter &&
+    activeOrientation.value === orient &&
+    hasInitialCentered.value
+  ) return;
   activeAnchor.value = next;
   activeFamily.value = family;
   activeFilter.value = filter;
+  activeOrientation.value = orient;
   frameAnchor(next);
   centeredTarget.value = next;
   hasInitialCentered.value = true;
+}
+
+/** Active generation index based on viewport center */
+const activeGeneration = computed(() => {
+  if (layout.value.nodes.length === 0) return null;
+  const rect = viewportEl.value?.getBoundingClientRect();
+  const width = rect?.width || 800;
+  const height = rect?.height || 600;
+  const zoom = Math.max(0.01, transform.zoom);
+
+  // Center in world coordinates
+  const worldCenterX = (width / 2 - transform.tx) / zoom;
+  const worldCenterY = (height / 2 - transform.ty) / zoom;
+  const centerCoord = props.orientation === 'horizontal' ? worldCenterX : worldCenterY;
+
+  // Find the band whose coordinate range is closest to centerCoord
+  let closestGen = layout.value.bands[0]?.index ?? null;
+  let minDiff = Infinity;
+  for (const band of layout.value.bands) {
+    const bandMid = band.coord + band.size / 2;
+    const diff = Math.abs(bandMid - centerCoord);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestGen = band.index;
+    }
+  }
+  return closestGen;
+});
+
+function jumpToGeneration(genIndex: number): void {
+  const band = layout.value.bands.find((b) => b.index === genIndex);
+  if (!band) return;
+
+  const rect = viewportEl.value?.getBoundingClientRect();
+  const width = rect?.width || 800;
+  const height = rect?.height || 600;
+  const zoom = transform.zoom;
+
+  // Center on generation band
+  if (props.orientation === 'horizontal') {
+    const bandMidX = band.coord + band.size / 2;
+    const newTx = width / 2 - bandMidX * zoom;
+    setTransform(zoom, newTx, transform.ty);
+  } else {
+    const bandMidY = band.coord + band.size / 2;
+    const newTy = height / 2 - bandMidY * zoom;
+    setTransform(zoom, transform.tx, newTy);
+  }
+}
+
+function panToWorld(targetWorldX: number, targetWorldY: number): void {
+  const rect = viewportEl.value?.getBoundingClientRect();
+  const width = rect?.width || 800;
+  const height = rect?.height || 600;
+  const zoom = transform.zoom;
+
+  const newTx = width / 2 - targetWorldX * zoom;
+  const newTy = height / 2 - targetWorldY * zoom;
+  setTransform(zoom, newTx, newTy);
 }
 
 /**
@@ -342,8 +463,8 @@ onMounted(async () => {
   }
 });
 
-// Redraw edges when the layout changes (filter / refetch)
-watch([layout, () => store.familyId, () => store.generationFilter], async () => {
+// Redraw edges when the layout changes (filter / refetch / orientation)
+watch([layout, () => store.familyId, () => store.generationFilter, () => props.orientation], async () => {
   await nextTick();
   drawEdges();
   if (layout.value.nodes.length > 0) frameCurrentAnchor();

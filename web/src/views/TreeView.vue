@@ -17,6 +17,9 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
+          <!-- Orientation toggle Dọc / Ngang (per-family persistence) -->
+          <TreeOrientationToggle v-model="orientation" />
+
           <!-- Add member (auth-gated) -->
           <AppButton
             v-if="auth.isAuthenticated"
@@ -136,7 +139,7 @@
     </EmptyState>
 
     <!-- Visualizer -->
-    <TreeVisualizer v-else />
+    <TreeVisualizer v-else :orientation="orientation" />
 
     <!-- Add member dialog (create mode) -->
     <MemberEditDialog
@@ -153,6 +156,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import TreeVisualizer from '@/components/tree/TreeVisualizer.vue';
+import TreeOrientationToggle from '@/components/tree/TreeOrientationToggle.vue';
 import ExcelPanel from '@/components/excel/ExcelPanel.vue';
 import MemberEditDialog from '@/components/member/MemberEditDialog.vue';
 import AppButton from '@/components/ui/AppButton.vue';
@@ -164,6 +168,7 @@ import { formatApiError } from '@/api/client';
 import { useTreeStore } from '@/stores/tree';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
+import { useTreeOrientation } from '@/composables/useTreeOrientation';
 import type { Family } from '@/types/api';
 
 const store = useTreeStore();
@@ -173,6 +178,7 @@ const route = useRoute();
 
 const families = ref<Family[]>([]);
 const selectedFamilyId = ref<string>('');
+const { orientation } = useTreeOrientation(selectedFamilyId);
 const addOpen = ref(false);
 /** true once the first fetch attempt resolved (distinguishes empty from initial). */
 const hasLoaded = ref(false);

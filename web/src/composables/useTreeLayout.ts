@@ -31,6 +31,7 @@ export const Y_GAP = 96;
 export const BAND_HEIGHT = CARD_HEIGHT + Y_GAP;
 export const BAND_TOP_MARGIN = 56; // room for "Đời thứ N" label above cards
 export const ROOT_MARGIN_LEFT = 48;
+export type TreeOrientation = 'vertical' | 'horizontal';
 export type TreeLodTier = 'full-card' | 'name-only' | 'chip' | 'dot';
 export function treeLodTier(zoom: number): TreeLodTier {
   if (zoom >= 0.85) return 'full-card';
@@ -47,30 +48,32 @@ export function canvasPersonBudget(rosterRows: number): number {
 
 /** Reading-frame geometry uses nearby generations and a width budget, never world bounds. */
 export function anchorFrameTransform(
-  layout: Pick<TreeLayout, 'nodes' | 'nodeById'>,
+  layout: Pick<TreeLayout, 'nodes' | 'nodeById'> & { orientation?: TreeOrientation },
   anchorId: string,
   viewport: { width: number; height: number }
 ): { zoom: number; tx: number; ty: number; frameWidth: number; frameHeight: number } | null {
   const anchor = layout.nodeById.get(anchorId);
   if (!anchor) return null;
-  const budget = Math.floor((viewport.width - 48) / 0.65);
-  const centerX = anchor.x + anchor.width / 2;
-  const nearby = layout.nodes.filter((node) =>
-    Math.abs(node.generation_index - anchor.generation_index) <= 1 &&
-    // A <360px reading strip needs the adjacent root couple inside the frame;
-    // framing only the first root left its name outside the visible viewport.
-    Math.abs(node.x + node.width / 2 - centerX) <= budget / 2 + (viewport.width <= 360 ? node.width / 2 : 0)
-  );
+  const isHorizontal = layout.orientation === 'horizontal';
+  const primaryDim = isHorizontal ? viewport.height : viewport.width;
+  const budget = Math.floor((primaryDim - 48) / 0.65);
+  const centerCross = isHorizontal ? anchor.y + anchor.height / 2 : anchor.x + anchor.width / 2;
+  const nearby = layout.nodes.filter((node) => {
+    if (Math.abs(node.generation_index - anchor.generation_index) > 1) return false;
+    const nodeCross = isHorizontal ? node.y + node.height / 2 : node.x + node.width / 2;
+    const extra = (!isHorizontal && viewport.width <= 360) ? node.width / 2 : 0;
+    return Math.abs(nodeCross - centerCross) <= budget / 2 + extra;
+  });
   const minX = Math.min(...nearby.map((node) => node.x));
   const maxX = Math.max(...nearby.map((node) => node.x + node.width));
   const minY = Math.min(...nearby.map((node) => node.y));
   const maxY = Math.max(...nearby.map((node) => node.y + node.height));
-  const frameWidth = Math.max(1, Math.min(budget, maxX - minX));
-  const frameHeight = Math.max(1, maxY - minY);
+  const frameWidth = Math.max(1, isHorizontal ? (maxX - minX) : Math.min(budget, maxX - minX));
+  const frameHeight = Math.max(1, isHorizontal ? Math.min(budget, maxY - minY) : (maxY - minY));
   const zoom = Math.max(0.65, Math.min(1, (viewport.width - 48) / frameWidth, (viewport.height - 48) / frameHeight));
   return {
     zoom,
-    tx: viewport.width / 2 - (viewport.width <= 360 ? (minX + maxX) / 2 : centerX) * zoom,
+    tx: viewport.width / 2 - (viewport.width <= 360 && !isHorizontal ? (minX + maxX) / 2 : (anchor.x + anchor.width / 2)) * zoom,
     ty: viewport.height / 2 - (anchor.y + anchor.height / 2) * zoom,
     frameWidth,
     frameHeight,
@@ -111,7 +114,13 @@ export interface GenerationBand {
   index: number;
   label: string;
   count: number;
+  /** Primary coordinate along the generation axis: y for vertical, x for horizontal */
+  coord: number;
+  /** Size along the generation axis: height for vertical, width for horizontal */
+  size: number;
+  /** Legacy alias for y coordinate */
   y: number;
+  /** Legacy alias for height */
   height: number;
   /** CSS var holding the band accent, cycles --gen-1..--gen-4 via modulo */
   colorVar: string;
@@ -126,6 +135,7 @@ export interface TreeLayout {
   bands: GenerationBand[];
   width: number;
   height: number;
+  orientation: TreeOrientation;
 }
 
 // ---------- filter ----------
@@ -250,7 +260,8 @@ export function layoutTree(
   rawRoots: TreeNode[],
   generations: GenerationMeta[],
   generationFilter: number | null = null,
-  anchorMemberId?: string | null
+  anchorMemberId?: string | null,
+  orientation: TreeOrientation = 'vertical'
 ): TreeLayout {
   // 1. Normalization pass (client-side couple pairing, in-law root prune, D1 grandparent order)
   const normalized = normalizeTreeRoots(rawRoots, anchorMemberId);
@@ -476,16 +487,61 @@ export function layoutTree(
   const metaByIndex = new Map(generations.map((g) => [g.index, g]));
   const bands: GenerationBand[] = sorted.map((index) => {
     const meta = metaByIndex.get(index);
+    const bandCoord = (index - 1) * BAND_HEIGHT;
     return {
       index,
       label: meta?.label ?? `Đời thứ ${index}`,
       count: meta?.count ?? 0,
-      y: (index - 1) * BAND_HEIGHT,
+      coord: bandCoord,
+      size: BAND_HEIGHT,
+      y: bandCoord,
       height: BAND_HEIGHT,
       colorVar: genAccentVar(index),
       colorSoftVar: genSoftVar(index),
     };
   });
+
+  if (orientation === 'horizontal') {
+    // Coordinate transposition for horizontal (Ngang: generations left-to-right)
+    for (const node of nodes) {
+      const origX = node.x;
+      const origY = node.y;
+      node.x = origY;
+      node.y = origX;
+    }
+
+    for (const edge of edges) {
+      const origFromX = edge.fromX;
+      const origFromY = edge.fromY;
+      const origToX = edge.toX;
+      const origToY = edge.toY;
+      edge.fromX = origFromY;
+      edge.fromY = origFromX;
+      edge.toX = origToY;
+      edge.toY = origToX;
+    }
+
+    for (const ortho of orthogonalEdges) {
+      for (const seg of ortho.segments) {
+        const origX1 = seg.x1;
+        const origY1 = seg.y1;
+        const origX2 = seg.x2;
+        const origY2 = seg.y2;
+        seg.x1 = origY1;
+        seg.y1 = origX1;
+        seg.x2 = origY2;
+        seg.y2 = origX2;
+      }
+      if (ortho.midpoint) {
+        const origMx = ortho.midpoint.x;
+        const origMy = ortho.midpoint.y;
+        ortho.midpoint.x = origMy;
+        ortho.midpoint.y = origMx;
+      }
+    }
+
+    // Bands carry the generation axis coordinate; horizontal renderers consume coord as x.
+  }
 
   let maxX = 0;
   let maxY = 0;
@@ -494,14 +550,18 @@ export function layoutTree(
     maxY = Math.max(maxY, n.y + n.height);
   }
 
+  const marginX = orientation === 'horizontal' ? Y_GAP : ROOT_MARGIN_LEFT;
+  const marginY = orientation === 'horizontal' ? ROOT_MARGIN_LEFT : Y_GAP;
+
   return {
     nodes,
     nodeById,
     edges,
     orthogonalEdges,
     bands,
-    width: maxX + ROOT_MARGIN_LEFT,
-    height: maxY + Y_GAP,
+    width: maxX + marginX,
+    height: maxY + marginY,
+    orientation,
   };
 }
 
@@ -596,15 +656,22 @@ export function fitToViewport(
 
 // ---------- composable (memoized) ----------
 /**
- * MEMOIZED layout: the computed re-runs ONLY when roots, generationFilter, or anchorMemberId change.
+ * MEMOIZED layout: the computed re-runs ONLY when roots, generationFilter, anchorMemberId, or orientation change.
  */
 export function useTreeLayout(
   roots: Ref<TreeNode[]>,
   generations: Ref<GenerationMeta[]>,
   generationFilter: Ref<number | null>,
-  anchorMemberId?: Ref<string | null | undefined>
+  anchorMemberId?: Ref<string | null | undefined>,
+  orientation?: Ref<TreeOrientation>
 ): ComputedRef<TreeLayout> {
   return computed(() =>
-    layoutTree(roots.value, generations.value, generationFilter.value, anchorMemberId?.value)
+    layoutTree(
+      roots.value,
+      generations.value,
+      generationFilter.value,
+      anchorMemberId?.value,
+      orientation?.value ?? 'vertical'
+    )
   );
 }
