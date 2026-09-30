@@ -153,8 +153,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import TreeVisualizer from '@/components/tree/TreeVisualizer.vue';
 import TreeOrientationToggle from '@/components/tree/TreeOrientationToggle.vue';
 import ExcelPanel from '@/components/excel/ExcelPanel.vue';
@@ -175,6 +175,7 @@ const store = useTreeStore();
 const auth = useAuthStore();
 const toast = useToast();
 const route = useRoute();
+const router = useRouter();
 
 const families = ref<Family[]>([]);
 const selectedFamilyId = ref<string>('');
@@ -231,6 +232,13 @@ async function loadSelectedFamily(): Promise<void> {
 }
 
 async function onFamilyChange(): Promise<void> {
+  const familyId = selectedFamilyId.value;
+  const query = { ...route.query };
+  if (familyId) query.family = familyId;
+  else delete query.family;
+  if (query.family !== route.query.family) {
+    await router.replace({ query, hash: route.hash });
+  }
   hasLoaded.value = false;
   store.setGenerationFilter(null);
   store.selectMember(null);
@@ -241,17 +249,38 @@ function onMemberSaved(): void {
   // member store already invalidated the tree; keep selector state as-is
 }
 
+watch(
+  () => route.query.family,
+  async (value) => {
+    if (!families.value.length) return;
+    const requested = typeof value === 'string' ? value : '';
+    const resolved = families.value.some((family) => family.id === requested)
+      ? requested
+      : families.value[0].id;
+    if (selectedFamilyId.value !== resolved) {
+      selectedFamilyId.value = resolved;
+      hasLoaded.value = false;
+      store.setGenerationFilter(null);
+      store.selectMember(null);
+      await loadSelectedFamily();
+    }
+    if (requested !== resolved) {
+      await router.replace({ query: { ...route.query, family: resolved }, hash: route.hash });
+    }
+  }
+);
+
 onMounted(async () => {
   await loadFamilies();
-  // Honor member-detail navigation; otherwise preserve first-family default.
   const requestedFamily = typeof route.query.family === 'string' ? route.query.family : '';
-  if (requestedFamily && families.value.some((family) => family.id === requestedFamily)) {
-    selectedFamilyId.value = requestedFamily;
-    await loadSelectedFamily();
-    return;
-  }
-  if (families.value.length > 0 && !selectedFamilyId.value) {
-    selectedFamilyId.value = families.value[0].id;
+  const resolvedFamily = families.value.some((family) => family.id === requestedFamily)
+    ? requestedFamily
+    : families.value[0]?.id || '';
+  if (resolvedFamily) {
+    selectedFamilyId.value = resolvedFamily;
+    if (requestedFamily !== resolvedFamily) {
+      await router.replace({ query: { ...route.query, family: resolvedFamily }, hash: route.hash });
+    }
     await loadSelectedFamily();
   }
 });

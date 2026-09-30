@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-vi.mock('vue-router', () => ({ useRoute: () => ({ query: {} }) }));
+const routeState = vi.hoisted(() => ({ query: {} as Record<string, any>, hash: '' }));
+const routerMock = vi.hoisted(() => ({ replace: vi.fn(async (to: any) => { routeState.query = to.query; routeState.hash = to.hash || ''; }) }));
+vi.mock('vue-router', () => ({ useRoute: () => routeState, useRouter: () => routerMock }));
 import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import TreeView from '@/views/TreeView.vue';
@@ -72,11 +74,14 @@ const mountTree = () =>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  routeState.query = {};
+  routeState.hash = '';
   setActivePinia(createPinia());
   mockedListFamilies.mockResolvedValue({
     families: [
       { id: 'f1', name: 'Họ Nguyễn', version: 1, created_at: '2026-01-01T00:00:00Z' },
       { id: 'f2', name: 'Họ Trần', version: 1, created_at: '2026-01-02T00:00:00Z' },
+      { id: 'f3', name: 'Họ Lê', version: 1, created_at: '2026-01-03T00:00:00Z' },
     ],
   });
   mockedGetTree.mockResolvedValue(treePayload([rootAn]));
@@ -96,12 +101,18 @@ describe('TreeView', () => {
     expect(horizontal().attributes('aria-pressed')).toBe('true');
     expect(localStorage.getItem('cgp_tree_orientation_f1')).toBe('horizontal');
 
+    routeState.hash = '#preserve';
     await wrapper.find('.tree-family-select select').setValue('f2');
     await flushPromises();
     expect(vertical().attributes('aria-pressed')).toBe('true');
+    expect(routeState.query.family).toBe('f2');
+    expect(routeState.hash).toBe('#preserve');
     expect(localStorage.getItem('cgp_tree_orientation_f2')).toBeNull();
 
     await horizontal().trigger('click');
+    await wrapper.find('.tree-family-select select').setValue('f3');
+    await flushPromises();
+    expect(vertical().attributes('aria-pressed')).toBe('true');
     await wrapper.find('.tree-family-select select').setValue('f1');
     await flushPromises();
     expect(horizontal().attributes('aria-pressed')).toBe('true');
@@ -109,9 +120,25 @@ describe('TreeView', () => {
 
     // Remounting the real view simulates a page reload and rehydrates the selected family's choice.
     wrapper.unmount();
+    routeState.query = { family: 'f1' };
     const reloaded = mountTree();
     await flushPromises();
     expect(reloaded.find('[data-testid="orientation-horizontal"]').attributes('aria-pressed')).toBe('true');
+  });
+
+  it('restores a selected family from query on reload and canonicalizes invalid IDs', async () => {
+    localStorage.setItem('cgp_tree_orientation_f2', 'horizontal');
+    routeState.query = { family: 'missing', page: '2' };
+    const wrapper = mountTree();
+    await flushPromises();
+    expect(mockedGetTree).toHaveBeenCalledWith('f1');
+    expect(routeState.query).toEqual({ family: 'f1', page: '2' });
+    wrapper.unmount();
+    routeState.query = { family: 'f2' };
+    const selected = mountTree();
+    await flushPromises();
+    expect(mockedGetTree).toHaveBeenLastCalledWith('f2');
+    expect(selected.find('[data-testid="orientation-horizontal"]').attributes('aria-pressed')).toBe('true');
   });
 
   it('auto-selects the first family on mount and fetches its tree', async () => {
