@@ -141,6 +141,72 @@ test('constrained-height / scroll-reflow keeps measured tree above mobile nav', 
   } finally { await context.close(); }
 });
 
+// Screenshot pixels, not a computed-style ancestor walk: transparent layers and
+// dark-mode CSS variables can make an inherited "background" attribution false.
+test('name-card contrast and real pointer clicks at 320x800 (light+dark)', async ({ browser }) => {
+  const results = [];
+  const rgb = value => { const m = value.match(/rgba?\((\d+)[, ]+([\d]+)[, ]+([\d]+)/); if (!m) throw new Error(`unknown foreground ${value}`); return m.slice(1, 4).map(Number); };
+  const lum = color => color.map(v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }).reduce((v, c, i) => v + c * [.2126, .7152, .0722][i], 0);
+  const ratio = (a, b) => { const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x); return (hi + .05) / (lo + .05); };
+  for (const theme of themes) {
+    const context = await demoContext(browser, theme, { width: 320, height: 800 });
+    const page = await context.newPage(), errors = collectErrors(page), serverErrors = [];
+    page.on('response', r => { if (r.status() >= 500) serverErrors.push({ url: r.url(), status: r.status() }); });
+    try {
+      await page.goto(BASE + '/tree');
+      await expect(page.locator('button[aria-label*="Đời thứ"]').first()).toBeVisible({ timeout: 10000 });
+      const proof = await viewportNameProof(page);
+      const name = proof.readableNames.find(n => n.tier === 'name-only' || n.tier === 'full-card');
+      expect(name, `${theme}: must have a readable name to measure`).toBeTruthy();
+      const card = page.locator('.tree-viewport button[aria-label*="Đời thứ"]').filter({ hasText: name.name }).first();
+      const foreground = await card.evaluate((el, tier) => getComputedStyle(tier === 'full-card' ? el.querySelector('p.font-display') : el).color, name.tier);
+      const screenshot = path.join(OUT, `contrast-pointer-${theme}-320x800.png`);
+      const image = await page.screenshot({ path: screenshot, fullPage: false });
+      // Decode actual rendered pixels in the browser; sample two text-free lower
+      // card corners. No guessed ancestor backgrounds or opaque-white assumption.
+      const samples = await page.evaluate(async ({ encoded, box }) => {
+        const bytes = Uint8Array.from(atob(encoded), c => c.charCodeAt(0));
+        const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+        const canvas = document.createElement('canvas'); canvas.width = bitmap.width; canvas.height = bitmap.height;
+        const ctx = canvas.getContext('2d'); ctx.drawImage(bitmap, 0, 0);
+        const points = [[box.x + 8, box.bottom - 8], [box.right - 8, box.bottom - 8]];
+        return points.map(([x, y]) => {
+          const px = [...ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data];
+          return { x: Math.round(x), y: Math.round(y), rgba: px, hit: document.elementFromPoint(x, y)?.getAttribute('aria-label') };
+        });
+      }, { encoded: image.toString('base64'), box: name.box });
+      const foregroundRgb = rgb(foreground);
+      const contrasts = samples.map(s => ratio(foregroundRgb, s.rgba.slice(0, 3)));
+      const world = page.locator('[data-testid="tree-world"]');
+      // The real mouse synthesizes pointerdown/up/click; monkeypatch records
+      // whether the viewport tries to steal capture from button targets.
+      await page.evaluate(() => {
+        window.__captureCalls = [];
+        const original = HTMLElement.prototype.setPointerCapture;
+        HTMLElement.prototype.setPointerCapture = function (id) { window.__captureCalls.push({ target: this.className, id }); return original.call(this, id); };
+      });
+      const before = await readTransform(world);
+      await page.getByTestId('zoom-in').click();
+      const zoomed = await readTransform(world);
+      await page.getByTestId('compass-east').click();
+      const panned = await readTransform(world);
+      const captureCalls = await page.evaluate(() => window.__captureCalls);
+      const result = { theme, name: name.name, tier: name.tier, foreground, foregroundRgb, samples, contrasts, screenshot,
+        pointer: { before, zoomed, panned, captureCalls }, errors, serverErrors };
+      results.push(result);
+      fs.writeFileSync(path.join(OUT, `contrast-pointer-${theme}-320x800.json`), JSON.stringify(result, null, 2));
+      console.log('CONTRAST_POINTER ' + JSON.stringify(result));
+      expect(zoomed.zoom, 'real pointer click zooms').toBeGreaterThan(before.zoom);
+      expect(panned.tx, 'real pointer click pans').not.toBe(zoomed.tx);
+      expect(captureCalls, 'buttons must not trigger viewport pointer capture').toEqual([]);
+      expect(errors.pageErrors).toEqual([]); expect(errors.consoleErrors).toEqual([]); expect(serverErrors).toEqual([]);
+    } finally { await context.close(); }
+  }
+  fs.writeFileSync(path.join(OUT, 'contrast-pointer-summary.json'), JSON.stringify(results, null, 2));
+  expect(results.flatMap(r => r.contrasts.map((contrast, sample) => ({ theme: r.theme, sample, contrast, foreground: r.foreground, background: r.samples[sample].rgba }))).filter(x => x.contrast < 4.5),
+    'each screenshot-sampled name-card background must contrast >=4.5:1 with computed name ink').toEqual([]);
+});
+
 test('REFLOW-SAME-ANCHOR: same-family tree refetch preserves pan/zoom transform (no auto-refit)', async ({ browser }) => {
   const context = await demoContext(browser), page = await context.newPage(), errors = collectErrors(page), treeResponses = [], serverErrors = [];
   page.on('response', r => { if (r.status() >= 500) serverErrors.push({ url: r.url(), status: r.status() }); });
