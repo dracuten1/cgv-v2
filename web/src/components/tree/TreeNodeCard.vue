@@ -76,7 +76,7 @@
       <div class="min-w-0 flex-1 flex flex-col justify-center">
         <!-- Full name & "Đây là tôi" button header -->
         <div class="flex items-center justify-between gap-1">
-          <p class="text-xs font-semibold text-slate-800 truncate font-display" style="line-height: 1.45;">
+          <p class="text-xs font-semibold text-ink-1 truncate font-display" style="line-height: 1.45;">
             {{ node.full_name }}
           </p>
 
@@ -95,7 +95,7 @@
         </div>
 
         <!-- Years + gender chip + kinship badge row -->
-        <div class="mt-0.5 flex items-center space-x-1.5 text-[11px] text-slate-500">
+        <div class="mt-0.5 flex items-center space-x-1.5 text-[11px] text-ink-2">
           <span
             :class="[
               'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-normal',

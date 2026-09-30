@@ -207,6 +207,54 @@ test('name-card contrast and real pointer clicks at 320x800 (light+dark)', async
     'each screenshot-sampled name-card background must contrast >=4.5:1 with computed name ink').toEqual([]);
 });
 
+// Extended contrast assertion: measure all six viewport×theme cells, not just 320x800,
+// to catch future regressions in token changes on desktop full-card tiers.
+test('rendered pixel contrast >=4.5:1 on all six cells (1440×900|390×844|320×800 × light|dark)', async ({ browser }) => {
+  const cells = [];
+  const rgb = value => { const m = value.match(/rgba?\((\d+)[, ]+([\d]+)[, ]+([\d]+)/); if (!m) throw new Error(`unknown foreground ${value}`); return m.slice(1, 4).map(Number); };
+  const lum = color => color.map(v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }).reduce((v, c, i) => v + c * [.2126, .7152, .0722][i], 0);
+  const ratio = (a, b) => { const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x); return (hi + .05) / (lo + .05); };
+  for (const theme of themes) {
+    for (const [width, height] of viewports) {
+      const context = await demoContext(browser, theme, { width, height });
+      const page = await context.newPage(), errors = collectErrors(page), serverErrors = [];
+      page.on('response', r => { if (r.status() >= 500) serverErrors.push({ url: r.url(), status: r.status() }); });
+      try {
+        await page.goto(BASE + '/tree');
+        await expect(page.locator('button[aria-label*="Đời thứ"]').first()).toBeVisible({ timeout: 10000 });
+        const proof = await viewportNameProof(page);
+        const name = proof.readableNames.find(n => n.tier === 'name-only' || n.tier === 'full-card');
+        if (!name) { cells.push({ theme, viewport: { width, height }, skip: 'no readable name found', errors, serverErrors }); await context.close(); continue; }
+        const card = page.locator('.tree-viewport button[aria-label*="Đời thứ"]').filter({ hasText: name.name }).first();
+        const foreground = await card.evaluate((el, tier) => getComputedStyle(tier === 'full-card' ? el.querySelector('p.font-display') : el).color, name.tier);
+        const screenshot = path.join(OUT, `contrast-6cell-${theme}-${width}x${height}.png`);
+        const image = await page.screenshot({ path: screenshot, fullPage: false });
+        const samples = await page.evaluate(async ({ encoded, box }) => {
+          const bytes = Uint8Array.from(atob(encoded), c => c.charCodeAt(0));
+          const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+          const canvas = document.createElement('canvas'); canvas.width = bitmap.width; canvas.height = bitmap.height;
+          const ctx = canvas.getContext('2d'); ctx.drawImage(bitmap, 0, 0);
+          const points = [[box.x + 8, box.bottom - 8], [box.right - 8, box.bottom - 8]];
+          return points.map(([x, y]) => {
+            const px = [...ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data];
+            return { x: Math.round(x), y: Math.round(y), rgba: px };
+          });
+        }, { encoded: image.toString('base64'), box: name.box });
+        const foregroundRgb = rgb(foreground);
+        const contrasts = samples.map(s => ratio(foregroundRgb, s.rgba.slice(0, 3)));
+        const cell = { theme, viewport: { width, height }, name: name.name, tier: name.tier, foreground, contrasts, screenshot, errors, serverErrors,
+          pass: !errors.pageErrors.length && !errors.consoleErrors.length && !serverErrors.length && contrasts.every(c => c >= 4.5) };
+        cells.push(cell);
+        fs.writeFileSync(path.join(OUT, `contrast-6cell-${theme}-${width}x${height}.json`), JSON.stringify(cell, null, 2));
+        console.log('CONTRAST_6CELL ' + JSON.stringify({ theme, viewport: { width, height }, tier: name.tier, contrasts, pass: cell.pass }));
+      } finally { await context.close(); }
+    }
+  }
+  fs.writeFileSync(path.join(OUT, 'contrast-6cell-summary.json'), JSON.stringify(cells, null, 2));
+  expect(cells.filter(c => !c.pass).map(c => ({ theme: c.theme, viewport: c.viewport, tier: c.tier, contrasts: c.contrasts, errors: c.errors, serverErrors: c.serverErrors })),
+    'all six viewport cells must have >=4.5:1 contrast on rendered pixels').toEqual([]);
+});
+
 test('REFLOW-SAME-ANCHOR: same-family tree refetch preserves pan/zoom transform (no auto-refit)', async ({ browser }) => {
   const context = await demoContext(browser), page = await context.newPage(), errors = collectErrors(page), treeResponses = [], serverErrors = [];
   page.on('response', r => { if (r.status() >= 500) serverErrors.push({ url: r.url(), status: r.status() }); });
