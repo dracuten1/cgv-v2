@@ -10,4 +10,4 @@ NODE
 SERVER_PID=$!; cleanup(){ kill "$SERVER_PID" 2>/dev/null || true; wait "$SERVER_PID" 2>/dev/null || true; }; trap cleanup EXIT INT TERM
 BASE="http://127.0.0.1:$PORT"; ready=0; for i in {1..120}; do if curl -fsS "$BASE/" >/dev/null && curl -fsS http://127.0.0.1:3456/api/v1/health >/dev/null; then ready=1;break;fi;sleep .25;done
 [[ $ready == 1 ]] || { echo 'FAIL: fresh dist or live backend readiness';cat "$LOG";exit 1; }
-export TREE_ORIENT_BASE="$BASE"; cd "$ROOT/e2e"; npx playwright test specs/tree-orientation-navigation.spec.cjs --config=playwright.config.ts --reporter=line --output="$RESULTS/tree-orientation-navigation-playwright"
+export TREE_ORIENT_BASE="$BASE"; cd "$ROOT/e2e"; npx playwright test specs/tree-orientation-navigation.spec.cjs --config=playwright.config.ts --reporter=line --output="$RESULTS/tree-orientation-navigation-playwright" 2>&1 | tee -a "$LOG"; exit "${PIPESTATUS[0]}"
