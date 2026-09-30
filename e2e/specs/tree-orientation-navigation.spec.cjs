@@ -32,7 +32,7 @@ test('orientation toggles, keyboard/focus and per-family persistence',async({bro
  const families=await p.request.get(BASE+'/api/v1/families');
  if(!families.ok()) throw new Error(`families API ${families.status()}: ${await families.text()}`);
  const body=await families.json();
- const realFamilies=(body.families||[]).filter(f=>f.id && f.id!== '00000000-0000-4000-8000-000000000001');
+ const realFamilies=(body.families||[]).filter(f=>f.id && f.id!=='11111111-1111-4111-8111-000000000001');
  const ids=[...new Set(realFamilies.map(f=>f.id))];
  const selectorIds=await familySelect.locator('option').evaluateAll(os=>os.map(o=>o.value).filter(Boolean));
  const usable=ids.filter(id=>selectorIds.includes(id));
