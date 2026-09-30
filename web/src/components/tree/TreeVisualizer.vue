@@ -65,7 +65,7 @@
         :key="node.id"
         :node="node"
         :selected="node.id === store.selectedId"
-        :collapsed="culled.collapsed"
+        :tier="culled.tier"
         @select="onNodeSelect"
       />
     </div>
@@ -115,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, toRefs, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
 import TreeNodeCard from './TreeNodeCard.vue';
 import TreeCompassControl from './TreeCompassControl.vue';
 import { useTreeStore } from '@/stores/tree';
@@ -123,7 +123,7 @@ import { useAuthStore } from '@/stores/auth';
 import {
   useTreeLayout,
   cullVisibleNodes,
-  fitToViewport,
+  anchorFrameTransform,
 } from '@/composables/useTreeLayout';
 import { useTreeViewport } from '@/composables/useTreeViewport';
 import { TREE_CONNECTOR_COLOR, TREE_CONNECTOR_NODE_COLOR } from './treeTokens';
@@ -160,56 +160,78 @@ const {
  * selection never touches this (selection is a primitive ref read).
  */
 const culled = computed(() =>
-  cullVisibleNodes(layout.value, worldViewport(), transform.zoom)
+  cullVisibleNodes(layout.value, worldViewport(), transform.zoom, { rosterRows: reservedRosterRows.value })
 );
 
 /** Has initial positioning (auto-center or fitView) executed? */
 const hasInitialCentered = ref(false);
 const centeredTarget = ref<string | null>(null);
+const activeAnchor = ref<string | null>(null);
+const activeFamily = ref<string | null>(null);
+const activeFilter = ref<number | null>(null);
+/** P4 sets this to its rendered roster-row count; one shared allocator owns both tiers. */
+const reservedRosterRows = ref(0);
 
-function fitView(): void {
+function resolveAnchor(): string | null {
+  const linked = authStore.user?.member_id;
+  if (linked && layout.value.nodeById.has(linked)) return linked;
+  const routeAnchor = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('anchor') : null;
+  if (routeAnchor && layout.value.nodeById.has(routeAnchor)) return routeAnchor;
+  return store.roots[0]?.id && layout.value.nodeById.has(store.roots[0].id) ? store.roots[0].id : layout.value.nodes[0]?.id ?? null;
+}
+
+function frameAnchor(anchorId: string): void {
   const rect = viewportEl.value?.getBoundingClientRect();
-  const width = rect?.width || 800;
-  const height = rect?.height || 600;
-  const { zoom, tx, ty } = fitToViewport(layout.value, { width, height });
-  setTransform(zoom, tx, ty);
-  centeredTarget.value = 'fit';
+  const frame = anchorFrameTransform(layout.value, anchorId, {
+    width: rect?.width || 800,
+    height: rect?.height || 600,
+  });
+  if (frame) setTransform(frame.zoom, frame.tx, frame.ty);
+}
+
+function frameCurrentAnchor(): void {
+  const next = resolveAnchor();
+  if (!next) return;
+  const family = store.familyId;
+  const filter = store.generationFilter;
+  if (activeAnchor.value === next && activeFamily.value === family && activeFilter.value === filter && hasInitialCentered.value) return;
+  activeAnchor.value = next;
+  activeFamily.value = family;
+  activeFilter.value = filter;
+  frameAnchor(next);
+  centeredTarget.value = next;
+  hasInitialCentered.value = true;
 }
 
 /**
- * Focus viewport on a specific node (centered at zoom 1.0).
+ * Focus viewport on a specific node in the complete, unculled layout.
  * Returns true if the node was found and centered, false otherwise.
  */
 function focusNode(nodeId: string): boolean {
   const target = layout.value.nodes.find((n) => n.id === nodeId);
   if (!target) return false;
 
-  const rect = viewportEl.value?.getBoundingClientRect();
-  const width = rect?.width || 800;
-  const height = rect?.height || 600;
-
-  const targetCenterX = target.x + target.width / 2;
-  const targetCenterY = target.y + target.height / 2;
-
-  const zoom = 1.0;
-  const tx = width / 2 - targetCenterX * zoom;
-  const ty = height / 2 - targetCenterY * zoom;
-
-  setTransform(zoom, tx, ty);
+  frameAnchor(nodeId);
+  activeAnchor.value = nodeId;
+  activeFamily.value = store.familyId;
+  activeFilter.value = store.generationFilter;
+  hasInitialCentered.value = true;
+  centeredTarget.value = nodeId;
   return true;
 }
 
-/**
- * Auto-center on initial layout: focuses on "Tôi" node at zoom 1.0 if linked,
- * otherwise falls back to fitView().
- */
+/** Frame linked user, route anchor, or deterministic first root. */
 function autoCenterInitial(): void {
-  const selfId = authStore.user?.member_id;
-  if (selfId && focusNode(selfId)) {
-    centeredTarget.value = 'self';
-    return;
-  }
-  fitView();
+  frameCurrentAnchor();
+}
+
+function fitView(): void {
+  const rect = viewportEl.value?.getBoundingClientRect();
+  const width = rect?.width || 800;
+  const height = rect?.height || 600;
+  const zoom = Math.max(0.05, Math.min((width - 48) / Math.max(layout.value.width, 1), (height - 48) / Math.max(layout.value.height, 1), 1));
+  setTransform(zoom, (width - layout.value.width * zoom) / 2, (height - layout.value.height * zoom) / 2);
+  centeredTarget.value = 'fit';
 }
 
 /**
@@ -230,12 +252,9 @@ function drawEdges(): void {
   if (!canvas || !ctx) return; // jsdom: getContext returns null — safe no-op
 
   // M11 Canvas Backing-Store & DPR Guard
-  let dpr = Math.min((typeof window !== 'undefined' && window.devicePixelRatio) || 1, 2);
-  const pixelCount = layout.value.width * dpr * layout.value.height * dpr;
-  if (pixelCount > 16_777_216) {
-    console.warn('Canvas backing store exceeds 16M pixels; falling back to dpr=1 to prevent texture overflow');
-    dpr = 1;
-  }
+  // The backing area cap applies even at DPR=1 on a very large world.
+  const area = Math.max(1, layout.value.width * layout.value.height);
+  const dpr = Math.min(Math.max(0.01, (typeof window !== 'undefined' && window.devicePixelRatio) || 1), 2, Math.sqrt(16_000_000 / area));
 
   if (canvas.width !== Math.ceil(layout.value.width * dpr) || canvas.height !== Math.ceil(layout.value.height * dpr)) {
     canvas.width = Math.ceil(layout.value.width * dpr);
@@ -308,28 +327,32 @@ onMounted(async () => {
     if (!hasInitialCentered.value) {
       autoCenterInitial();
       hasInitialCentered.value = true;
-    } else {
-      fitView();
     }
   }
 });
 
 // Redraw edges when the layout changes (filter / refetch)
-watch(layout, async () => {
+watch([layout, () => store.familyId, () => store.generationFilter], async () => {
   await nextTick();
   drawEdges();
-  if (layout.value.nodes.length > 0) {
-    if (!hasInitialCentered.value) {
-      autoCenterInitial();
-      hasInitialCentered.value = true;
-    } else {
-      fitView();
-    }
-  }
-});
+  if (layout.value.nodes.length > 0) frameCurrentAnchor();
+}, { flush: 'post' });
 
 // Redraw after culled set changes visibility of canvas siblings (same size)
 watch(culled, () => {
   drawEdges();
 });
+
+let resizeObserver: ResizeObserver | undefined;
+onMounted(() => {
+  if (viewportEl.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      // Preserve pan/zoom at unchanged anchor; a new anchor follows the normal policy.
+      frameCurrentAnchor();
+      drawEdges();
+    });
+    resizeObserver.observe(viewportEl.value);
+  }
+});
+onUnmounted(() => resizeObserver?.disconnect());
 </script>

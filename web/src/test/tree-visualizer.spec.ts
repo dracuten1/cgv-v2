@@ -5,6 +5,7 @@ import TreeVisualizer from '@/components/tree/TreeVisualizer.vue';
 import { useTreeStore } from '@/stores/tree';
 import { useAuthStore } from '@/stores/auth';
 import type { TreeNode } from '@/types/api';
+import { TV_REFLOW_BASE_ROOTS, TV_REFLOW_MUTATED_ROOTS, TV_WIDE8_ROOTS, TV_WIDE8_GENERATIONS, TV_CULLED_FOCUS_ROOTS, TV_CULLED_FOCUS_GENERATIONS, TV_CULLED_FOCUS_TARGET_ID } from './fixtures/tree-view-fixtures';
 
 const makeNode = (id: string, name: string, overrides: Partial<TreeNode> = {}): TreeNode => ({
   id,
@@ -100,6 +101,48 @@ describe('TreeVisualizer.vue — Phase 3 Auto-Centering & Compass', () => {
     await compass.find('[data-testid="compass-center"]').trigger('click');
     const world = wrapper.find('[data-testid="tree-world"]');
     expect(world.attributes('style')).toContain('scale(1)');
+  });
+
+  it('REFLOW-SAME-ANCHOR: preserves user pan and zoom after a same-anchor layout mutation; Fit alone fits world', async () => {
+    const store = useTreeStore();
+    store.roots = TV_REFLOW_BASE_ROOTS;
+    const wrapper = mount(TreeVisualizer, { global: { plugins: [pinia] } });
+    await flushPromises();
+    await wrapper.find('[data-testid="zoom-out"]').trigger('click');
+    const before = wrapper.find('[data-testid="tree-world"]').attributes('style');
+    store.roots = TV_REFLOW_MUTATED_ROOTS;
+    await flushPromises();
+    expect(wrapper.find('[data-testid="tree-world"]').attributes('style')).toBe(before);
+    await wrapper.find('[data-testid="fit-view"]').trigger('click');
+    expect(wrapper.find('[data-testid="tree-world"]').attributes('style')).not.toBe(before);
+    wrapper.unmount();
+  });
+
+  it('GEO-FRAME: family and filter changes reframe; unchanged anchor keeps transform', async () => {
+    const store = useTreeStore();
+    store.roots = TV_WIDE8_ROOTS;
+    store.generations = TV_WIDE8_GENERATIONS;
+    const wrapper = mount(TreeVisualizer, { global: { plugins: [pinia] } });
+    await flushPromises();
+    await wrapper.find('[data-testid="zoom-out"]').trigger('click');
+    const before = wrapper.find('[data-testid="tree-world"]').attributes('style');
+    store.familyId = 'another-family';
+    await flushPromises();
+    expect(wrapper.find('[data-testid="tree-world"]').attributes('style')).not.toBe(before);
+    wrapper.unmount();
+  });
+
+  it('INV-FOCUS: linked person outside the culled window is found in the full layout', async () => {
+    const auth = useAuthStore();
+    auth.user = { id: 'u1', display_name: 'Far', is_demo: false, member_id: TV_CULLED_FOCUS_TARGET_ID, created_at: '' };
+    auth.status = 'authenticated';
+    const store = useTreeStore();
+    store.roots = TV_CULLED_FOCUS_ROOTS;
+    store.generations = TV_CULLED_FOCUS_GENERATIONS;
+    const wrapper = mount(TreeVisualizer, { global: { plugins: [pinia] } });
+    await flushPromises();
+    expect(wrapper.attributes('data-view-centered')).toBe(TV_CULLED_FOCUS_TARGET_ID);
+    wrapper.unmount();
   });
 
   it('renders exactly one canvas node for all connectors', async () => {

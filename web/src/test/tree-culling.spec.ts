@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   layoutTree,
   cullVisibleNodes,
+  treeLodTier,
   MAX_VISIBLE_NODES,
-  DOT_ZOOM_THRESHOLD,
   type PositionedNode,
   type ViewportRect,
 } from '@/composables/useTreeLayout';
@@ -90,6 +90,16 @@ describe('cullVisibleNodes — viewport culling (Arch §7.2)', () => {
     expect(MAX_VISIBLE_NODES).toBe(300);
     expect(zoomedOut.visible.length).toBe(300); // saturated in this fixture
     expect(zoomedOut.collapsed).toBe(true);
+    expect(treeLodTier(.4199)).toBe('dot');
+    expect(treeLodTier(.42)).toBe('chip');
+    expect(treeLodTier(.4201)).toBe('chip');
+    expect(treeLodTier(.6499)).toBe('chip');
+    expect(treeLodTier(.65)).toBe('name-only');
+    expect(treeLodTier(.6501)).toBe('name-only');
+    expect(treeLodTier(.8499)).toBe('name-only');
+    expect(treeLodTier(.85)).toBe('full-card');
+    expect(treeLodTier(.8501)).toBe('full-card');
+
 
     // Zoomed IN: subset only
     const zoomedIn = cullVisibleNodes(layout, { x: 500, y: 500, width: 400, height: 300 }, 2);
@@ -97,12 +107,9 @@ describe('cullVisibleNodes — viewport culling (Arch §7.2)', () => {
     expect(zoomedIn.visible.length).toBeLessThanOrEqual(MAX_VISIBLE_NODES);
   });
 
-  it('renders collapsed dot markers below 0.6x zoom', () => {
-    const result = cullVisibleNodes(layout, viewport, DOT_ZOOM_THRESHOLD - 0.01);
-    expect(result.collapsed).toBe(true);
-
-    const above = cullVisibleNodes(layout, viewport, DOT_ZOOM_THRESHOLD);
-    expect(above.collapsed).toBe(false);
+  it('retains the collapsed compatibility flag for NAME and DOT tiers', () => {
+    expect(cullVisibleNodes(layout, viewport, .6499).collapsed).toBe(true);
+    expect(cullVisibleNodes(layout, viewport, .65).collapsed).toBe(false);
   });
 
   it('is a pure function of (nodes, viewport, zoom) — deterministic', () => {
@@ -145,3 +152,5 @@ describe('cullVisibleNodes — viewport culling (Arch §7.2)', () => {
     expect(Array.isArray(layout.orthogonalEdges)).toBe(true);
   });
 });
+
+// P2 contract tests use the P1 fixture oracle rather than duplicating the ladder.

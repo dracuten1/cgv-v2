@@ -1,7 +1,7 @@
 <template>
-  <!-- Collapsed dot marker (< 0.6x zoom) -->
+  <!-- DOT tier -->
   <button
-    v-if="collapsed"
+    v-if="tier === 'dot'"
     type="button"
     :aria-label="ariaLabel"
     :class="[
@@ -18,7 +18,25 @@
     @click.stop="onClick"
   />
 
-  <!-- Full node card (>= 0.6x zoom) -->
+  <button
+    v-else-if="tier === 'chip'"
+    type="button"
+    :aria-label="ariaLabel"
+    class="absolute -translate-y-1/2 rounded-full border border-tree-card-border bg-tree-card-bg px-2 py-1 text-[10px] font-semibold text-ink-1 shadow-xs cursor-pointer whitespace-nowrap"
+    :style="{ left: `${node.x}px`, top: `${node.y + node.height / 2}px`, maxWidth: `${node.width}px` }"
+    @click.stop="onClick"
+  >{{ node.full_name }}</button>
+
+  <button
+    v-else-if="tier === 'name-only'"
+    type="button"
+    :aria-label="ariaLabel"
+    class="absolute text-left rounded-lg border border-tree-card-border bg-tree-card-bg px-2.5 py-1.5 text-xs font-semibold text-ink-1 cursor-pointer truncate"
+    :style="{ left: `${node.x}px`, top: `${node.y}px`, width: `${node.width}px`, height: `${node.height}px` }"
+    @click.stop="onClick"
+  >{{ node.full_name }} <span v-if="yearsText" class="font-normal text-ink-2">{{ yearsText }}</span></button>
+
+  <!-- FULL-tier detail card -->
   <button
     v-else
     type="button"
@@ -39,7 +57,7 @@
     }"
     @click.stop="onClick"
   >
-    <div class="h-full px-2.5 py-1.5 flex items-center space-x-2 overflow-hidden">
+    <div v-if="tier === 'full-card'" class="h-full px-2.5 py-1.5 flex items-center space-x-2 overflow-hidden">
       <!-- Circular Avatar Image & Robust Error Fallback (M12) -->
       <div
         class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0 border border-slate-200 bg-slate-100 font-medium text-xs text-slate-600"
@@ -125,7 +143,7 @@
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { toUiGender } from '@/api/gender';
-import type { PositionedNode } from '@/composables/useTreeLayout';
+import type { PositionedNode, TreeLodTier } from '@/composables/useTreeLayout';
 import { getInitials, getYearsText, genAccentVar } from './card-visual';
 import { useAuthStore } from '@/stores/auth';
 import { useTreeStore } from '@/stores/tree';
@@ -135,12 +153,12 @@ import { useToast } from '@/composables/useToast';
 interface Props {
   node: PositionedNode;
   selected?: boolean;
-  collapsed?: boolean;
+  tier?: TreeLodTier;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   selected: false,
-  collapsed: false,
+  tier: 'full-card',
 });
 
 const emit = defineEmits<{

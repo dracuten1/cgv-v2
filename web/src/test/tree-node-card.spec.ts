@@ -108,14 +108,11 @@ describe('TreeNodeCard', () => {
     expect(routerPush).toHaveBeenCalledWith('/members/member-1');
   });
 
-  it('renders collapsed dot marker when collapsed=true', () => {
-    const wrapper = mountCard(makeNode(), { collapsed: true });
-    const btn = wrapper.find('button');
-    // Dot marker: small square positioned at node center
-    expect(btn.attributes('style')).toContain('width: 14px');
-    expect(btn.attributes('aria-label')).toBe('Nguyễn Văn An, Đời thứ 1');
-    // No full-card content
-    expect(wrapper.find('[data-testid="gender-chip"]').exists()).toBe(false);
+  it('renders each ratified LOD tier', () => {
+    expect(mountCard(makeNode(), { tier: 'dot' }).find('button').attributes('style')).toContain('width: 14px');
+    expect(mountCard(makeNode(), { tier: 'chip' }).text()).toContain('Nguyễn Văn An');
+    expect(mountCard(makeNode(), { tier: 'name-only' }).find('[data-testid="gender-chip"]').exists()).toBe(false);
+    expect(mountCard(makeNode(), { tier: 'full-card' }).find('[data-testid="gender-chip"]').exists()).toBe(true);
   });
 
   it('shows selected ring state', () => {

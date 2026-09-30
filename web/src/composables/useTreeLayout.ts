@@ -31,11 +31,50 @@ export const Y_GAP = 96;
 export const BAND_HEIGHT = CARD_HEIGHT + Y_GAP;
 export const BAND_TOP_MARGIN = 56; // room for "Đời thứ N" label above cards
 export const ROOT_MARGIN_LEFT = 48;
-/** Collapse threshold: below this zoom, cards render as dot markers. */
-export const DOT_ZOOM_THRESHOLD = 0.6;
-/** Hard DOM budget for visible node cards at any zoom (Arch §7.2). */
+export type TreeLodTier = 'full-card' | 'name-only' | 'chip' | 'dot';
+export function treeLodTier(zoom: number): TreeLodTier {
+  if (zoom >= 0.85) return 'full-card';
+  if (zoom >= 0.65) return 'name-only';
+  if (zoom >= 0.42) return 'chip';
+  return 'dot';
+}
+/** Hard cap for visible interactive person controls (cards/chips/dots). */
 export const MAX_VISIBLE_NODES = 300;
-/** Viewport buffer factor: visible + 1.5× viewport. */
+/** Reserve one unit per roster person row before projecting canvas controls. */
+export function canvasPersonBudget(rosterRows: number): number {
+  return Math.max(0, MAX_VISIBLE_NODES - Math.min(MAX_VISIBLE_NODES, Math.max(0, Math.floor(rosterRows))));
+}
+
+/** Reading-frame geometry uses nearby generations and a width budget, never world bounds. */
+export function anchorFrameTransform(
+  layout: Pick<TreeLayout, 'nodes' | 'nodeById'>,
+  anchorId: string,
+  viewport: { width: number; height: number }
+): { zoom: number; tx: number; ty: number; frameWidth: number; frameHeight: number } | null {
+  const anchor = layout.nodeById.get(anchorId);
+  if (!anchor) return null;
+  const budget = Math.floor((viewport.width - 48) / 0.65);
+  const centerX = anchor.x + anchor.width / 2;
+  const nearby = layout.nodes.filter((node) =>
+    Math.abs(node.generation_index - anchor.generation_index) <= 1 &&
+    Math.abs(node.x + node.width / 2 - centerX) <= budget / 2
+  );
+  const minX = Math.min(...nearby.map((node) => node.x));
+  const maxX = Math.max(...nearby.map((node) => node.x + node.width));
+  const minY = Math.min(...nearby.map((node) => node.y));
+  const maxY = Math.max(...nearby.map((node) => node.y + node.height));
+  const frameWidth = Math.max(1, Math.min(budget, maxX - minX));
+  const frameHeight = Math.max(1, maxY - minY);
+  const zoom = Math.max(0.65, Math.min(1, (viewport.width - 48) / frameWidth, (viewport.height - 48) / frameHeight));
+  return {
+    zoom,
+    tx: viewport.width / 2 - centerX * zoom,
+    ty: viewport.height / 2 - (anchor.y + anchor.height / 2) * zoom,
+    frameWidth,
+    frameHeight,
+  };
+}
+
 export const VIEWPORT_BUFFER = 1.5;
 
 // ---------- Layout output types ----------
@@ -474,7 +513,8 @@ export interface ViewportRect {
 
 export interface CulledResult {
   visible: PositionedNode[];
-  /** true → render dot markers instead of full cards */
+  tier: TreeLodTier;
+  /** Compatibility flag for consumers that only distinguish dots from cards. */
   collapsed: boolean;
 }
 
@@ -489,10 +529,10 @@ export function cullVisibleNodes(
   layout: Pick<TreeLayout, 'nodes'>,
   viewport: ViewportRect,
   zoom: number,
-  options: { buffer?: number; maxNodes?: number } = {}
+  options: { buffer?: number; rosterRows?: number } = {}
 ): CulledResult {
   const buffer = options.buffer ?? VIEWPORT_BUFFER;
-  const maxNodes = options.maxNodes ?? MAX_VISIBLE_NODES;
+  const maxNodes = canvasPersonBudget(options.rosterRows ?? 0);
 
   const padX = (viewport.width * (buffer - 1)) / 2;
   const padY = (viewport.height * (buffer - 1)) / 2;
@@ -514,7 +554,7 @@ export function cullVisibleNodes(
     }
   }
 
-  return { visible, collapsed: zoom < DOT_ZOOM_THRESHOLD };
+  return { visible, tier: treeLodTier(zoom), collapsed: zoom < 0.65 };
 }
 
 // ---------- bounds helper for fit-to-view ----------
