@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -uo pipefail
+export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+ROOT="$1"; PORT="$2"; cd "$ROOT"
+RESULTS="$ROOT/.agents/tester/RESULTS"; mkdir -p "$RESULTS"; LOG="$RESULTS/tree_fetch_race_browser.log"; : > "$LOG"
+node - "$ROOT/web/dist" "$PORT" >"$LOG" 2>&1 <<'NODE' &
+const fs=require('fs'),http=require('http'),path=require('path'),root=process.argv[2],port=+process.argv[3];const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.woff2':'font/woff2','.svg':'image/svg+xml','.png':'image/png','.json':'application/json','.webmanifest':'application/manifest+json'};
+http.createServer((req,res)=>{const send=(s,f,b)=>{res.statusCode=s;res.setHeader('Content-Type',mime[path.extname(f)]||'application/octet-stream');res.end(b)};const u=new URL(req.url,'http://localhost');if(u.pathname.startsWith('/api/')||u.pathname.startsWith('/static/avatars/')){const q=http.request({hostname:'127.0.0.1',port:3456,path:req.url,method:req.method,headers:{...req.headers,host:'127.0.0.1:3456',...(req.headers.origin?{origin:'http://localhost:3456'}:{})}},r=>{res.statusCode=r.statusCode;for(const[k,v]of Object.entries(r.headers))if(v!==undefined)res.setHeader(k,v);r.pipe(res)});q.on('error',e=>send(502,'error.txt',String(e)));req.pipe(q);return}let pathname;try{pathname=decodeURIComponent(u.pathname)}catch{send(400,'error.txt','bad path');return}let f=path.resolve(root,'.'+pathname),base=path.resolve(root);if(f!==base&&!f.startsWith(base+path.sep)){send(404,'error.txt','not found');return}fs.stat(f,(e,s)=>{if(e||!s.isFile()){if(pathname==='/'||!path.extname(pathname))f=path.join(base,'index.html');else{send(404,'error.txt','not found');return}}fs.readFile(f,(x,b)=>x?send(404,'error.txt','not found'):send(200,f,b))})}).listen(port,'127.0.0.1');
+NODE
+SERVER_PID=$!; cleanup(){ kill "$SERVER_PID" 2>/dev/null || true; wait "$SERVER_PID" 2>/dev/null || true; }; trap cleanup EXIT INT TERM
+BASE="http://127.0.0.1:$PORT"; ready=0; for i in {1..120}; do if curl -fsS "$BASE/" >/dev/null && curl -fsS http://127.0.0.1:3456/api/v1/health >/dev/null; then ready=1;break;fi;sleep .25;done
+[[ $ready == 1 ]] || { echo 'FAIL: fresh dist or live backend readiness';cat "$LOG";exit 1; }
+export TREE_RACE_BASE="$BASE"; cd "$ROOT/e2e"; npx playwright test specs/tree-fetch-race.spec.cjs --config=playwright.config.ts --reporter=line --output="$RESULTS/tree-fetch-race-playwright"
