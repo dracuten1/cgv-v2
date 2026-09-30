@@ -1,8 +1,8 @@
 <template>
   <div
     ref="viewportEl"
-    class="tree-viewport relative overflow-hidden rounded-xl bg-white border border-slate-200 select-none"
-    style="touch-action: none; height: calc(100dvh - 4rem - 5rem - env(safe-area-inset-bottom, 0px)); min-height: 480px;"
+    class="tree-viewport relative overflow-hidden rounded-xl bg-white border border-slate-200 select-none touch-none"
+    :style="{ height: viewportHeight ? `${viewportHeight}px` : '320px' }"
     :data-view-centered="centeredTarget"
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
@@ -127,6 +127,7 @@ import {
 } from '@/composables/useTreeLayout';
 import { useTreeViewport } from '@/composables/useTreeViewport';
 import { TREE_CONNECTOR_COLOR, TREE_CONNECTOR_NODE_COLOR } from './treeTokens';
+import { canvasBackingSize } from './canvasBackingSize';
 
 defineOptions({ name: 'TreeVisualizer' });
 
@@ -135,6 +136,15 @@ const authStore = useAuthStore();
 
 const viewportEl = ref<HTMLElement | null>(null);
 const canvasEl = ref<HTMLCanvasElement | null>(null);
+
+const viewportHeight = ref(0);
+/** Only the visible space above AppLayout's fixed mobile nav is a reading viewport. */
+function updateViewportHeight(): void {
+  const top = viewportEl.value?.getBoundingClientRect().top ?? 0;
+  const nav = document.querySelector<HTMLElement>('nav[aria-label="Điều hướng di động"]');
+  const navTop = nav && getComputedStyle(nav).display !== 'none' ? nav.getBoundingClientRect().top : window.innerHeight;
+  viewportHeight.value = Math.max(240, Math.floor(navTop - top - 16));
+}
 
 const { roots: rootsRef, generations: generationsRef, generationFilter: filterRef } = toRefs(store);
 const linkedMemberRef = computed(() => authStore.user?.member_id);
@@ -253,12 +263,10 @@ function drawEdges(): void {
 
   // M11 Canvas Backing-Store & DPR Guard
   // The backing area cap applies even at DPR=1 on a very large world.
-  const area = Math.max(1, layout.value.width * layout.value.height);
-  const dpr = Math.min(Math.max(0.01, (typeof window !== 'undefined' && window.devicePixelRatio) || 1), 2, Math.sqrt(16_000_000 / area));
-
-  if (canvas.width !== Math.ceil(layout.value.width * dpr) || canvas.height !== Math.ceil(layout.value.height * dpr)) {
-    canvas.width = Math.ceil(layout.value.width * dpr);
-    canvas.height = Math.ceil(layout.value.height * dpr);
+  const { width, height, dpr } = canvasBackingSize(layout.value.width, layout.value.height, window.devicePixelRatio);
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, layout.value.width, layout.value.height);
@@ -322,6 +330,8 @@ function onNodeSelect(id: string): void {
 
 onMounted(async () => {
   await nextTick();
+  updateViewportHeight();
+  await nextTick();
   drawEdges();
   if (layout.value.nodes.length > 0) {
     if (!hasInitialCentered.value) {
@@ -345,6 +355,7 @@ watch(culled, () => {
 
 let resizeObserver: ResizeObserver | undefined;
 onMounted(() => {
+  window.addEventListener('resize', updateViewportHeight);
   if (viewportEl.value && typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(() => {
       // Preserve pan/zoom at unchanged anchor; a new anchor follows the normal policy.
@@ -354,5 +365,8 @@ onMounted(() => {
     resizeObserver.observe(viewportEl.value);
   }
 });
-onUnmounted(() => resizeObserver?.disconnect());
+onUnmounted(() => {
+  resizeObserver?.disconnect();
+  window.removeEventListener('resize', updateViewportHeight);
+});
 </script>

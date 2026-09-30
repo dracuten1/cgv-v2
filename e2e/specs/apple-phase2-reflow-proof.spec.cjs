@@ -71,6 +71,10 @@ test('initial /tree load renders on-screen FULL readable NAME at exact viewport 
     const screenshot = path.join(OUT, `viewport-${theme}-${width}x${height}.png`);
     await page.screenshot({ path: screenshot, fullPage: false });
     const proof = await viewportNameProof(page);
+    if (width === 320) {
+      expect(proof.readableNames.length, `${theme} 320×800 must show an unclipped, unobscured full person name above mobile nav`).toBeGreaterThanOrEqual(1);
+      expect(proof.treeViewport.bottom, `${theme} tree viewport must end above the fixed mobile nav`).toBeLessThanOrEqual(height - 64);
+    }
     const cell = { theme, expectedViewport: { width, height }, screenshot, ...proof, serverErrors, errors, network,
       pass: proof.viewport.width === width && proof.viewport.height === height && proof.readableNames.length > 0 && !serverErrors.length && !errors.pageErrors.length && !errors.consoleErrors.length };
     cells.push(cell);

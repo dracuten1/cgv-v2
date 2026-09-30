@@ -17,7 +17,10 @@ describe('P2 anchor frame, LOD and combined budget', () => {
         const frame = anchorFrameTransform(layout, anchor.id, { width, height })!;
         expect(frame.zoom).toBe(Math.max(.65, Math.min(1, (width - 48) / frame.frameWidth, (height - 48) / frame.frameHeight)));
         expect(frame.zoom).toBeGreaterThanOrEqual(.65);
-        expect(frame.tx + (anchor.x + anchor.width / 2) * frame.zoom).toBeCloseTo(width / 2);
+        // Narrow reading frames center the admitted neighborhood, not the first root's
+        // center (which would clip its adjacent spouse entirely).
+        if (width > 360) expect(frame.tx + (anchor.x + anchor.width / 2) * frame.zoom).toBeCloseTo(width / 2);
+        else expect(frame.tx + (anchor.x + anchor.width / 2) * frame.zoom).toBeGreaterThan(0);
         expect(frame.ty + (anchor.y + anchor.height / 2) * frame.zoom).toBeCloseTo(height / 2);
       }
     }

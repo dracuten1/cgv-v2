@@ -31,7 +31,7 @@
     v-else-if="tier === 'name-only'"
     type="button"
     :aria-label="ariaLabel"
-    class="absolute text-left rounded-lg border border-tree-card-border bg-tree-card-bg px-2.5 py-1.5 text-xs font-semibold text-ink-1 cursor-pointer truncate"
+    class="absolute text-left rounded-lg border border-tree-card-border bg-tree-card-bg px-2.5 py-1.5 text-[13px] font-semibold text-ink-1 cursor-pointer truncate"
     :style="{ left: `${node.x}px`, top: `${node.y}px`, width: `${node.width}px`, height: `${node.height}px` }"
     @click.stop="onClick"
   >{{ node.full_name }} <span v-if="yearsText" class="font-normal text-ink-2">{{ yearsText }}</span></button>

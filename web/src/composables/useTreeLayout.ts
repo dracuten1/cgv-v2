@@ -57,7 +57,9 @@ export function anchorFrameTransform(
   const centerX = anchor.x + anchor.width / 2;
   const nearby = layout.nodes.filter((node) =>
     Math.abs(node.generation_index - anchor.generation_index) <= 1 &&
-    Math.abs(node.x + node.width / 2 - centerX) <= budget / 2
+    // A <360px reading strip needs the adjacent root couple inside the frame;
+    // framing only the first root left its name outside the visible viewport.
+    Math.abs(node.x + node.width / 2 - centerX) <= budget / 2 + (viewport.width <= 360 ? node.width / 2 : 0)
   );
   const minX = Math.min(...nearby.map((node) => node.x));
   const maxX = Math.max(...nearby.map((node) => node.x + node.width));
@@ -68,7 +70,7 @@ export function anchorFrameTransform(
   const zoom = Math.max(0.65, Math.min(1, (viewport.width - 48) / frameWidth, (viewport.height - 48) / frameHeight));
   return {
     zoom,
-    tx: viewport.width / 2 - centerX * zoom,
+    tx: viewport.width / 2 - (viewport.width <= 360 ? (minX + maxX) / 2 : centerX) * zoom,
     ty: viewport.height / 2 - (anchor.y + anchor.height / 2) * zoom,
     frameWidth,
     frameHeight,
