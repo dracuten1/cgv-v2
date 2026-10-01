@@ -1,243 +1,238 @@
 <template>
-  <div class="mx-auto w-full max-w-[760px] px-4 pb-10 pt-6 md:px-6 md:pt-[38px]">
-    <!-- PWA install banner (top) -->
+  <div class="mx-auto w-full max-w-[1120px] px-4 pb-10 pt-6 md:px-6 md:pt-[38px]">
     <InstallPrompt />
-
-    <!-- Header: eyebrow + title + family selector + push toggle (feed.html feed-head) -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-6">
-      <div>
-        <p class="mb-1 text-xs font-semibold leading-[1.45] tracking-[0.04em] text-accent-fg">
-          Chuyện nhà
-        </p>
-        <h1
-          class="text-2xl font-bold leading-[1.45] tracking-[-0.019em] text-ink-1 md:text-[28px]"
-        >
-          Bảng tin dòng họ
-        </h1>
-        <p class="mt-1.5 text-sm leading-[1.6] text-ink-2">
-          Những câu chuyện mới nhất của gia đình.
-        </p>
-      </div>
-      <div class="flex items-center gap-3">
-        <div v-if="families.length > 1" class="w-44">
-          <AppSelect
-            v-model="selectedFamilyId"
-            :options="familyOptions"
-            label="Dòng họ"
-            aria-label="Chọn dòng họ"
-            :disabled="loadingFamilies"
-            @update:model-value="onFamilyChange"
-          />
+    <section class="mb-6" data-testid="feed-heading">
+      <p class="mb-1 text-xs font-semibold leading-[1.45] tracking-[0.04em] text-ink-3">
+        Chuyện nhà
+      </p>
+      <h1 class="text-2xl font-bold leading-[1.45] text-ink-1 md:text-[28px]">
+        Bảng tin dòng họ
+      </h1>
+      <p class="mt-1.5 text-sm leading-[1.6] text-ink-2">
+        Những câu chuyện mới nhất của gia đình.
+      </p>
+    </section>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,700px)_minmax(230px,300px)]">
+      <section class="min-w-0 space-y-4" aria-labelledby="feed-stream-heading">
+        <div class="mb-2 flex flex-wrap items-end justify-between gap-3">
+          <h2 id="feed-stream-heading" class="text-lg font-semibold leading-[1.45] text-ink-1">
+            Bảng tin gia đình
+          </h2>
+          <div class="w-52" data-testid="family-selector">
+            <AppSelect
+              v-model="selectedFamilyId"
+              :options="familyOptions"
+              label="Dòng họ đang xem"
+              placeholder="Chọn dòng họ"
+              aria-label="Chọn dòng họ"
+              :disabled="loadingFamilies || !families.length"
+              @update:model-value="onFamilyChange"
+            />
+          </div>
+          <NotificationToggle />
         </div>
-        <NotificationToggle />
-      </div>
-    </div>
-
-    <!-- Composer (authenticated) — mockup feed.html .composer -->
-    <form
-      v-if="authStore.isAuthenticated"
-      class="mb-6 rounded-app-xl border border-hairline bg-card p-[18px] shadow-e1 md:p-[22px]"
-      data-testid="composer-form"
-      :aria-busy="posting ? 'true' : undefined"
-      @submit.prevent="submitPost"
-    >
-      <!-- Avatar + borderless textarea row -->
-      <div class="flex items-start gap-3">
-        <AppAvatar :name="authStore.displayName" size="w-10" />
-        <AppTextarea
-          v-model="content"
-          variant="borderless"
-          :rows="3"
-          :maxlength="MAX_CONTENT_RUNES"
-          placeholder="Chia sẻ câu chuyện với gia đình…"
-        />
-      </div>
-
-      <!-- Image URL adder (no upload endpoint — images are JSONB URL arrays) -->
-      <div class="mt-3 flex items-center gap-2">
+        <p
+          v-if="!selectedFamilyId && !loadingFamilies"
+          class="rounded-app-lg border border-hairline bg-well p-4 text-sm leading-[1.6] text-ink-2"
+          data-testid="no-family"
+        >
+          Chưa chọn dòng họ. Hãy chọn một dòng họ để xem bảng tin.
+        </p>
         <div
-          class="flex-1 flex items-center gap-2 rounded-app-md border border-dashed border-hairline-strong bg-well/60 px-3 py-1.5 transition-colors hover:border-ink-3 focus-within:border-transparent focus-within:ring-2 focus-within:ring-accent"
+          v-if="authStore.isDemo && selectedFamilyId"
+          class="rounded-app-lg border border-demo-border bg-demo-soft px-4 py-3 text-sm leading-[1.6] text-demo-deep"
+          data-testid="demo-notice"
         >
-          <IconLink class="w-4 h-4 shrink-0 text-ink-3" />
-          <input
-            v-model="imageUrl"
-            type="url"
-            placeholder="Dán URL ảnh (https://…)"
-            class="w-full bg-transparent text-sm text-ink-1 placeholder:text-ink-3 focus:outline-none"
-            @keydown.enter.prevent="addImage"
-          />
+          <span class="rounded-full border border-demo-border bg-card px-2 py-1 text-xs font-semibold text-demo-deep">
+            Bản dùng thử
+          </span>
+          <p class="mt-2">Bạn đang trải nghiệm tài khoản mẫu.</p>
         </div>
-        <AppButton variant="outline" size="sm" type="button" @click="addImage">
-          <span class="flex items-center gap-1.5">
-            <IconPhoto class="w-4 h-4" />
-            <span>Thêm ảnh</span>
-          </span>
-        </AppButton>
-      </div>
-
-      <!-- Queued image chips -->
-      <div v-if="images.length" class="mt-3 flex flex-wrap gap-2">
-        <span
-          v-for="(img, index) in images"
-          :key="`${img}-${index}`"
-          class="inline-flex max-w-full items-center gap-2 rounded-full border border-hairline bg-well py-1 pl-1 pr-2.5 text-xs leading-[1.45] text-ink-2"
+        <form
+          v-if="authStore.isAuthenticated && selectedFamilyId"
+          class="rounded-app-xl border border-hairline bg-card p-5 shadow-e1"
+          data-testid="composer-form"
+          :aria-busy="posting ? 'true' : undefined"
+          @submit.prevent="submitPost"
         >
-          <span
-            class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-hairline bg-well text-ink-3"
-            aria-hidden="true"
+          <div class="flex items-start gap-3">
+            <AppAvatar :name="authStore.displayName" size="w-10" />
+            <AppTextarea
+              v-model="content"
+              variant="borderless"
+              :rows="3"
+              :maxlength="MAX_CONTENT_RUNES"
+              placeholder="Chia sẻ câu chuyện với gia đình…"
+            />
+          </div>
+          <div class="mt-3 flex items-center gap-2">
+            <input
+              v-model="imageUrl"
+              type="url"
+              placeholder="Dán URL ảnh (https://…)"
+              aria-label="URL ảnh"
+              :aria-invalid="imageUrlError ? 'true' : undefined"
+              :aria-describedby="imageUrlError ? 'image-url-error' : undefined"
+              class="min-w-0 flex-1 rounded-app-md border border-hairline-strong bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
+              @keydown.enter.prevent="addImage"
+            />
+            <AppButton variant="outline" size="sm" type="button" @click="addImage">
+              Thêm ảnh
+            </AppButton>
+          </div>
+          <p
+            v-if="imageUrlError"
+            id="image-url-error"
+            role="alert"
+            class="mt-2 text-sm leading-[1.6] text-danger-fg"
+            data-testid="image-url-error"
           >
-            <IconPhoto class="h-3.5 w-3.5" />
-          </span>
-          <span class="max-w-[180px] truncate" :title="img">{{ img }}</span>
-          <button
-            type="button"
-            class="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full text-ink-3 transition-colors hover:text-danger-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
-            :aria-label="`Xóa ảnh ${index + 1}`"
-            @click="removeImage(index)"
-          >
-            <IconXMark class="h-3 w-3" />
-          </button>
-        </span>
-      </div>
-
-      <!-- Footer: helper + char budget + submit (composer__footer) -->
-      <div class="mt-3.5 flex items-center justify-between gap-3 border-t border-hairline pt-3.5">
-        <p class="text-xs leading-[1.45] text-ink-3">Bài viết hiển thị cho cả gia đình</p>
-        <div class="flex items-center gap-3">
+            {{ imageUrlError }}
+          </p>
+          <div v-if="images.length" class="mt-3 flex flex-wrap gap-2">
+            <span
+              v-for="(img,index) in images"
+              :key="img"
+              class="rounded-full bg-well px-2 py-1 text-xs leading-[1.45] text-ink-2"
+            >
+              <span class="max-w-[180px] truncate" :title="img">{{img}}</span>
+              <button
+                type="button"
+                class="cursor-pointer rounded-full text-ink-3 transition-colors hover:text-danger-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-1"
+                :aria-label="`Xóa ảnh ${index+1}`"
+                @click="removeImage(index)"
+              >
+                ×
+              </button>
+            </span>
+          </div>
+          <p class="text-xs leading-[1.45] text-ink-3">Bài viết hiển thị cho cả gia đình</p>
           <span
             data-testid="composer-char-counter"
-            :class="[
-              'text-xs leading-[1.45] tabular-nums',
-              overLimit ? 'text-red-600 font-medium' : 'text-ink-3',
-            ]"
             aria-live="polite"
+            :class="['text-xs leading-[1.45]', overLimit ? 'text-danger-fg font-medium' : 'text-ink-3']"
           >
             {{ runeCount }}/{{ MAX_CONTENT_RUNES }}
           </span>
-          <AppButton type="submit" :loading="posting" :disabled="!canSubmit || posting">
-            <span class="flex items-center gap-2">
-              <IconPaperAirplane class="w-4 h-4" />
-              <span>{{ posting ? 'Đang đăng…' : 'Đăng bài' }}</span>
-            </span>
+          <AppButton type="submit" :disabled="!canSubmit || posting" :loading="posting">
+            {{ posting ? 'Đang đăng…' : 'Đăng bài' }}
+          </AppButton>
+        </form>
+        <div
+          v-else-if="!authStore.isAuthenticated"
+          class="rounded-app-xl border border-accent-border bg-terracotta-soft p-5"
+          data-testid="anonymous-hint"
+        >
+          <p class="text-sm leading-[1.6] text-accent-fg">Đăng nhập để đăng bài viết.</p>
+          <RouterLink
+            to="/login"
+            data-testid="login-cta"
+            class="mt-3 inline-block rounded-app-md bg-terracotta px-4 py-2 text-white focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2"
+          >
+            Đăng nhập
+          </RouterLink>
+        </div>
+        <p
+          v-if="familyError"
+          class="text-sm leading-[1.6] text-danger-fg"
+          role="alert"
+          data-testid="family-error"
+        >
+          {{ familyError }}
+        </p>
+        <div
+          v-if="feedStore.loading && !feedStore.posts.length"
+          class="space-y-4"
+          data-testid="feed-loading"
+          role="status"
+          aria-live="polite"
+        >
+          <div
+            v-for="n in 3"
+            :key="n"
+            class="animate-pulse rounded-app-xl border border-hairline bg-card p-5 shadow-e1"
+          >
+            <div class="h-10 w-10 rounded-full bg-well"></div>
+            <div class="mt-4 h-3 rounded bg-well"></div>
+          </div>
+          <p class="text-center text-sm leading-[1.6] text-ink-3">Đang tải bài viết…</p>
+        </div>
+        <div
+          v-else-if="feedStore.error && !feedStore.posts.length"
+          class="rounded-app-xl border border-danger-fg bg-card p-5"
+          data-testid="feed-error"
+          role="alert"
+        >
+          <p class="text-sm leading-[1.6] text-danger-fg">{{feedStore.error}}</p>
+          <AppButton variant="outline" size="sm" class="mt-3" @click="retryFetch">
+            Thử lại
           </AppButton>
         </div>
-      </div>
-    </form>
-
-    <!-- Anonymous hint (reads are public, posting requires auth) — terracotta banner per §8.1 -->
-    <div
-      v-else
-      class="mb-6 flex flex-col justify-between gap-3 rounded-app-xl border border-accent-border bg-terracotta-soft p-4 sm:flex-row sm:items-center md:p-5"
-      data-testid="anonymous-hint"
-    >
-      <div>
-        <p class="text-sm leading-[1.6] text-accent-fg">Đăng nhập để đăng bài viết.</p>
-        <p class="mt-0.5 text-xs leading-[1.45] text-ink-2">
-          Bạn có thể đọc bảng tin — đăng nhập để kể chuyện cùng gia đình.
-        </p>
-      </div>
-      <RouterLink to="/login" data-testid="login-cta" class="shrink-0">
-        <AppButton size="sm">Đăng nhập</AppButton>
-      </RouterLink>
-    </div>
-
-    <!-- Families loading / error -->
-    <p
-      v-if="familyError"
-      class="mb-4 text-sm leading-[1.6] text-danger-fg"
-      data-testid="family-error"
-      role="alert"
-    >
-      {{ familyError }}
-    </p>
-
-    <!-- Feed loading state — 3-card pulsing skeleton (feed.html state-card--loading) -->
-    <div
-      v-if="feedStore.loading && !feedStore.posts.length"
-      class="space-y-4"
-      data-testid="feed-loading"
-      role="status"
-    >
-      <div
-        v-for="n in 3"
-        :key="n"
-        class="animate-pulse rounded-app-xl border border-hairline bg-card p-5 shadow-e1"
-      >
-        <div class="flex items-center gap-3">
-          <div class="h-10 w-10 rounded-full bg-well"></div>
-          <div class="flex-1 space-y-2">
-            <div class="h-3 w-1/3 rounded bg-well"></div>
-            <div class="h-2 w-1/4 rounded bg-well"></div>
+        <EmptyState
+          v-else-if="selectedFamilyId && !feedStore.posts.length && !feedStore.loading"
+          title="Chưa có bài viết nào. Hãy chia sẻ bài viết đầu tiên!"
+          description="Bài viết sẽ hiển thị tại đây cho cả gia đình cùng xem."
+          data-testid="feed-empty"
+        />
+        <div v-else-if="feedStore.posts.length" class="space-y-4" data-testid="feed-list">
+          <PostCard v-for="post in feedStore.posts" :key="post.id" :post="post" />
+          <div
+            v-if="feedStore.error"
+            class="flex items-center justify-between gap-3 rounded-app-lg border border-danger-fg bg-card px-4 py-3 text-sm leading-[1.6] text-danger-fg"
+            data-testid="feed-page-error"
+            role="alert"
+          >
+            <span>{{feedStore.error}}</span>
+            <AppButton variant="outline" size="sm" @click="feedStore.loadMore()">
+              Thử lại
+            </AppButton>
+          </div>
+          <div v-if="feedStore.nextCursor" class="flex justify-center pt-2">
+            <AppButton
+              variant="outline"
+              :loading="feedStore.loading"
+              data-testid="load-more"
+              @click="feedStore.loadMore()"
+            >
+              {{feedStore.loading ? 'Đang tải…' : 'Tải thêm bài viết'}}
+            </AppButton>
           </div>
         </div>
-        <div class="mt-4 space-y-2">
-          <div class="h-3 w-full rounded bg-well"></div>
-          <div class="h-3 w-2/3 rounded bg-well"></div>
-        </div>
-      </div>
-      <p class="text-center text-sm leading-[1.6] text-ink-3">Đang tải bài viết…</p>
-    </div>
-
-    <!-- Feed error state — card + danger-fg border/heading (feed.html state-card--error) -->
-    <div
-      v-else-if="feedStore.error && !feedStore.posts.length"
-      class="mb-4 rounded-app-xl border border-danger-fg bg-card p-5 text-center shadow-e1"
-      data-testid="feed-error"
-      role="alert"
-    >
-      <p class="text-sm font-medium leading-[1.6] text-danger-fg">{{ feedStore.error }}</p>
-      <AppButton variant="outline" size="sm" class="mt-3" @click="retryFetch">Thử lại</AppButton>
-    </div>
-
-    <!-- Empty state -->
-    <EmptyState
-      v-else-if="!feedStore.posts.length"
-      title="Chưa có bài viết nào. Hãy chia sẻ bài viết đầu tiên!"
-      description="Bài viết sẽ hiển thị tại đây cho cả gia đình cùng xem."
-      data-testid="feed-empty"
-    />
-
-    <!-- Timeline (newest first — order comes from the API) -->
-    <div v-else class="space-y-4" data-testid="feed-list">
-      <PostCard v-for="post in feedStore.posts" :key="post.id" :post="post" />
-
-      <!-- Feed-level error while paging -->
-      <p
-        v-if="feedStore.error"
-        class="text-center text-sm leading-[1.6] text-danger-fg"
-        data-testid="feed-page-error"
-        role="alert"
+      </section>
+      <aside
+        class="h-fit rounded-app-xl border border-hairline bg-card p-5 shadow-e1"
+        data-testid="shortcut-rail"
       >
-        {{ feedStore.error }}
-      </p>
-
-      <div v-if="feedStore.nextCursor" class="flex justify-center pt-2">
-        <AppButton
-          variant="outline"
-          :loading="feedStore.loading"
-          data-testid="load-more"
-          @click="feedStore.loadMore()"
-        >
-          {{ feedStore.loading ? 'Đang tải…' : 'Tải thêm bài viết' }}
-        </AppButton>
-      </div>
+        <h2 class="text-base font-semibold leading-[1.45] text-ink-1">Lối tắt</h2>
+        <p class="mt-1 text-sm leading-[1.6] text-ink-2">Khám phá gia đình bạn.</p>
+        <nav class="mt-4 grid gap-2" aria-label="Lối tắt">
+          <RouterLink
+            v-for="item in shortcuts"
+            :key="item.to"
+            :to="item.to"
+            class="rounded-app-lg border border-hairline bg-well p-3 text-sm font-medium leading-[1.6] text-ink-1 hover:text-accent-fg focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2"
+          >
+            {{item.label}}
+          </RouterLink>
+        </nav>
+      </aside>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import AppButton from '@/components/ui/AppButton.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
-import AppAvatar from '@/components/ui/AppAvatar.vue';
 import AppTextarea from '@/components/ui/AppTextarea.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
-import { IconLink, IconPhoto, IconPaperAirplane, IconXMark } from '@/components/icons';
+import AppAvatar from '@/components/ui/AppAvatar.vue';
 import PostCard from '@/components/feed/PostCard.vue';
 import InstallPrompt from '@/components/notifications/InstallPrompt.vue';
 import NotificationToggle from '@/components/notifications/NotificationToggle.vue';
 import { useFeedStore } from '@/stores/feed';
+import { MAX_ATTACHMENT_IMAGES } from '@/stores/feed/constants';
 import { useAuthStore } from '@/stores/auth';
 import { familiesApi } from '@/api/families';
 import { formatApiError } from '@/api/client';
@@ -256,6 +251,7 @@ const familyError = ref<string | null>(null);
 
 const content = ref('');
 const imageUrl = ref('');
+const imageUrlError = ref<string | null>(null);
 const images = ref<string[]>([]);
 const posting = ref(false);
 
@@ -266,6 +262,12 @@ const MAX_CONTENT_RUNES = 5000;
 
 const runeCount = computed(() => [...content.value].length);
 const overLimit = computed(() => runeCount.value > MAX_CONTENT_RUNES);
+
+const shortcuts = [
+  { to: '/tree', label: 'Cây gia phả' },
+  { to: '/kinship', label: 'Quan hệ trong họ' },
+  { to: '/account', label: 'Tài khoản' },
+] as const;
 
 const familyOptions = computed<SelectOption[]>(() =>
   families.value.map((f) => ({ value: f.id, label: f.name }))
@@ -291,16 +293,19 @@ async function loadFamilies(): Promise<void> {
 
     if (!families.value.length) {
       familyError.value = 'Chưa có dòng họ nào trong hệ thống.';
+      selectedFamilyId.value = '';
+      feedStore.reset();
       return;
     }
 
-    // Restore the persisted choice, otherwise default to the first family
+    // Restore Feed-scoped family selection only; do not synchronize tree state.
     const persisted = feedStore.loadPersistedFamily();
-    const initial =
-      (persisted && families.value.find((f) => f.id === persisted)?.id) || families.value[0].id;
-
+    const initial = persisted && families.value.some((f) => f.id === persisted)
+      ? persisted
+      : families.value[0].id;
     selectedFamilyId.value = initial;
-    await feedStore.fetchFeed(initial);
+    if (initial) await feedStore.fetchFeed(initial);
+    else feedStore.reset();
   } catch (err) {
     familyError.value = formatApiError(err);
   } finally {
@@ -322,15 +327,41 @@ function retryFetch(): void {
   }
 }
 
+/**
+ * Client-side image-URL gate (MAJ-2): only absolute http(s) URLs may enter
+ * the composer's attachment list. `type="url"` alone does not validate on
+ * programmatic add/submit, so the scheme is checked here after trimming.
+ */
+function isValidImageUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+const IMAGE_URL_ERROR = 'URL ảnh không hợp lệ. Vui lòng dùng liên kết bắt đầu bằng http:// hoặc https://.';
+
 function addImage(): void {
   const url = imageUrl.value.trim();
   if (!url) return;
-  if (images.value.length >= 9) return;
+  if (!isValidImageUrl(url)) {
+    imageUrlError.value = IMAGE_URL_ERROR;
+    return;
+  }
+  imageUrlError.value = null;
+  if (images.value.length >= MAX_ATTACHMENT_IMAGES) return;
   if (!images.value.includes(url)) {
     images.value.push(url);
   }
   imageUrl.value = '';
 }
+
+// A corrected input clears the previous rejection message.
+watch(imageUrl, () => {
+  if (imageUrlError.value) imageUrlError.value = null;
+});
 
 function removeImage(index: number): void {
   images.value.splice(index, 1);
@@ -338,6 +369,11 @@ function removeImage(index: number): void {
 
 async function submitPost(): Promise<void> {
   if (!canSubmit.value || posting.value) return;
+  // Defensive: the queue must never reach the API with a non-http(s) URL.
+  if (images.value.some((img) => !isValidImageUrl(img))) {
+    imageUrlError.value = IMAGE_URL_ERROR;
+    return;
+  }
 
   posting.value = true;
   try {
@@ -349,6 +385,7 @@ async function submitPost(): Promise<void> {
     content.value = '';
     images.value = [];
     imageUrl.value = '';
+    imageUrlError.value = null;
   } catch {
     toast.error(feedStore.error || 'Không thể đăng bài viết. Vui lòng thử lại.');
   } finally {
@@ -356,16 +393,3 @@ async function submitPost(): Promise<void> {
   }
 }
 </script>
-
-<style scoped>
-/*
-  Compatibility remap (Phase-1 retained-class pattern): the over-budget
-  counter's legacy class string `text-red-600` is pinned by feed-view.spec.ts
-  and must stay in the DOM. Its stock value #DC2626 is 4.83:1 on the light
-  card but only ~3.1:1 on the dark card, so remap the pinned class to the
-  semantic AA danger token (light #B82C34 / dark #FF817B) — both ≥4.5:1.
-*/
-.text-red-600 {
-  color: var(--danger-fg);
-}
-</style>

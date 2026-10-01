@@ -1,0 +1,34 @@
+#!/bin/bash
+# Isolated static SPA + /api proxy worker for the feeds-main browser pack.
+set -uo pipefail
+export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/local/go/bin:$PATH"
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 1
+cd "$ROOT"
+[[ -f web/dist/index.html ]] || { echo 'FAIL: web/dist/index.html missing'; exit 1; }
+PORT=""
+START=$((10000 + RANDOM % 10000))
+for attempt in $(seq 0 9999); do
+ CANDIDATE=$((10000 + (START - 10000 + attempt) % 10000))
+ if node -e 'const n=require("net"),s=n.createServer();s.unref();s.once("error",()=>process.exit(1));s.listen({host:"127.0.0.1",port:+process.argv[1],exclusive:true},()=>s.close(()=>process.exit(0)))' "$CANDIDATE" >/dev/null 2>&1; then PORT="$CANDIDATE"; break; fi
+done
+[[ -n "$PORT" ]] || { echo 'FAIL: no free port'; exit 1; }
+LOG="$ROOT/.agents/tester/RESULTS/feeds-main-redesign/server.log"
+mkdir -p "$ROOT/.agents/tester/RESULTS/feeds-main-redesign"
+node - "$ROOT/web/dist" "$PORT" >"$LOG" 2>&1 <<'NODE' &
+const fs=require('fs'),http=require('http'),path=require('path'),root=process.argv[2],port=+process.argv[3];
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.woff2':'font/woff2','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon','.webmanifest':'application/manifest+json'};
+const s=http.createServer((q,r)=>{const u=new URL(q.url,'http://127.0.0.1'); if(u.pathname.startsWith('/api/')){console.log('PROXY '+q.method+' '+q.url);const h={...q.headers,host:'127.0.0.1:3456'};if(h.origin)h.origin='http://localhost:3456';const p=http.request({hostname:'127.0.0.1',port:3456,path:q.url,method:q.method,headers:h},x=>{console.log('PROXY-STATUS '+q.url+' '+x.statusCode);r.writeHead(x.statusCode,x.headers);x.pipe(r)});p.on('error',e=>{r.writeHead(502,{'Content-Type':'text/plain'});r.end(String(e))});q.pipe(p);return;}let f=path.resolve(root,'.'+decodeURIComponent(u.pathname));if(!f.startsWith(path.resolve(root)+path.sep)&&f!==path.resolve(root))f=path.join(root,'index.html');fs.stat(f,(e,st)=>{if(e||!st.isFile())f=path.join(root,'index.html');fs.readFile(f,(err,b)=>{if(err){r.writeHead(404,{'Content-Type':'text/plain'});r.end('Not found');return}r.writeHead(200,{'Content-Type':mime[path.extname(f)]||'application/octet-stream'});r.end(b)})})});s.listen(port,'127.0.0.1');
+NODE
+SERVER=$!
+cleanup(){ kill "$SERVER" 2>/dev/null || true; wait "$SERVER" 2>/dev/null || true; if node -e 'const n=require("net"),s=n.createServer();s.once("error",()=>process.exit(1));s.listen({host:"127.0.0.1",port:+process.argv[1],exclusive:true},()=>s.close(()=>process.exit(0)))' "$PORT" >/dev/null 2>&1; then echo "TEARDOWN: server PID $SERVER killed; port $PORT free"; else echo "TEARDOWN: ERROR port $PORT still occupied"; fi; }
+trap cleanup EXIT INT TERM
+BASE="http://127.0.0.1:$PORT"
+for attempt in $(seq 1 80); do if curl -fsS "$BASE/" >/dev/null && curl -fsS http://127.0.0.1:3456/api/v1/health >/dev/null; then break; fi; sleep .25; done
+curl -fsS "$BASE/" >/dev/null || { echo 'FAIL: static server unavailable'; exit 1; }
+export FEEDS_MAIN_BASE="$BASE" FEEDS_MAIN_ARTIFACTS="$ROOT/.agents/tester/RESULTS/feeds-main-redesign"
+cd "$ROOT/e2e" || exit 1
+node_modules/.bin/playwright test specs/feeds-main-redesign.spec.cjs --config=playwright.config.ts --reporter=list --output="$FEEDS_MAIN_ARTIFACTS/test-results"
+rc=$?
+echo "SERVER_PID=$SERVER PORT=$PORT"
+cat "$LOG" || true
+exit "$rc"

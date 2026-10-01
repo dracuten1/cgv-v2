@@ -1,11 +1,18 @@
 <template>
   <div class="min-h-screen flex flex-col bg-canvas text-ink-1">
+    <!-- Skip-to-content (feed-main-draft.html .skip pattern): absolute off-screen until :focus -->
+    <a
+      href="#main"
+      class="absolute left-[-9999px] top-2 z-[100] rounded-app-md bg-card px-2.5 py-2.5 text-sm font-medium text-ink-1 shadow-e1 focus:left-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2"
+    >
+      Đến nội dung chính
+    </a>
     <!-- Desktop Header (md+) — frosted translucent bar (spec §3.3 / §4) -->
     <header class="hidden md:block bg-card/80 backdrop-blur-xl border-b border-hairline sticky top-0 z-40">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         <!-- Logo & Brand -->
         <div class="flex items-center space-x-3">
-          <router-link to="/tree" class="flex items-center space-x-2 text-ink-1 font-bold text-xl">
+          <router-link to="/feed" class="flex items-center space-x-2 text-ink-1 font-bold text-xl">
             <span class="w-8 h-8 rounded-app-sm bg-terracotta text-white flex items-center justify-center font-semibold text-lg">
               Phả
             </span>
@@ -61,7 +68,7 @@
     </header>
 
     <!-- Main Content Area with padding for mobile BottomNav -->
-    <main class="flex-1 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:pb-6">
+    <main id="main" class="flex-1 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:pb-6">
       <slot />
     </main>
 

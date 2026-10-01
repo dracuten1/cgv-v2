@@ -200,7 +200,7 @@ describe('OAuthCallbackView.vue', () => {
     );
   });
 
-  it('redirects to /account after 1500ms when authenticated and oauth_linked=google', async () => {
+  it('redirects to /feed after 1500ms when authenticated and oauth_linked=google (owner decision 2026-10-01: feeds are the main page)', async () => {
     vi.useFakeTimers();
     mockQuery = { oauth_linked: 'google' };
     const authStore = useAuthStore();
@@ -228,6 +228,38 @@ describe('OAuthCallbackView.vue', () => {
 
     expect(wrapper.find('[data-testid="oauth-success"]').exists()).toBe(true);
     expect(mockPush).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1500);
+    await flushPromises();
+
+    expect(mockPush).toHaveBeenCalledWith('/feed');
+  });
+
+  it('post-auth redirect honors an explicit ?redirect= over the /feed default', async () => {
+    vi.useFakeTimers();
+    mockQuery = { oauth_linked: 'google', redirect: '/account' };
+    const authStore = useAuthStore();
+    authStore.user = {
+      id: 'usr-123',
+      display_name: 'Test User',
+      is_demo: false,
+      created_at: new Date().toISOString(),
+    };
+    authStore.status = 'authenticated';
+    vi.spyOn(authStore, 'fetchMe').mockImplementation(async () => null);
+
+    mount(OAuthCallbackView, {
+      global: {
+        stubs: {
+          'router-link': {
+            props: ['to'],
+            template: '<a :href="to" data-testid="stub-router-link"><slot /></a>',
+          },
+        },
+      },
+    });
+
+    await flushPromises();
 
     vi.advanceTimersByTime(1500);
     await flushPromises();

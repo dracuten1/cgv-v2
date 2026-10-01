@@ -293,7 +293,7 @@ describe('FeedView', () => {
 
     await textarea.setValue('Xin chào cả nhà');
     expect(counter.text()).toBe('15/5000');
-    expect(counter.classes()).not.toContain('text-red-600');
+    expect(counter.classes()).not.toContain('text-danger-fg');
 
     // Publish stays enabled within budget
     const submit = form.find('button[type="submit"]');
@@ -320,7 +320,7 @@ describe('FeedView', () => {
 
     const counter = form.find('[data-testid="composer-char-counter"]');
     expect(counter.text()).toBe('5001/5000');
-    expect(counter.classes()).toContain('text-red-600');
+    expect(counter.classes()).toContain('text-danger-fg');
 
     const submit = form.find('button[type="submit"]');
     expect(submit.attributes('disabled')).toBeDefined();
@@ -346,14 +346,14 @@ describe('FeedView', () => {
     textareaComp.vm.$emit('update:modelValue', 'x'.repeat(4999));
     await flushPromises();
     expect(counter.text()).toBe('4999/5000');
-    expect(counter.classes()).not.toContain('text-red-600');
+    expect(counter.classes()).not.toContain('text-danger-fg');
     expect(submit.attributes('disabled')).toBeUndefined();
 
     // 5000 runes: exactly at limit, still valid and enabled
     textareaComp.vm.$emit('update:modelValue', 'x'.repeat(5000));
     await flushPromises();
     expect(counter.text()).toBe('5000/5000');
-    expect(counter.classes()).not.toContain('text-red-600');
+    expect(counter.classes()).not.toContain('text-danger-fg');
     expect(submit.attributes('disabled')).toBeUndefined();
 
     // Multibyte Vietnamese and emojis: code points vs UTF-16 code units
@@ -556,5 +556,147 @@ describe('FeedView', () => {
     await flushPromises();
     await flushPromises();
     expect(wrapper.find('[data-testid="feed-loading"]').exists()).toBe(false);
+  });
+});
+
+// Feeds-as-main additive contracts.
+describe('FeedView guest, family, and demo states', () => {
+  let pinia: ReturnType<typeof createPinia>;
+  beforeEach(() => {
+    pinia = createPinia(); setActivePinia(pinia); vi.clearAllMocks(); window.localStorage.clear();
+    mockedFamiliesApi.listFamilies.mockResolvedValue({ families: [
+      { id:'f1', name:'Gia tộc Nguyễn', version:1, created_at:'2026-09-21T00:00:00Z' },
+      { id:'f2', name:'Gia tộc Trần', version:1, created_at:'2026-09-21T00:00:00Z' },
+    ] });
+  });
+  it('keeps guest composer absent while load-more remains functional', async () => {
+    const auth = useAuthStore(); auth.user = null; auth.status = 'anonymous';
+    mockedFeedApi.list.mockResolvedValue({ posts:[makePost()], next_cursor:{created_at:'2026-09-21T10:00:00Z',id:'p1'} });
+    const wrapper = mount(FeedView, { global:{ plugins:[pinia], stubs:{ RouterLink:true } } });
+    await flushPromises();
+    expect(wrapper.find('[data-testid="composer-form"]').exists()).toBe(false);
+    const more = wrapper.find('[data-testid="load-more"]'); expect(more.exists()).toBe(true);
+    await more.trigger('click'); await flushPromises();
+    expect(mockedFeedApi.list).toHaveBeenCalledTimes(2);
+  });
+  it('renders a labeled family selector populated from store families without redirecting to Tree', async () => {
+    const auth = useAuthStore(); auth.user = testUser; auth.status = 'authenticated';
+    mockedFeedApi.list.mockResolvedValue({posts:[], next_cursor:null});
+    const wrapper = mount(FeedView, { global:{ plugins:[pinia], stubs:{ RouterLink:true } } });
+    await flushPromises();
+    expect(wrapper.find('[data-testid="family-selector"]').exists()).toBe(true);
+    expect(wrapper.find('[aria-label="Chọn dòng họ"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="no-family"]').exists()).toBe(false);
+    expect(wrapper.text()).toContain('Gia tộc Nguyễn'); expect(wrapper.text()).toContain('Gia tộc Trần');
+    expect(mockedFamiliesApi.listFamilies).toHaveBeenCalled();
+  });
+  it('uses amber demo treatment only for demo accounts', async () => {
+    const auth = useAuthStore(); auth.user = {...testUser, is_demo:true}; auth.status = 'authenticated';
+    mockedFeedApi.list.mockResolvedValue({posts:[], next_cursor:null});
+    const demo = mount(FeedView, { global:{ plugins:[pinia], stubs:{ RouterLink:true } } }); await flushPromises();
+    const notice = demo.find('[data-testid="demo-notice"]');
+    expect(notice.exists()).toBe(true); expect(notice.classes()).toContain('bg-demo-soft');
+    expect(notice.classes().join(' ')).not.toContain('terracotta'); demo.unmount();
+    auth.user = testUser;
+    const regular = mount(FeedView, { global:{ plugins:[pinia], stubs:{ RouterLink:true } } }); await flushPromises();
+    expect(regular.find('[data-testid="demo-notice"]').exists()).toBe(false);
+  });
+});
+
+// Final-iteration fixes (MAJ-2 composer image-URL gate, MAJ-3 empty-state gating).
+describe('FeedView composer image-URL validation and empty-state exclusivity', () => {
+  let pinia: ReturnType<typeof createPinia>;
+  beforeEach(() => {
+    pinia = createPinia(); setActivePinia(pinia); vi.clearAllMocks(); window.localStorage.clear();
+    mockedFamiliesApi.listFamilies.mockResolvedValue({ families: [
+      { id:'f1', name:'Gia tộc Nguyễn', version:1, created_at:'2026-09-21T00:00:00Z' },
+      { id:'f2', name:'Gia tộc Trần', version:1, created_at:'2026-09-21T00:00:00Z' },
+    ] });
+  });
+
+  async function mountComposer() {
+    const auth = useAuthStore(); auth.user = testUser; auth.status = 'authenticated';
+    mockedFeedApi.list.mockResolvedValue({ posts: [], next_cursor: null });
+    const wrapper = mount(FeedView, { global:{ plugins:[pinia], stubs:{ RouterLink:true } } });
+    await flushPromises(); await flushPromises();
+    return wrapper;
+  }
+
+  it('rejects non-http(s) image URLs with a role=alert message and adds no chip', async () => {
+    const wrapper = await mountComposer();
+    const form = wrapper.find('[data-testid="composer-form"]');
+    const urlInput = form.find('input[type="url"]');
+
+    // javascript: scheme must never enter the queue
+    await urlInput.setValue('javascript:alert(1)');
+    await urlInput.trigger('keydown.enter');
+
+    const alertMsg = wrapper.find('[data-testid="image-url-error"]');
+    expect(alertMsg.exists()).toBe(true);
+    expect(alertMsg.attributes('role')).toBe('alert');
+    expect(alertMsg.text()).toContain('URL ảnh không hợp lệ');
+    expect(form.findAll('span[title="javascript:alert(1)"]')).toHaveLength(0);
+    // Rejected input is flagged and kept for correction
+    expect(urlInput.attributes('aria-invalid')).toBe('true');
+    expect((urlInput.element as HTMLInputElement).value).toBe('javascript:alert(1)');
+
+    // Other non-http(s) schemes rejected too (type="url" alone would accept them)
+    await urlInput.setValue('ftp://example.com/anh.jpg');
+    await urlInput.trigger('keydown.enter');
+    expect(wrapper.findAll('[data-testid="image-url-error"]')).toHaveLength(1);
+    expect(form.findAll('span[title="ftp://example.com/anh.jpg"]')).toHaveLength(0);
+    expect(form.text()).not.toContain('Đã đăng bài viết');
+  });
+
+  it('accepts http:// and https:// URLs and clears the error once corrected', async () => {
+    const wrapper = await mountComposer();
+    const form = wrapper.find('[data-testid="composer-form"]');
+    const urlInput = form.find('input[type="url"]');
+
+    // Schemeless garbage rejected first
+    await urlInput.setValue('example.com/anh.jpg');
+    await urlInput.trigger('keydown.enter');
+    expect(wrapper.find('[data-testid="image-url-error"]').exists()).toBe(true);
+
+    // Corrected https URL: watch clears the stale rejection, chip is added
+    await urlInput.setValue('https://example.com/anh.jpg');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="image-url-error"]').exists()).toBe(false);
+    await urlInput.trigger('keydown.enter');
+    expect(form.findAll('span[title="https://example.com/anh.jpg"]')).toHaveLength(1);
+
+    // Plain http:// is equally valid
+    await urlInput.setValue('http://example.com/anh2.jpg');
+    await urlInput.trigger('keydown.enter');
+    expect(form.findAll('span[title="http://example.com/anh2.jpg"]')).toHaveLength(1);
+  });
+
+  it('keeps the 10-image cap while invalid entries never consume slots', async () => {
+    const wrapper = await mountComposer();
+    const form = wrapper.find('[data-testid="composer-form"]');
+    const urlInput = form.find('input[type="url"]');
+
+    await urlInput.setValue('notaurl');
+    await urlInput.trigger('keydown.enter');
+    for (let i = 0; i < 12; i++) {
+      await urlInput.setValue(`https://example.com/${i}.jpg`);
+      await urlInput.trigger('keydown.enter');
+    }
+    expect(form.findAll('span[title^="https://example.com/"]')).toHaveLength(10);
+  });
+
+  it('renders the labeled no-family state exclusively — first-post empty state is gated on a selected family', async () => {
+    mockedFamiliesApi.listFamilies.mockResolvedValue({ families: [] });
+    const auth = useAuthStore(); auth.user = testUser; auth.status = 'authenticated';
+    mockedFeedApi.list.mockResolvedValue({ posts: [], next_cursor: null });
+
+    const wrapper = mount(FeedView, { global:{ plugins:[pinia], stubs:{ RouterLink:true } } });
+    await flushPromises(); await flushPromises();
+
+    expect(wrapper.find('[data-testid="no-family"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain('Chưa chọn dòng họ');
+    // MAJ-3 exclusivity: generic first-post prompt must NOT co-render
+    expect(wrapper.find('[data-testid="feed-empty"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="composer-form"]').exists()).toBe(false);
   });
 });

@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    redirect: '/tree',
+    redirect: '/feed',
   },
   {
     path: '/login',
@@ -119,7 +119,7 @@ router.beforeEach(async (to, _from, next) => {
 
   // 2. Check guest guard (already authenticated hitting /login -> redirect /tree)
   if (to.meta.guest && authStore.isAuthenticated) {
-    return next({ path: '/tree' });
+    return next({ path: '/feed' });
   }
 
   // Set document title if specified

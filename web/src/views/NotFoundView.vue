@@ -36,6 +36,12 @@
       </p>
 
       <div class="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <AppButton variant="primary" size="lg" to="/feed" data-testid="not-found-feed">
+          <span class="flex items-center justify-center gap-2">
+            <IconNewspaper class="w-4 h-4" />
+            <span>Về bảng tin</span>
+          </span>
+        </AppButton>
         <AppButton
           variant="primary"
           size="lg"
@@ -77,7 +83,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import AppButton from '@/components/ui/AppButton.vue';
-import { IconArrowLeft, IconMagnifyingGlass, IconExclamationCircle } from '@/components/icons';
+import { IconArrowLeft, IconMagnifyingGlass, IconExclamationCircle, IconNewspaper } from '@/components/icons';
 
 const router = useRouter();
 </script>

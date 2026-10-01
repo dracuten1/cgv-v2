@@ -6,7 +6,7 @@
       :href="image"
       target="_blank"
       rel="noopener noreferrer"
-      class="block aspect-square overflow-hidden rounded-app-md border border-hairline bg-well focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+      class="block aspect-square overflow-hidden rounded-app-md border border-hairline bg-well focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2 focus-visible:ring-offset-card"
       @click.stop
     >
       <img
@@ -21,6 +21,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { MAX_ATTACHMENT_IMAGES } from '@/stores/feed/constants';
 
 interface Props {
   images: string[];
@@ -32,7 +33,7 @@ const props = defineProps<Props>();
  * Image layout rules (F6):
  * - 1 image  → full width
  * - 2 images → 2-column grid
- * - 3+ images → 3-column grid (extra images beyond 9 are dropped)
+ * - 3+ images → 3-column grid (extra images beyond MAX_ATTACHMENT_IMAGES are dropped)
  */
 const gridClasses = computed(() => {
   const count = props.images.length;
@@ -41,5 +42,5 @@ const gridClasses = computed(() => {
   return 'grid grid-cols-3 gap-2 mt-3';
 });
 
-const limitedImages = computed(() => props.images.slice(0, 9));
+const limitedImages = computed(() => props.images.slice(0, MAX_ATTACHMENT_IMAGES));
 </script>

@@ -22,12 +22,12 @@ describe('ImageGrid', () => {
     expect(wrapper.find('[data-testid="image-grid"]').classes()).toContain('grid-cols-2');
   });
 
-  it('uses 3 columns for 3+ images and caps at 9 images', () => {
+  it('uses 3 columns for 3+ images and caps at 10 images', () => {
     const many = Array.from({ length: 12 }, (_, i) => `https://a/${i}.jpg`);
     const wrapper = mount(ImageGrid, { props: { images: many } });
     const grid = wrapper.find('[data-testid="image-grid"]');
     expect(grid.classes()).toContain('grid-cols-3');
-    expect(grid.findAll('img')).toHaveLength(9);
+    expect(grid.findAll('img')).toHaveLength(10);
   });
 
   it('renders Vietnamese alt text on every image', () => {
@@ -57,7 +57,9 @@ describe('ImageGrid', () => {
     expect(tile.classes()).toContain('rounded-app-md');
     expect(tile.classes()).toContain('aspect-square');
     // Focus stays visible (terracotta halo, design-system §3.5)
-    expect(tile.classes()).toContain('focus-visible:ring-accent');
+    expect(tile.classes()).toContain('focus-visible:ring-terracotta');
+    expect(tile.classes()).not.toContain('focus-visible:ring-accent');
+    expect(tile.classes()).toContain('focus-visible:ring-offset-2');
   });
 
   it('keeps the external-link security contract on every tile anchor', () => {

@@ -347,7 +347,7 @@ async function handleDemoLogin() {
   demoLoading.value = true;
   try {
     await authStore.loginDemo();
-    const redirect = (route.query.redirect as string) || '/tree';
+    const redirect = (route.query.redirect as string) || '/feed';
     await router.push(redirect);
   } catch (err: unknown) {
     toast.error(formatApiError(err) || 'Đăng nhập dùng thử thất bại');

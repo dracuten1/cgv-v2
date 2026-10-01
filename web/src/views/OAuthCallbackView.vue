@@ -120,9 +120,12 @@ onMounted(() => {
   if (outcome.value.type === 'success' && authStore.isAuthenticated) {
     // Refresh user profile in background to load newly linked identity
     authStore.fetchMe(true);
-    // Redirect to /account after brief moment so user sees visible confirmation
+    // Post-auth routing (owner decision 2026-10-01): feeds are the main page —
+    // default to /feed; an explicit ?redirect= always wins. Brief delay so the
+    // user sees the visible confirmation first.
+    const redirect = typeof route.query.redirect === 'string' && route.query.redirect ? route.query.redirect : '/feed';
     setTimeout(async () => {
-      await router.push('/account');
+      await router.push(redirect);
     }, 1500);
   }
 });
