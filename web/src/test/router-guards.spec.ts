@@ -12,10 +12,10 @@ describe('Router Navigation Guards', () => {
     await router.push('/');
   });
 
-  it('redirects / to /tree', async () => {
+  it('redirects / to /feed', async () => {
     vi.spyOn(meApi, 'getMe').mockRejectedValue(new ApiError(401, 'UNAUTHORIZED', 'Chưa đăng nhập'));
     await router.push('/');
-    expect(router.currentRoute.value.path).toBe('/tree');
+    expect(router.currentRoute.value.path).toBe('/feed');
   });
 
   it('requiresAuth redirects anonymous users to /login?redirect=<path>', async () => {
@@ -40,7 +40,7 @@ describe('Router Navigation Guards', () => {
     expect(router.currentRoute.value.path).toBe('/account');
   });
 
-  it('guest guard redirects authenticated user away from /login to /tree', async () => {
+  it('guest guard redirects authenticated user away from /login to /feed', async () => {
     const authStore = useAuthStore();
     authStore.user = {
       id: 'user-1',
@@ -51,6 +51,51 @@ describe('Router Navigation Guards', () => {
     authStore.status = 'authenticated';
 
     await router.push('/login');
+    expect(router.currentRoute.value.path).toBe('/feed');
+  });
+});
+
+// Feeds-as-main routing contracts (owner-approved 2026-10-01).
+describe('feeds-as-main routing', () => {
+  beforeEach(async () => {
+    setActivePinia(createPinia());
+    vi.restoreAllMocks();
+    await router.push('/feed');
+  });
+
+  it('preserves an explicit redirect target through the sign-in route', async () => {
+    const auth = useAuthStore();
+    auth.status = 'anonymous';
+    vi.spyOn(meApi, 'getMe').mockRejectedValue(new ApiError(401, 'UNAUTHORIZED', ''));
+    await router.push('/login?redirect=%2Faccount%3Ftab%3Dprofile');
+    expect(router.currentRoute.value.path).toBe('/login');
+    expect(router.currentRoute.value.query.redirect).toBe('/account?tab=profile');
+    await router.push('/account?tab=profile');
+    expect(router.currentRoute.value.path).toBe('/login');
+    expect(router.currentRoute.value.query.redirect).toBe('/account?tab=profile');
+  });
+
+  it('keeps /tree directly reachable for authenticated users', async () => {
+    const auth = useAuthStore();
+    auth.user = { id:'user-1', display_name:'An', is_demo:false, created_at:new Date().toISOString() };
+    auth.status = 'authenticated';
+    await router.push('/tree');
     expect(router.currentRoute.value.path).toBe('/tree');
+  });
+
+  it('redirects authenticated users visiting a guest-only route to /feed', async () => {
+    const auth = useAuthStore();
+    auth.user = { id:'user-1', display_name:'An', is_demo:false, created_at:new Date().toISOString() };
+    auth.status = 'authenticated';
+    await router.push('/login');
+    expect(router.currentRoute.value.path).toBe('/feed');
+  });
+
+  it('redirects / to /feed', async () => {
+    const auth = useAuthStore();
+    auth.status = 'anonymous';
+    vi.spyOn(meApi, 'getMe').mockRejectedValue(new ApiError(401, 'UNAUTHORIZED', ''));
+    await router.push('/');
+    expect(router.currentRoute.value.path).toBe('/feed');
   });
 });

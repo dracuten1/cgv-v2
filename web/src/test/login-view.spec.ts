@@ -6,12 +6,15 @@ import { useAuthStore } from '@/stores/auth';
 import { authApi } from '@/api/auth';
 
 const mockPush = vi.fn();
+let mockQuery: Record<string, any> = {};
 vi.mock('vue-router', () => ({
   useRouter: () => ({
     push: mockPush,
   }),
   useRoute: () => ({
-    query: {},
+    get query() {
+      return mockQuery;
+    },
   }),
 }));
 
@@ -19,6 +22,7 @@ describe('LoginView.vue', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     mockPush.mockReset();
+    mockQuery = {};
   });
 
   it('renders brand lockup glyph, display-font heading and tagline', () => {
@@ -177,7 +181,7 @@ describe('LoginView.vue', () => {
     await demoBtn.trigger('click');
 
     expect(loginDemoSpy).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith('/tree');
+    expect(mockPush).toHaveBeenCalledWith('/feed');
   });
 
   it('magic link triggers sendMagicLink and shows the sent confirmation', async () => {
@@ -199,6 +203,51 @@ describe('LoginView.vue', () => {
 
     expect(sendMagicLinkSpy).toHaveBeenCalledWith('test@example.com');
     expect(wrapper.text()).toContain('Đã gửi liên kết đăng nhập');
+  });
+
+  // --- MAJ-1 (owner decision 2026-10-01: feeds are the main page) ---
+
+  it('normal email sign-in form success performs NO navigation — sign-in completes via the emailed link (EmailVerifyView defaults /feed)', async () => {
+    const wrapper = mount(LoginView, {
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+      },
+    });
+
+    vi.spyOn(authApi, 'sendMagicLink').mockResolvedValue({ message: 'OK' });
+
+    const input = wrapper.find('input[type="email"]');
+    await input.setValue('user@example.com');
+    await wrapper.find('form').trigger('submit.prevent');
+
+    // The form's contract: confirmation interstitial only — the user is not
+    // signed in yet, so there is no in-form redirect to /feed or elsewhere.
+    expect(wrapper.text()).toContain('Đã gửi liên kết đăng nhập');
+    expect(wrapper.text()).toContain('Mở email và nhấn liên kết để đăng nhập');
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('demo sign-in success honors an explicit ?redirect= over the /feed default', async () => {
+    mockQuery = { redirect: '/tree' };
+
+    const wrapper = mount(LoginView, {
+      global: {
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+            stubActions: false,
+          }),
+        ],
+      },
+    });
+
+    const authStore = useAuthStore();
+    vi.spyOn(authStore, 'loginDemo').mockResolvedValue();
+
+    await wrapper.find('[data-testid="demo-login-btn"]').trigger('click');
+
+    expect(authStore.loginDemo).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith('/tree');
   });
 
   // --- F1 scheduled defect fix (additive): Zalo glyph dark-mode contrast ---

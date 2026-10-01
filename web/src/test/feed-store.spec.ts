@@ -158,4 +158,20 @@ describe('feed store', () => {
     expect(store.nextCursor).toBeNull();
     expect(store.currentFamilyId).toBeNull();
   });
+  it('retains next_cursor after an appended page and exposes null when pagination ends', async () => {
+    const firstCursor = {created_at:'2026-09-21T10:00:00Z', id:'p1'};
+    mockedFeedApi.list.mockResolvedValueOnce({posts:[makePost({id:'p1'})], next_cursor:firstCursor})
+      .mockResolvedValueOnce({posts:[makePost({id:'p2'})], next_cursor:{created_at:'2026-09-21T08:00:00Z',id:'p2'}})
+      .mockResolvedValueOnce({posts:[makePost({id:'p3'})], next_cursor:null});
+    const store = useFeedStore(); await store.fetchFeed('f1');
+    expect(store.nextCursor).toEqual(firstCursor);
+    await store.loadMore();
+    expect(store.posts.map(p=>p.id)).toEqual(['p1','p2']);
+    expect(store.nextCursor).toEqual({created_at:'2026-09-21T08:00:00Z',id:'p2'});
+    await store.loadMore();
+    expect(store.posts.map(p=>p.id)).toEqual(['p1','p2','p3']);
+    expect(store.nextCursor).toBeNull();
+    const calls = mockedFeedApi.list.mock.calls.length;
+    await store.loadMore(); expect(mockedFeedApi.list).toHaveBeenCalledTimes(calls);
+  });
 });

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import EmailVerifyView from '@/views/EmailVerifyView.vue';
@@ -26,6 +26,10 @@ describe('EmailVerifyView.vue', () => {
     vi.restoreAllMocks();
     mockPush.mockReset();
     mockQuery = {};
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('renders invalid token message when query.token is missing', async () => {
@@ -103,7 +107,7 @@ describe('EmailVerifyView.vue', () => {
     if (resolveVerify) (resolveVerify as () => void)();
   });
 
-  it('calls verifyMagicLink with token and redirects to /tree on success', async () => {
+  it('calls verifyMagicLink with token and renders the success interstitial', async () => {
     mockQuery = { token: 'valid-jwt-token' };
 
     const mockUser = {
@@ -149,6 +153,71 @@ describe('EmailVerifyView.vue', () => {
     expect(dots.length).toBe(3);
     expect(dots[2].classes()).toContain('bg-accent');
     expect(dots.filter((d) => d.classes().includes('bg-accent')).length).toBe(3);
+  });
+
+  // --- MAJ-1 (owner decision 2026-10-01: feeds are the main page) ---
+  // The emailed magic link is the normal email sign-in completion path.
+
+  async function mountSignedIn(): Promise<ReturnType<typeof mount>> {
+    const mockUser = {
+      id: 'usr-1',
+      display_name: 'Nguyen Van A',
+      is_demo: false,
+      created_at: new Date().toISOString(),
+    };
+    vi.spyOn(authApi, 'verifyMagicLink').mockResolvedValue({
+      user: mockUser,
+      is_new: false,
+      conflict_detected: false,
+    });
+    vi.spyOn(meApi, 'getMe').mockResolvedValue({
+      User: mockUser,
+      Identities: [],
+      Contacts: [],
+    });
+    const wrapper = mount(EmailVerifyView, {
+      global: {
+        stubs: {
+          'router-link': {
+            template: '<a><slot /></a>',
+          },
+        },
+      },
+    });
+    await flushPromises();
+    return wrapper;
+  }
+
+  it('normal email sign-in (magic link) success defaults to /feed', async () => {
+    vi.useFakeTimers();
+    mockQuery = { token: 'valid-jwt-token' };
+
+    const wrapper = await mountSignedIn();
+
+    expect(wrapper.find('[data-testid="verify-success"]').exists()).toBe(true);
+    // Copy names the feed destination, not the tree
+    expect(wrapper.text()).toContain('bảng tin dòng họ');
+    expect(mockPush).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(500);
+    await flushPromises();
+
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith('/feed');
+  });
+
+  it('normal email sign-in success honors an explicit ?redirect= over the /feed default', async () => {
+    vi.useFakeTimers();
+    mockQuery = { token: 'valid-jwt-token', redirect: '/tree' };
+
+    const wrapper = await mountSignedIn();
+
+    expect(wrapper.find('[data-testid="verify-success"]').exists()).toBe(true);
+
+    vi.advanceTimersByTime(500);
+    await flushPromises();
+
+    expect(mockPush).toHaveBeenCalledWith('/tree');
   });
 
   it('displays error message when verifyMagicLink fails', async () => {

@@ -64,7 +64,7 @@ const currentCopy = computed(() => {
     return 'Vui lòng đợi trong giây lát. Chúng tôi đang kiểm tra liên kết đăng nhập của bạn.';
   }
   if (state.value === 'success') {
-    return 'Liên kết đã được xác nhận. Bạn sẽ được chuyển đến cây gia phả.';
+    return 'Liên kết đã được xác nhận. Bạn sẽ được chuyển đến bảng tin dòng họ.';
   }
   return errorMessage.value;
 });
@@ -84,8 +84,11 @@ async function verifyToken() {
   try {
     await authStore.loginMagicLink(token);
     state.value = 'success';
+    // Post-auth routing (owner decision 2026-10-01): feeds are the main page —
+    // default to /feed; an explicit ?redirect= always wins.
+    const redirect = typeof route.query.redirect === 'string' && route.query.redirect ? route.query.redirect : '/feed';
     setTimeout(async () => {
-      await router.push('/tree');
+      await router.push(redirect);
     }, 500);
   } catch (err: unknown) {
     state.value = 'error';
